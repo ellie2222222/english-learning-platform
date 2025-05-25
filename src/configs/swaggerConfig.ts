@@ -80,6 +80,6 @@ export function swaggerDoc(app: Application): void {
       process.env.NODE_ENV === "PRODUCTION"
         ? process.env.PRODUCTION_URL
         : process.env.SERVER_URL
-    }:${process.env.PORT}/api-docs`
+    }/api-docs`
   );
 }

@@ -32,9 +32,9 @@ class AuthDto {
    * Validates input for signup requests.
    */
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
 
-    if (!name) {
+    if (!username) {
       res.status(StatusCodeEnum.BadRequest_400).json({
         message: "Name is required",
       });
@@ -42,10 +42,10 @@ class AuthDto {
     }
 
     try {
-      validateName(name);
+      validateName(username);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid name",
+        message: error instanceof CustomException ? error.message : "Invalid username",
       });
       return;
     }

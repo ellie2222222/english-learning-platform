@@ -38,8 +38,8 @@ authRoutes.get("/me", authController.getUserByToken);
 
 authRoutes.post("/renew-access-token", authController.renewAccessToken);
 
-authRoutes.post(
-  "/confirm-email-verification-token",
+authRoutes.get(
+  "/email-verification",
   authController.confirmEmailVerificationToken
 );
 

@@ -4,7 +4,7 @@ import { IUser } from "../interfaces/models/IUser";
 
 const userModelSchema = new Schema<IUser>(
   {
-    name: {
+    username: {
       type: String,
       required: true,
       default: "",
@@ -25,41 +25,17 @@ const userModelSchema = new Schema<IUser>(
       type: String,
       default: "",
     },
-    phoneNumber: {
-      type: String,
-      default: null,
-    },
     password: {
       type: String,
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
+    lastOnline: {
+      type: Date,
     },
-    resetPasswordPin: {
-      value: { type: String, default: null },
-      expiresAt: { type: Date, default: null },
-      isVerified: { type: Boolean, default: false },
+    onlineStreak: {
+      type: Number,
     },
-    subscription: {
-      startDate: {
-        type: Date,
-        default: null,
-      },
-      endDate: {
-        type: Date,
-        default: null,
-      },
-      currentPlan: {
-        type: Schema.Types.ObjectId,
-        ref: "MembershipPackage",
-        default: null,
-      },
-      futurePlan: {
-        type: Schema.Types.ObjectId,
-        ref: "MembershipPackage",
-        default: null,
-      },
+    activeUntil: {
+      type: Date,
     },
     ...baseModelSchema.obj,
   },

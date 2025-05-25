@@ -11,7 +11,6 @@ import IJwtPayload, {
 } from "../interfaces/others/IJwtPayload";
 import path from "path";
 import ejs from "ejs";
-import UserEnum from "../enums/UserEnum";
 import { IAuthService } from "../interfaces/services/IAuthService";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import Database from "../db/database";
@@ -230,7 +229,7 @@ class AuthService implements IAuthService {
       const timestamp = new Date().toISOString();
       const payload = {
         userId: user._id,
-        name: user.username,
+        username: user.username,
         email: user.email,
         role: user.role,
         timestamp,
@@ -315,7 +314,7 @@ class AuthService implements IAuthService {
       if (!user) {
         user = await this.userRepository.createUser({
           email,
-          name,
+          username: name,
           avatar: picture,
           googleId: sub,
         });
@@ -325,7 +324,7 @@ class AuthService implements IAuthService {
       const timestamp = new Date().toISOString();
       const payload = {
         userId: user._id,
-        name: user.username,
+        username: user.username,
         email: user.email,
         role: user.role,
         timestamp,
@@ -351,13 +350,13 @@ class AuthService implements IAuthService {
   /**
    * Signs up a user and generates an access token.
    *
-   * @param name - The user's name.
+   * @param username - The user's name.
    * @param email - The user's email address.
    * @param password - The user's password.
    * @returns A promise that resolves to the JWT if credentials are valid, or throws an error.
    */
   signup = async (
-    name: string,
+    username: string,
     email: string,
     password: string
   ): Promise<void> => {
@@ -371,7 +370,7 @@ class AuthService implements IAuthService {
         );
       }
 
-      this.sendVerificationEmail(email, password, name);
+      this.sendVerificationEmail(email, password, username);
 
       return;
     } catch (error) {
@@ -498,12 +497,12 @@ class AuthService implements IAuthService {
   private sendVerificationEmail = async (
     email: string,
     password: string,
-    name: string
+    username: string
   ): Promise<void> => {
     try {
       // Generate token
       const token = jwt.sign(
-        { email, password, name },
+        { email, password, username },
         process.env.EMAIL_TOKEN_SECRET as string,
         { expiresIn: process.env.EMAIL_TOKEN_EXPIRATION }
       );
@@ -511,12 +510,12 @@ class AuthService implements IAuthService {
       const url =
         process.env.NODE_ENV?.toLowerCase() === "production"
           ? process.env.PRODUCTION_URL
-          : process.env.FRONTEND_URL;
+          : process.env.SERVER_URL;
 
       const emailHtml = await ejs.renderFile(emailTemplatePath, {
-        name: name,
+        username: username,
         expiration: process.env.EMAIL_TOKEN_EXPIRATION,
-        verificationLink: `${url}/email-verification?verificationToken=${token}`,
+        verificationLink: `${url}/api/auth/email-verification?verificationToken=${token}`,
       });
 
       const mailOptions: Mail.Options = {
@@ -552,7 +551,7 @@ class AuthService implements IAuthService {
         token,
         process.env.EMAIL_TOKEN_SECRET!
       ) as IVerificationTokenPayload;
-      const { name, email, password } = payload;
+      const { username, email, password } = payload;
 
       // Check if user already exists
       const existingUser = await this.userRepository.getUserByEmail(email);
@@ -569,7 +568,7 @@ class AuthService implements IAuthService {
 
       await this.userRepository.createUser(
         {
-          name,
+          username,
           email,
           password: hashedPassword,
         },

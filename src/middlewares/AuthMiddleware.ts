@@ -3,8 +3,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import getLogger from "../utils/logger";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import IJwtPayload from "../interfaces/models/IJwtPayload";
-import CustomException from "../exceptions/CustomException";
+import IJwtPayload from "../interfaces/others/IJwtPayload";
 
 const logger = getLogger("AUTHENTICATION");
 
@@ -14,7 +13,6 @@ const AuthMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   const isProtectedRoute = req.isProtectedRoute;
-  // const token = req.cookies?.accessToken || "";
 
   const { authorization } = req.headers;
   const token = authorization?.split(" ")[1] || req.cookies?.accessToken || ""; //for swagger test and cookie

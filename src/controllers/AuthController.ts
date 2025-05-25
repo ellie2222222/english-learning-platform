@@ -218,15 +218,15 @@ class AuthController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { verificationToken } = req.body;
+      const { verificationToken } = req.query;
+    
+      await this.authService.confirmEmailVerificationToken(verificationToken as string);
 
-      await this.authService.confirmEmailVerificationToken(verificationToken);
-
-      res.status(StatusCodeEnum.OK_200).json({
-        message: "Success",
-      });
+      res.status(StatusCodeEnum.OK_200).render("EmailVerificationSuccess");
     } catch (error) {
-      next(error);
+      res.status(StatusCodeEnum.BadRequest_400).render("EmailVerificationFailure", {
+        errorMessage: (error as any).message || "Invalid or expired verification link.",
+      });
     }
   };
 }
