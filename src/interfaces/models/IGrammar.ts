@@ -4,9 +4,9 @@ export interface IGrammar extends Document {
   lessonId: mongoose.Schema.Types.ObjectId;
   title: string;
   structure: string;
-  example: string;
+  example?: string;
   explanation?: string;
-  order: String;
+  order: number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

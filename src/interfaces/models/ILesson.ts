@@ -4,7 +4,7 @@ export interface ILesson extends Document {
   courseId: mongoose.Schema.Types.ObjectId;
   name: string;
   description: string;
-  length: string;
+  length: number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

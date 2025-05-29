@@ -5,7 +5,7 @@ export interface IVocabulary extends Document {
   englishContent: string;
   vietnameseContent: string;
   imageUrl?: string;
-  order: String;
+  order: number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
