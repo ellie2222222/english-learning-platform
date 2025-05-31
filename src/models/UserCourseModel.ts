@@ -25,7 +25,7 @@ const UserCourseModelSchema = new Schema<IUserCourse>(
       min: 0,
       max: 100,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

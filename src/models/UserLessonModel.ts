@@ -24,7 +24,7 @@ const UserLessonModelSchema = new Schema<IUserLesson>(
       enum: Object.values(UserLessonStatus),
       default: UserLessonStatus.ON_GOING,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

@@ -23,7 +23,7 @@ const achievementModelSchema = new Schema<IAchievement>(
       type: Number,
       required: true,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

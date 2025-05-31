@@ -30,7 +30,7 @@ const GrammarModelSchema = new Schema<IGrammar>(
       required: true,
     },
 
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

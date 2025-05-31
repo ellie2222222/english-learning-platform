@@ -2,13 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import ms from "ms";
 import { IAuthService } from "../interfaces/services/IAuthService";
+import { Inject, Service } from "typedi";
+import AuthService from "../services/AuthService";
 
+@Service()
 class AuthController {
-  private authService: IAuthService;
-
-  constructor(authService: IAuthService) {
-    this.authService = authService;
-  }
+  constructor(@Inject(() => AuthService) private authService: IAuthService) {}
 
   /**
    * Handles user login.
@@ -21,8 +20,10 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      const { accessToken, refreshToken } =
-        await this.authService.login(email, password);
+      const { accessToken, refreshToken } = await this.authService.login(
+        email,
+        password
+      );
 
       // Set Refresh Token in cookies
       const COOKIES_EXPIRATION = Number(process.env.COOKIES_EXPIRATION!);
@@ -91,8 +92,9 @@ class AuthController {
     try {
       const googleUser = req.user;
 
-      const { accessToken, refreshToken } =
-        await this.authService.loginGoogle(googleUser);
+      const { accessToken, refreshToken } = await this.authService.loginGoogle(
+        googleUser
+      );
 
       // Set Refresh Token in cookies
       const COOKIES_EXPIRATION = Number(process.env.COOKIES_EXPIRATION!);
@@ -186,7 +188,7 @@ class AuthController {
       next(error);
     }
   };
-  
+
   /**
    * Handles changing password
    */
@@ -219,14 +221,19 @@ class AuthController {
   ): Promise<void> => {
     try {
       const { verificationToken } = req.query;
-    
-      await this.authService.confirmEmailVerificationToken(verificationToken as string);
+
+      await this.authService.confirmEmailVerificationToken(
+        verificationToken as string
+      );
 
       res.status(StatusCodeEnum.OK_200).render("EmailVerificationSuccess");
     } catch (error) {
-      res.status(StatusCodeEnum.BadRequest_400).render("EmailVerificationFailure", {
-        errorMessage: (error as any).message || "Invalid or expired verification link.",
-      });
+      res
+        .status(StatusCodeEnum.BadRequest_400)
+        .render("EmailVerificationFailure", {
+          errorMessage:
+            (error as any).message || "Invalid or expired verification link.",
+        });
     }
   };
 }

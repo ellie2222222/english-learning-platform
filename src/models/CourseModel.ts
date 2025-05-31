@@ -23,7 +23,7 @@ const CourseModelSchema = new Schema<ICourse>(
       required: false,
       min: 1,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

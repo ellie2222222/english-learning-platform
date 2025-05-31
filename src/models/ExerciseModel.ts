@@ -42,7 +42,7 @@ const ExerciseModelSchema = new Schema<IExercise>(
       type: String,
       required: false,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

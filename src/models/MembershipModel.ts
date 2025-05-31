@@ -16,7 +16,7 @@ const MembershipModelSchema = new Schema<IMembership>(
       required: true,
       min: 0,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

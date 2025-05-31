@@ -13,7 +13,7 @@ const FlashcardModelSchema = new Schema<IFlashcard>(
       type: Schema.Types.ObjectId,
       ref: "FlashcardSet",
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

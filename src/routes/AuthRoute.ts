@@ -7,10 +7,9 @@ import AuthService from "../services/AuthService";
 import UserRepository from "../repositories/UserRepository";
 import passport from "passport";
 import AuthDto from "../dtos/AuthDto";
+import Container from "typedi";
 
-const userRepository = new UserRepository();
-const authService = new AuthService(userRepository);
-const authController = new AuthController(authService);
+const authController = Container.get(AuthController);
 const authDto = new AuthDto();
 
 const authRoutes = express.Router();
@@ -19,7 +18,10 @@ authRoutes.use(AuthMiddleware);
 
 authRoutes.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"], prompt: "select_account" })
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account",
+  })
 );
 
 authRoutes.get(

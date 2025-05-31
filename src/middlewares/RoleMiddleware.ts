@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import UserRepository from "../repositories/UserRepository";
 import { IUser } from "../interfaces/models/IUser";
 import UserEnum from "../enums/UserEnum";
+import Container from "typedi";
 
 /**
  *
@@ -17,12 +18,13 @@ const RoleMiddleware = (roles: Array<number>) => {
   ): Promise<void> => {
     try {
       const { userId } = req.userInfo;
-      const userRepository = new UserRepository();
+      const userRepository = Container.get(UserRepository);
 
       const user: IUser | null = await userRepository.getUserById(
         userId,
         false
       );
+
       if (!user) {
         res
           .status(StatusCodeEnum.Unauthorized_401)
@@ -42,7 +44,8 @@ const RoleMiddleware = (roles: Array<number>) => {
       }
 
       next();
-    } catch {
+    } catch (error) {
+      console.log(error);
       res
         .status(StatusCodeEnum.InternalServerError_500)
         .json({ message: "Internal Server Error" });

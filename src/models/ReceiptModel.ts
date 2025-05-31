@@ -31,7 +31,7 @@ const ReceiptModelSchema = new Schema<IReceipt>(
       required: true,
       enum: Object.values(PaymentGatewayEnum),
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

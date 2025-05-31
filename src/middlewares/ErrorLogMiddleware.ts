@@ -2,10 +2,11 @@ import path from "path";
 import { Request, Response, NextFunction } from "express";
 import getLogger from "../utils/logger";
 import StatusCodeEnums from "../enums/StatusCodeEnum";
-import Database from "../utils/database";
+import Database from "../db/database";
 import ErrorLogRepository from "../repositories/ErrorLogRepository";
 import CustomException from "../exceptions/CustomException";
 import mongoose from "mongoose";
+import Container from "typedi";
 
 // Get logger instance for error logging
 const logger = getLogger("ERROR_LOG");
@@ -44,6 +45,7 @@ const ErrorLogMiddleware = async (
       StatusCodeEnums.InternalServerError_500,
       StatusCodeEnums.Unauthorized_401,
       StatusCodeEnums.Forbidden_403,
+      StatusCodeEnums.NotFound_404,
     ];
     if (errorCodes.includes(err.code)) {
       const errorLogData = {
@@ -84,7 +86,7 @@ const ErrorLogMiddleware = async (
       ? err.code || StatusCodeEnums.InternalServerError_500
       : StatusCodeEnums.InternalServerError_500;
 
-    res.status(statusCode).json({ message: err.message });
+    res.status(statusCode).json({ code: statusCode, message: err.message });
   }
 };
 

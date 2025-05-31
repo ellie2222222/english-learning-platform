@@ -25,7 +25,7 @@ const VocabularyModelSchema = new Schema<IVocabulary>(
       type: Number,
       required: true,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

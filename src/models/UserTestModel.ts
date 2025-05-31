@@ -35,7 +35,7 @@ const UserTestModelSchema = new Schema<IUserTest>(
       type: String,
       required: true,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

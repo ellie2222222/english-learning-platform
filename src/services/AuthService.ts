@@ -14,6 +14,8 @@ import ejs from "ejs";
 import { IAuthService } from "../interfaces/services/IAuthService";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import Database from "../db/database";
+import Container, { Inject, Service } from "typedi";
+import UserRepository from "../repositories/UserRepository";
 
 dotenv.config();
 
@@ -22,16 +24,12 @@ const emailTemplatePath = path.resolve(
   "../templates/EmailVerification.ejs"
 );
 
+@Service()
 class AuthService implements IAuthService {
-  private userRepository: IUserRepository;
-  private database: Database;
-
   constructor(
-    userRepository: IUserRepository,
-  ) {
-    this.userRepository = userRepository;
-    this.database = Database.getInstance();
-  }
+    @Inject(() => UserRepository) private userRepository: IUserRepository,
+    @Inject() private database: Database
+  ) {}
 
   /**
    * Generates an Access Token.
@@ -192,7 +190,7 @@ class AuthService implements IAuthService {
    */
   login = async (
     email: string,
-    password: string,
+    password: string
   ): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -291,7 +289,7 @@ class AuthService implements IAuthService {
   };
 
   loginGoogle = async (
-    googleUser: any,
+    googleUser: any
   ): Promise<{
     accessToken: string;
     refreshToken: string;

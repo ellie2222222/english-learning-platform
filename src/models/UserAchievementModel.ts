@@ -14,7 +14,7 @@ const UserAchievementModelSchema = new Schema<IUserAchievement>(
       ref: "Achievement",
       required: true,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
   { timestamps: true }
 );

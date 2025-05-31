@@ -4,12 +4,12 @@ import { Request } from "express";
 declare global {
   namespace Express {
     interface Request {
-      isProtectedRoute: boolean,
+      isProtectedRoute: boolean;
       userInfo: {
-        userId: string,
-        email: string,
-        role: number,
-      }
+        userId: string;
+        email: string;
+        role: number;
+      };
     }
   }
 }

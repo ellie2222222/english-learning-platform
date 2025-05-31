@@ -3,13 +3,13 @@ import { IUser } from "../interfaces/models/IUser";
 import { IUserService } from "../interfaces/services/IUserService";
 import { Request, Response, NextFunction } from "express";
 import { cleanUpFile } from "../utils/fileUtils";
+import { OrderType, SortByType } from "../interfaces/others/IQuery";
+import UserService from "../services/UserService";
+import { Inject, Service } from "typedi";
 
+@Service()
 class UserController {
-  private userService: IUserService;
-
-  constructor(userService: IUserService) {
-    this.userService = userService;
-  }
+  constructor(@Inject(() => UserService) private userService: IUserService) {}
 
   createUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -64,8 +64,8 @@ class UserController {
           size: parseInt(size as string) || 10,
           search: search as string,
           role: role as string,
-          order: (order as "asc" | "desc") || "asc",
-          sortBy: (sortBy as "date") || "date",
+          order: (order as OrderType) || "asc",
+          sortBy: (sortBy as SortByType) || "date",
         },
         requesterId
       );
@@ -91,12 +91,7 @@ class UserController {
           `${process.env.SERVER_URL}/${req.file.path}`
         );
       } else {
-        user = await this.userService.updateUser(
-          id,
-          requesterId,
-          name,
-          role
-        );
+        user = await this.userService.updateUser(id, requesterId, name, role);
       }
 
       res
