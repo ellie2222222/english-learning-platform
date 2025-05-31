@@ -6,7 +6,9 @@ import CustomException from "../exceptions/CustomException";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IQuery } from "../interfaces/others/IQuery";
+import { Service } from "typedi";
 
+@Service()
 class UserRepository implements IUserRepository {
   /**
    * Creates a new user document in the database.
@@ -23,9 +25,9 @@ class UserRepository implements IUserRepository {
       const userData = data as { email: string };
       const user = await UserModel.findOneAndUpdate(
         { email: userData.email },
-        { $setOnInsert: data }, 
-        { upsert: true, new: true, session }, 
-      );      
+        { $setOnInsert: data },
+        { upsert: true, new: true, session }
+      );
       return user!;
     } catch (error) {
       if ((error as Error) || (error as CustomException)) {
@@ -52,14 +54,15 @@ class UserRepository implements IUserRepository {
     ignoreDeleted: boolean
   ): Promise<IUser | null> {
     try {
-      const searchQuery: { _id: mongoose.Types.ObjectId; isDeleted?: boolean } = {
-        _id: new mongoose.Types.ObjectId(userId),
-      };
+      const searchQuery: { _id: mongoose.Types.ObjectId; isDeleted?: boolean } =
+        {
+          _id: new mongoose.Types.ObjectId(userId),
+        };
       if (!ignoreDeleted) {
         searchQuery.isDeleted = false;
       }
-  
-      return null;
+
+      return await UserModel.findOne(searchQuery);
     } catch (error) {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
@@ -67,7 +70,6 @@ class UserRepository implements IUserRepository {
       );
     }
   }
-  
 
   /**
    * Fetches a user document by email.
@@ -196,7 +198,7 @@ class UserRepository implements IUserRepository {
         page: 1,
         totalPages: 1,
         total: 10,
-        data: users
+        data: users,
       };
     } catch (error) {
       if ((error as Error) || (error as CustomException)) {

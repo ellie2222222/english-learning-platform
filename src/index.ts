@@ -1,13 +1,18 @@
-import express, { Application, NextFunction, Request, Response } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import helmet from 'helmet';
-import getLogger from './utils/logger';
-import { swaggerDoc } from './configs/swaggerConfig';
-import http from 'http'; 
-import authRoutes from './routes/AuthRoute';
-import userRoutes from './routes/UserRoute';
-import path from 'path';
+import "reflect-metadata";
+import express, { Application, NextFunction, Request, Response } from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import helmet from "helmet";
+import getLogger from "./utils/logger";
+import { swaggerDoc } from "./configs/swaggerConfig";
+import http from "http";
+import path from "path";
+
+//routes
+import authRoutes from "./routes/AuthRoute";
+import userRoutes from "./routes/UserRoute";
+import achievementRoute from "./routes/AchievementRoute";
+import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
 
 dotenv.config();
 
@@ -21,8 +26,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/achievements", achievementRoute);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");
@@ -41,6 +47,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   next();
 });
+app.use(ErrorLogMiddleware);
 
 const server = http.createServer(app);
 

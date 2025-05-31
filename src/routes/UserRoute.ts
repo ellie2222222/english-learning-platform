@@ -6,15 +6,12 @@ import UserEnum from "../enums/UserEnum";
 import AuthMiddleware from "../middlewares/AuthMiddleware";
 
 import UserController from "../controllers/UserController";
-import UserService from "../services/UserService";
 
-import UserRepository from "../repositories/UserRepository";
 import { uploadFile } from "../middlewares/storeFile";
 import UserDto from "../dtos/UserDto";
+import Container from "typedi";
 
-const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
-const userController: UserController = new UserController(userService);
+const userController: UserController = Container.get(UserController);
 const userDto = new UserDto();
 const userRoutes = express.Router();
 

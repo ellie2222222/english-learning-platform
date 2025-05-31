@@ -5,10 +5,13 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 
 import dotenv from "dotenv";
 import path from "path";
-dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`) });
+import { Service } from "typedi";
+dotenv.config({
+  path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`),
+});
 const logger = getLoggers("MONGOOSE");
 
-
+@Service()
 class Database {
   private static instance: Database | null = null;
 
@@ -31,8 +34,13 @@ class Database {
   private async connect(): Promise<void> {
     try {
       if (!process.env.DATABASE_URI || !process.env.DATABASE_NAME) {
-        logger.error("Missing required environment variables: DATABASE_URI or DATABASE_NAME");
-        throw new CustomException(StatusCodeEnum.InternalServerError_500, "Internal Server Error");
+        logger.error(
+          "Missing required environment variables: DATABASE_URI or DATABASE_NAME"
+        );
+        throw new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          "Internal Server Error"
+        );
       }
       const URI: string = process.env.DATABASE_URI!;
       const DBName: string = process.env.DATABASE_NAME!;

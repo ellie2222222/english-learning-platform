@@ -10,20 +10,23 @@ import Database from "../db/database";
 import { IUser } from "../interfaces/models/IUser";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IQuery } from "../interfaces/others/IQuery";
+import { Inject, Service } from "typedi";
+import UserRepository from "../repositories/UserRepository";
 
+@Service()
 class UserService implements IUserService {
-  private userRepository: IUserRepository;
-  private database: Database;
-
-  constructor(userRepository: IUserRepository) {
-    this.userRepository = userRepository;
-    this.database = Database.getInstance();
-  }
+  constructor(
+    @Inject(() => UserRepository) private userRepository: IUserRepository,
+    @Inject() private database: Database
+  ) {}
 
   private async validateRequester(requesterId: string): Promise<IUser> {
     const requester = await this.userRepository.getUserById(requesterId, false);
     if (!requester) {
-      throw new CustomException(StatusCodeEnum.NotFound_404, "Requester not found");
+      throw new CustomException(
+        StatusCodeEnum.NotFound_404,
+        "Requester not found"
+      );
     }
     return requester;
   }
@@ -34,10 +37,17 @@ class UserService implements IUserService {
     }
     throw error instanceof CustomException
       ? error
-      : new CustomException(StatusCodeEnum.InternalServerError_500, "Internal Server Error");
+      : new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          "Internal Server Error"
+        );
   }
 
-  private authorizeUpdate(requester: IUser, id: string | ObjectId, role?: number): void {
+  private authorizeUpdate(
+    requester: IUser,
+    id: string | ObjectId,
+    role?: number
+  ): void {
     const isAdmin = requester.role === UserEnum.ADMIN;
     const isSelf = (id as string) === (requester.id as string);
 
@@ -76,7 +86,10 @@ class UserService implements IUserService {
       }
 
       if (!Object.values(UserEnum).includes(role)) {
-        throw new CustomException(StatusCodeEnum.BadRequest_400, "Invalid role");
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Invalid role"
+        );
       }
 
       const saltRounds = 10;
@@ -104,7 +117,10 @@ class UserService implements IUserService {
 
       const user = await this.userRepository.getUserById(id, false);
       if (!user) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "User not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
       }
 
       return user;
@@ -137,7 +153,10 @@ class UserService implements IUserService {
       const requester = await this.validateRequester(requesterId);
       const user = await this.userRepository.getUserById(id, false);
       if (!user) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "User not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
       }
 
       this.authorizeUpdate(requester, id, role);
@@ -147,7 +166,11 @@ class UserService implements IUserService {
       if (role !== undefined) updateData.role = role;
       if (avatar) updateData.avatar = avatar;
 
-      const updatedUser = await this.userRepository.updateUserById(id, updateData, session);
+      const updatedUser = await this.userRepository.updateUserById(
+        id,
+        updateData,
+        session
+      );
       if (avatar && user.avatar) {
         await cleanUpFile(user.avatar, "update");
       }
@@ -174,7 +197,10 @@ class UserService implements IUserService {
 
       const user = await this.userRepository.getUserById(id, false);
       if (!user) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "User not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
       }
 
       await this.userRepository.deleteUserById(id, session);

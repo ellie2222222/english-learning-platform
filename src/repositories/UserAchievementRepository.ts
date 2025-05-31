@@ -1,0 +1,200 @@
+import mongoose, { ClientSession } from "mongoose";
+import { IUserAchievement } from "../interfaces/models/IUserAchievement";
+import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
+import UserAchieventModel from "../models/UserAchievementModel";
+import CustomException from "../exceptions/CustomException";
+import StatusCodeEnum from "../enums/StatusCodeEnum";
+import { IQuery } from "../interfaces/others/IQuery";
+import { Service } from "typedi";
+
+@Service()
+class UserAchievementRepository implements IUserAchievementRepository {
+  async createUserAchievement(
+    data: object,
+    session?: ClientSession
+  ): Promise<IUserAchievement | null> {
+    try {
+      const userAchievement = await UserAchieventModel.create([data], {
+        session,
+      });
+
+      return userAchievement[0];
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  //would not make this an api
+  async updateUserAchievement(
+    id: string,
+    data: object,
+    session?: ClientSession
+  ): Promise<IUserAchievement | null> {
+    try {
+      const userAchievement = await UserAchieventModel.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          isDeleted: false,
+        },
+        {
+          ...data,
+        },
+        { session, new: true }
+      );
+
+      if (!userAchievement) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User Achievement not found"
+        );
+      }
+
+      return userAchievement;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  //would not make this an api
+  async deleteUserAchievement(
+    id: string,
+    session?: ClientSession
+  ): Promise<IUserAchievement | null> {
+    try {
+      const userAchievement = await UserAchieventModel.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          isDeleted: false,
+        },
+        { session, new: true }
+      );
+
+      if (!userAchievement) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User Achievement not found"
+        );
+      }
+
+      return userAchievement;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getUserAchievement(id: string): Promise<IUserAchievement | null> {
+    try {
+      const userAchievement = await UserAchieventModel.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        isDeleted: false,
+      });
+
+      if (!userAchievement) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User Achievement not found"
+        );
+      }
+
+      return userAchievement;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getUserAchievements(
+    query: IQuery,
+    userId: string
+  ): Promise<IUserAchievement[] | []> {
+    type SearchQuery = {
+      userId: mongoose.Types.ObjectId;
+      isDeleted?: boolean;
+      "achievement.name"?: { $regex: string; $options: string };
+    };
+    try {
+      const matchQuery: SearchQuery = {
+        userId: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      };
+
+      if (query.search) {
+        matchQuery["achievement.name"] = {
+          $regex: query.search,
+          $options: "i",
+        };
+      }
+
+      let sortField = "createdAt";
+      switch (query.sortBy) {
+        case "date":
+          sortField = "createdAt";
+          break;
+        case "name":
+          sortField = "achievement.name";
+          break;
+        default:
+          break;
+      }
+
+      const sortOrder: 1 | -1 = query.order === "asc" ? 1 : -1;
+      const skip = (query.page - 1) * query.size;
+
+      const userAchievements = await UserAchieventModel.aggregate([
+        {
+          $lookup: {
+            from: "Achievement",
+            localField: "achievementId",
+            foreignField: "_id",
+            as: "achievement",
+          },
+        },
+        { $unwind: "achievement" },
+        { $match: matchQuery },
+        { $sort: { [sortField]: sortOrder } },
+        { $skip: skip },
+        { $limit: query.size },
+      ]);
+
+      return userAchievements;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+}
+
+export default UserAchievementRepository;

@@ -1,9 +1,9 @@
 import mongoose, { Document } from "mongoose";
 
 export interface IReceipt extends Document {
-  amount: string;
+  amount: number;
   userId: mongoose.Schema.Types.ObjectId;
-  membershipId: string;
+  membershipId: mongoose.Schema.Types.ObjectId;
   paymentMethod: string;
   paymentGateway: string;
   isDeleted?: boolean;

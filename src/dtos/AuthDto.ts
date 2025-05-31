@@ -32,9 +32,9 @@ class AuthDto {
    * Validates input for signup requests.
    */
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const { username, email, password } = req.body;
+    const { name, email, password } = req.body;
 
-    if (!username) {
+    if (!name) {
       res.status(StatusCodeEnum.BadRequest_400).json({
         message: "Name is required",
       });
@@ -42,10 +42,11 @@ class AuthDto {
     }
 
     try {
-      validateName(username);
+      validateName(name);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid username",
+        message:
+          error instanceof CustomException ? error.message : "Invalid username",
       });
       return;
     }
@@ -81,7 +82,11 @@ class AuthDto {
   /**
    * Validates input for change password requests.
    */
-  async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async changePassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword) {
