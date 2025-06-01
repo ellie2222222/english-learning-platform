@@ -26,7 +26,16 @@ export interface IUserAchievementRepository {
 
   getUserAchievements(
     query: IQuery,
-    userId: string,
-    ignoreDeleted?: boolean
+    userId: string
   ): Promise<IUserAchievement[] | []>;
+
+  deleteBatchUserAchievements(
+    achievementId: string,
+    session?: mongoose.ClientSession
+  ): Promise<number>;
+
+  findExistingAchievement(
+    achievementId: string,
+    userId: string
+  ): Promise<IUserAchievement | null>;
 }

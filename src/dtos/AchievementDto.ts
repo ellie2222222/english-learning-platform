@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 
 class AchievementDto {
-  createAchievement(req: Request, res: Response, next: NextFunction) {
+  async createAchievement(req: Request, res: Response, next: NextFunction) {
     const { name, description, type, goal } = req.body;
     try {
       if (!name || !description || !type || !goal) {
@@ -28,15 +28,15 @@ class AchievementDto {
     }
   }
 
-  updateAchievement(req: Request, res: Response, next: NextFunction) {
+  async updateAchievement(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params;
     const { name, description, type, goal } = req.body;
     try {
       if (!id) {
-        throw new Error("Missing required field");
+        throw new Error("Achievement ID is required");
       }
       if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Invalid id");
+        throw new Error("Invalid achievement id");
       }
 
       if (type && !Object.values(AchievementTypeEnum).includes(type)) {
@@ -56,14 +56,14 @@ class AchievementDto {
     }
   }
 
-  deleteAchievement(req: Request, res: Response, next: NextFunction) {
+  async deleteAchievement(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params;
     try {
       if (!id) {
-        throw new Error("Missing required field");
+        throw new Error("Achievement ID is required");
       }
       if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Invalid id");
+        throw new Error("Invalid achievement id");
       }
       next();
     } catch (error) {
@@ -74,14 +74,14 @@ class AchievementDto {
     }
   }
 
-  getAchievement(req: Request, res: Response, next: NextFunction) {
+  async getAchievement(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params;
     try {
       if (!id) {
-        throw new Error("Missing required field");
+        throw new Error("Achievement ID is required");
       }
       if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Invalid id");
+        throw new Error("Invalid achievement id");
       }
       next();
     } catch (error) {
@@ -92,7 +92,7 @@ class AchievementDto {
     }
   }
 
-  getAchievements(req: Request, res: Response, next: NextFunction) {
+  async getAchievements(req: Request, res: Response, next: NextFunction) {
     const { page, size, order, sortBy, search, type } = req.query;
     try {
       if (page && parseInt(page as string) < 1) {

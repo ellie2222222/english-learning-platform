@@ -19,6 +19,10 @@ const UserAchievementModelSchema = new Schema<IUserAchievement>(
   { timestamps: true }
 );
 
+UserAchievementModelSchema.index({ userId: 1, isDeleted: 1 });
+UserAchievementModelSchema.index({ achievementId: 1, isDeleted: 1 });
+UserAchievementModelSchema.index({ userId: 1, achievementId: 1, isDeleted: 1 });
+
 const UserAchieventModel: Model<IUserAchievement> =
   mongoose.model<IUserAchievement>(
     "UserAchievement",

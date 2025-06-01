@@ -8,41 +8,41 @@ import UserEnum from "../enums/UserEnum";
 
 const achiementController = Container.get(AchievementController);
 const achievementDto = new AchievementDto();
-const achievementRoute = Router();
+const achievementRoutes = Router();
 
-achievementRoute.use(AuthMiddleware);
+achievementRoutes.use(AuthMiddleware);
 
-achievementRoute.post(
+achievementRoutes.post(
   "/",
   RoleMiddleware([UserEnum.ADMIN]),
   achievementDto.createAchievement,
   achiementController.createAchievement
 );
 
-achievementRoute.get(
+achievementRoutes.get(
   "/",
   achievementDto.getAchievements,
   achiementController.getAchievements
 );
 
-achievementRoute.get(
+achievementRoutes.get(
   "/:id",
   achievementDto.getAchievement,
   achiementController.getAchievement
 );
 
-achievementRoute.patch(
+achievementRoutes.patch(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   achievementDto.updateAchievement,
   achiementController.updateAchievement
 );
 
-achievementRoute.delete(
+achievementRoutes.delete(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   achievementDto.deleteAchievement,
   achiementController.deleteAchievement
 );
 
-export default achievementRoute;
+export default achievementRoutes;

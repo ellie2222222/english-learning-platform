@@ -28,7 +28,7 @@ const BlogModelSchema = new Schema<IBlog>(
       enum: Object.values(BlogStatusEnum),
       default: BlogStatusEnum.DRAFTING,
     },
-    ...baseModelSchema,
+    ...baseModelSchema.obj,
   },
 
   { timestamps: true }
