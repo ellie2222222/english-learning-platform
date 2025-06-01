@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
 import { IAchievement } from "../interfaces/models/IAchievement";
 import AchievementModel from "../models/AchievementModel";
-import { IQuery } from "../interfaces/others/IQuery";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { Service } from "typedi";
@@ -141,16 +141,16 @@ class AchievementRepository implements IAchievementRepository {
 
       let sortField = "createdAt";
       switch (query.sortBy) {
-        case "date":
+        case SortByType.DATE:
           sortField = "createdAt";
           break;
-        case "name":
+        case SortByType.NAME:
           sortField = "name";
           break;
         default:
           break;
       }
-      const sortOrder: 1 | -1 = query.order === "asc" ? 1 : -1;
+      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
       const achievements = await AchievementModel.aggregate([

@@ -187,7 +187,6 @@ class AchievementService implements IAchievementService {
         throw error;
       }
 
-      const achievement = await this.achievementRepository.getAchievement(id);
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"

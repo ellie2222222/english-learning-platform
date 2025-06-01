@@ -13,6 +13,7 @@ import authRoutes from "./routes/AuthRoute";
 import userRoutes from "./routes/UserRoute";
 import achievementRoutes from "./routes/AchievementRoute";
 import userAchievementRoutes from "./routes/UserAchievementRoute";
+import membershipRoutes from "./routes/MembershipRoute";
 
 //middlewares
 import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
@@ -33,6 +34,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/user-achievements", userAchievementRoutes);
+app.use("/api/memberships", membershipRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

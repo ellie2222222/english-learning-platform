@@ -4,7 +4,7 @@ import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchi
 import UserAchieventModel from "../models/UserAchievementModel";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { IQuery } from "../interfaces/others/IQuery";
+import { IQuery, SortByType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
 import getLogger from "../utils/logger";
 
@@ -155,10 +155,10 @@ class UserAchievementRepository implements IUserAchievementRepository {
 
       let sortField = "createdAt";
       switch (query.sortBy) {
-        case "date":
+        case SortByType.DATE:
           sortField = "createdAt";
           break;
-        case "name":
+        case SortByType.NAME:
           sortField = "achievement.name";
           break;
         default:
