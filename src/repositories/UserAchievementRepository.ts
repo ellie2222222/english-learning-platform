@@ -4,7 +4,7 @@ import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchi
 import UserAchieventModel from "../models/UserAchievementModel";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { IQuery, SortByType } from "../interfaces/others/IQuery";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
 import getLogger from "../utils/logger";
 
@@ -109,7 +109,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
       const userAchievement = await UserAchieventModel.findOne({
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      });
+      }).populate("achievementId");
 
       if (!userAchievement) {
         throw new CustomException(
@@ -165,7 +165,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
           break;
       }
 
-      const sortOrder: 1 | -1 = query.order === "asc" ? 1 : -1;
+      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
       const userAchievements = await UserAchieventModel.aggregate([

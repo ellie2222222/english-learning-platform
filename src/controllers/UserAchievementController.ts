@@ -41,8 +41,9 @@ class UserAchievementController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
+      const requesterId = req.userInfo.userId;
       const userAchievement =
-        await this.userAchievementService.getUserAchievement(id);
+        await this.userAchievementService.getUserAchievement(id, requesterId);
       res.status(StatusCodeEnum.OK_200).json({
         userAchievement: userAchievement,
         message: "Get user achievement successfully",
@@ -59,7 +60,8 @@ class UserAchievementController {
   ): Promise<void> => {
     try {
       const { page, size, search, order, sortBy } = req.query;
-      const { userId } = req.userInfo;
+      const userId = req.params.id;
+      const requesterId = req.userInfo.userId;
       const userAchievements =
         await this.userAchievementService.getUserAchievements(
           {
@@ -69,7 +71,8 @@ class UserAchievementController {
             sortBy: (sortBy as SortByType) || "date",
             search: (search as string) || "",
           },
-          userId
+          userId,
+          requesterId
         );
       res.status(StatusCodeEnum.OK_200).json({
         userAchievements: userAchievements,

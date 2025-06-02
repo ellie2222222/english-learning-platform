@@ -57,18 +57,33 @@ class UserAchievementDto {
     try {
       const { page, size, search, order, sortBy } = req.query;
 
+      const { id } = req.params;
+
+      if (!id) {
+        throw new Error("User ID is required");
+      }
+
+      if (!mongoose.isValidObjectId(id)) {
+        throw new Error("Invalid user id");
+      }
+
       if (page && parseInt(page as string) < 1) {
         throw new Error("Invalid page number");
       }
+
       if (size && parseInt(size as string) < 1) {
         throw new Error("Invalid size");
       }
+
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
         throw new Error("Invalid order");
       }
+
       if (sortBy && !Object.values(SortByType).includes) {
         throw new Error("Invalid sort by");
       }
+
+      next();
     } catch (error) {
       res
         .status(StatusCodeEnum.BadRequest_400)

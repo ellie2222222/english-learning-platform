@@ -1,73 +1,66 @@
 import { Inject, Service } from "typedi";
-import { IUserAchievement } from "../interfaces/models/IUserAchievement";
-import { IUserAchievementService } from "../interfaces/services/IUserAchievementService";
-import UserAchievementRepository from "../repositories/UserAchievementRepository";
-import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
+import { IReceiptService } from "../interfaces/services/IReceiptService";
+import { IReceipt } from "../interfaces/models/IReceipt";
 import Database from "../db/database";
-import mongoose, { ObjectId } from "mongoose";
+import ReceiptRepository from "../repositories/ReceiptRepository";
+import { IReceiptRepository } from "../interfaces/repositories/IReceiptRepository";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { IQuery } from "../interfaces/others/IQuery";
-import getLogger from "../utils/logger";
-import UserRepository from "../repositories/UserRepository";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
+import UserRepository from "../repositories/UserRepository";
+import { ObjectId } from "mongoose";
 import UserEnum from "../enums/UserEnum";
-import AchievementRepository from "../repositories/AchievementRepository";
-import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
+import { IQuery } from "../interfaces/others/IQuery";
+import MembershipRepository from "../repositories/MembershipRepository";
+import { IMembershipRepository } from "../interfaces/repositories/IMembershipRepository";
 
 @Service()
-class UserAchievementService implements IUserAchievementService {
+class ReceiptService implements IReceiptService {
   constructor(
     @Inject(() => UserRepository) private userRepository: IUserRepository,
-    @Inject(() => AchievementRepository)
-    private achievementRepository: IAchievementRepository,
-    @Inject(() => UserAchievementRepository)
-    private userAchievementRepository: IUserAchievementRepository,
-    @Inject() private database: Database
+    @Inject(() => MembershipRepository)
+    private membershipRepository: IMembershipRepository,
+    @Inject() private database: Database,
+    @Inject(() => ReceiptRepository)
+    private receiptRepository: IReceiptRepository
   ) {}
-
-  //this will be use in to create user achievement after user login/finish lesson/finish courses
-  createUserAchievement = async (
+  createReceipt = async (
+    amount: number,
     userId: string,
-    achievementId: string
-  ): Promise<IUserAchievement | null> => {
+    membershipId: string,
+    paymentMethod: string,
+    paymentGateway: string
+  ): Promise<IReceipt | null> => {
     const session = await this.database.startTransaction();
-    const logger = getLogger("ACHIEVEMENT");
     try {
-      const checkAchievement = await this.achievementRepository.getAchievement(
-        achievementId
-      );
-
-      if (!checkAchievement) {
+      const checkUser = await this.userRepository.getUserById(userId, false);
+      if (!checkUser) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Achievement not found"
+          "User not found"
         );
       }
 
-      const existedAchievement =
-        await this.userAchievementRepository.findExistingAchievement(
-          achievementId,
-          userId
+      const checkMembership = await this.membershipRepository.getMembership(
+        membershipId
+      );
+      if (!checkMembership) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Membership not found"
         );
-
-      if (existedAchievement) {
-        logger.info(
-          `user ${userId} has accomplished achievement ${achievementId} already`
-        );
-        return null;
       }
-      const userAchievement =
-        await this.userAchievementRepository.createUserAchievement({
-          userId: new mongoose.Types.ObjectId(userId),
-          achievementId: new mongoose.Types.ObjectId(achievementId),
-        });
+
+      const receipt = await this.receiptRepository.createReceipt(
+        { amount, userId, membershipId, paymentMethod, paymentGateway },
+        session
+      );
 
       await this.database.commitTransaction(session);
 
-      return userAchievement;
+      return receipt;
     } catch (error) {
-      await session.abortTransaction(session);
+      await this.database.abortTransaction(session);
 
       if (error instanceof CustomException) {
         throw error;
@@ -79,11 +72,10 @@ class UserAchievementService implements IUserAchievementService {
       );
     }
   };
-
-  getUserAchievement = async (
+  getReceipt = async (
     id: string,
     requesterId: string
-  ): Promise<IUserAchievement | null> => {
+  ): Promise<IReceipt | null> => {
     try {
       const requester = await this.userRepository.getUserById(
         requesterId,
@@ -96,23 +88,23 @@ class UserAchievementService implements IUserAchievementService {
         );
       }
 
-      const achievement =
-        await this.userAchievementRepository.getUserAchievement(id);
-      if (!achievement) {
+      const receipt = await this.receiptRepository.getReceipt(id);
+      if (!receipt) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Achievement not found"
+          "Receipt not found"
         );
       }
 
       const isOwner =
         (requester._id as ObjectId).toString() ===
-        (achievement.userId as ObjectId).toString();
+        (receipt.userId as ObjectId).toString();
       const isAdmin = requester.role === UserEnum.ADMIN;
       if (!isOwner && !isAdmin) {
         throw new CustomException(StatusCodeEnum.Forbidden_403, "Forbidden");
       }
-      return achievement;
+
+      return receipt;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -124,17 +116,17 @@ class UserAchievementService implements IUserAchievementService {
       );
     }
   };
-
-  getUserAchievements = async (
+  getReceipts = async (
     query: IQuery,
     userId: string,
     requesterId: string
-  ): Promise<IUserAchievement[] | []> => {
+  ): Promise<IReceipt[] | null> => {
     try {
       const requester = await this.userRepository.getUserById(
         requesterId,
         false
       );
+
       if (!requester) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -149,10 +141,9 @@ class UserAchievementService implements IUserAchievementService {
         throw new CustomException(StatusCodeEnum.Forbidden_403, "Forbidden");
       }
 
-      const userAchievements =
-        await this.userAchievementRepository.getUserAchievements(query, userId);
+      const receipts = await this.receiptRepository.getReceipts(query, userId);
 
-      return userAchievements;
+      return receipts;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -165,4 +156,5 @@ class UserAchievementService implements IUserAchievementService {
     }
   };
 }
-export default UserAchievementService;
+
+export default ReceiptService;

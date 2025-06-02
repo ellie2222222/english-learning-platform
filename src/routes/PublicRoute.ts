@@ -8,16 +8,18 @@ interface PublicRoutes {
 }
 
 const publicRoutes: PublicRoutes[] = [
-  // //auth
-  // { path: "/api/auth/login", method: "POST" },
-  // { path: "/api/auth/signup", method: "POST" },
-  // { path: "/api/auth/logout", method: "POST" },
-  // //achievement
-  // { path: "/api/achievements", method: "GET" },
-  // { path: "/api/achievements/:id", method: "GET" },
-  // //membership
-  // { path: "/api/memberships", method: "GET" },
-  // { path: "/api/memberships/:id", method: "GET" },
+  //auth
+  { path: "/api/auth/login", method: "POST" },
+  { path: "/api/auth/signup", method: "POST" },
+  { path: "/api/auth/logout", method: "POST" },
+
+  //achievement
+  { path: "/api/achievements", method: "GET" },
+  { path: "/api/achievements/:id", method: "GET" },
+
+  //membership
+  { path: "/api/memberships", method: "GET" },
+  { path: "/api/memberships/:id", method: "GET" },
 ];
 
 export default publicRoutes;

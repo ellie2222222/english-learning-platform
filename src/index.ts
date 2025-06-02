@@ -17,6 +17,7 @@ import membershipRoutes from "./routes/MembershipRoute";
 
 //middlewares
 import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
+import receiptRoutes from "./routes/ReceiptRoute";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/user-achievements", userAchievementRoutes);
 app.use("/api/memberships", membershipRoutes);
+app.use("/api/receipts", receiptRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

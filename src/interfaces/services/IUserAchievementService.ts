@@ -4,10 +4,14 @@ import { IQuery } from "../others/IQuery";
 export interface IUserAchievementService {
   getUserAchievements(
     query: IQuery,
-    userId: string
+    userId: string,
+    requesterId: string
   ): Promise<IUserAchievement[] | []>;
 
-  getUserAchievement(id: string): Promise<IUserAchievement | null>;
+  getUserAchievement(
+    id: string,
+    requesterId: string
+  ): Promise<IUserAchievement | null>;
 
   createUserAchievement(
     userId: string,

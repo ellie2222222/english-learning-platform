@@ -17,7 +17,16 @@ userAchievementRouter.use(AuthMiddleware);
 //   userAchievementController.createUserAchievement
 // );
 
-userAchievementRouter.get("/", userAchievementController.getUserAchievements);
-userAchievementRouter.get("/:id", userAchievementController.getUserAchievement);
+userAchievementRouter.get(
+  "/:id/users",
+  userAchievementDto.getUserAchievements,
+  userAchievementController.getUserAchievements
+);
+
+userAchievementRouter.get(
+  "/:id",
+  userAchievementDto.getUserAchievement,
+  userAchievementController.getUserAchievement
+);
 
 export default userAchievementRouter;
