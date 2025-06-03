@@ -11,15 +11,9 @@ export interface IUserService {
     requesterId: string
   ) => Promise<IUser>;
 
-  getUserById: (
-    id: string,
-    requesterId: string
-  ) => Promise<IUser>;
+  getUserById: (id: string, requesterId: string) => Promise<IUser>;
 
-  getUsers: (
-    Query: IQuery,
-    requesterId: string
-  ) => Promise<IPagination>;
+  getUsers: (Query: IQuery, requesterId: string) => Promise<IPagination>;
 
   updateUser: (
     id: string,
@@ -29,8 +23,5 @@ export interface IUserService {
     avatar?: string
   ) => Promise<IUser | null>;
 
-  deleteUser: (
-    id: string,
-    requesterId: string,
-  ) => Promise<boolean>;
+  deleteUser: (id: string, requesterId: string) => Promise<boolean>;
 }

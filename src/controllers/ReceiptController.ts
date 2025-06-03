@@ -13,12 +13,20 @@ class ReceiptController {
 
   createReceipt = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { amount, userId, membershipId, paymentGateway, paymentMethod } =
-        req.body;
+      const {
+        amount,
+        userId,
+        membershipId,
+        transactionId,
+        paymentGateway,
+        paymentMethod,
+      } = req.body;
+
       const receipt = await this.receiptService.createReceipt(
         amount,
         userId,
         membershipId,
+        transactionId,
         paymentMethod,
         paymentGateway
       );
@@ -64,7 +72,7 @@ class ReceiptController {
       );
 
       res.status(StatusCodeEnum.OK_200).json({
-        receipts: receipts,
+        ...receipts,
         message: "Receipts retrieved successfully",
       });
     } catch (error) {

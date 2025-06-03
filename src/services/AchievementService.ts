@@ -10,6 +10,7 @@ import AchievementRepository from "../repositories/AchievementRepository";
 import { ObjectId } from "mongoose";
 import UserAchievementRepository from "../repositories/UserAchievementRepository";
 import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class AchievementService implements IAchievementService {
@@ -197,7 +198,7 @@ class AchievementService implements IAchievementService {
   getAchievements = async (
     query: IQuery,
     type?: string
-  ): Promise<IAchievement[] | []> => {
+  ): Promise<IPagination> => {
     try {
       const achievements = await this.achievementRepository.getAchievements(
         query,

@@ -75,7 +75,7 @@ class UserAchievementController {
           requesterId
         );
       res.status(StatusCodeEnum.OK_200).json({
-        userAchievements: userAchievements,
+        ...userAchievements,
         message: "Get user achievements successfully",
       });
     } catch (error) {

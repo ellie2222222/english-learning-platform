@@ -7,6 +7,8 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
 import getLogger from "../utils/logger";
+import { IPagination } from "../interfaces/others/IPagination";
+import UserModel from "../models/UserModel";
 
 @Service()
 class UserAchievementRepository implements IUserAchievementRepository {
@@ -134,7 +136,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
   async getUserAchievements(
     query: IQuery,
     userId: string
-  ): Promise<IUserAchievement[] | []> {
+  ): Promise<IPagination> {
     type SearchQuery = {
       userId: mongoose.Types.ObjectId;
       isDeleted?: boolean;
@@ -184,7 +186,13 @@ class UserAchievementRepository implements IUserAchievementRepository {
         { $limit: query.size },
       ]);
 
-      return userAchievements;
+      const total = await UserModel.countDocuments(matchQuery);
+      return {
+        data: userAchievements,
+        page: query.page,
+        total: total,
+        totalPages: Math.ceil(total / query.size),
+      };
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

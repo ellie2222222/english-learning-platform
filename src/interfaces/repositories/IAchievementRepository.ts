@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IAchievement } from "../models/IAchievement";
 import { IQuery } from "../others/IQuery";
+import { IPagination } from "../others/IPagination";
 
 export interface IAchievementRepository {
   createAchievement(
@@ -19,7 +20,7 @@ export interface IAchievementRepository {
     session?: mongoose.ClientSession
   ): Promise<IAchievement | null>;
 
-  getAchievements(query: IQuery, type?: string): Promise<IAchievement[] | []>;
+  getAchievements(query: IQuery, type?: string): Promise<IPagination>;
 
   getAchievement(id: string): Promise<IAchievement | null>;
 

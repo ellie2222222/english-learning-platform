@@ -7,6 +7,7 @@ import MembershipRepository from "../repositories/MembershipRepository";
 import { IMembershipRepository } from "../interfaces/repositories/IMembershipRepository";
 import Database from "../db/database";
 import { IQuery } from "../interfaces/others/IQuery";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class MembershipService implements IMembershipService {
@@ -162,7 +163,7 @@ class MembershipService implements IMembershipService {
       );
     }
   };
-  getMemberships = async (query: IQuery): Promise<IMembership[] | []> => {
+  getMemberships = async (query: IQuery): Promise<IPagination> => {
     try {
       const memberships = await this.membershipRepository.getMemberships(query);
 

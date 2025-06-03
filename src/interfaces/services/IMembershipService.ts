@@ -1,4 +1,5 @@
 import { IMembership } from "../models/IMembership";
+import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
 
 export interface IMembershipService {
@@ -17,5 +18,5 @@ export interface IMembershipService {
   ): Promise<IMembership | null>;
   deleteMembership(id: string): Promise<IMembership | null>;
   getMembership(id: string): Promise<IMembership | null>;
-  getMemberships(query: IQuery): Promise<IMembership[] | []>;
+  getMemberships(query: IQuery): Promise<IPagination>;
 }

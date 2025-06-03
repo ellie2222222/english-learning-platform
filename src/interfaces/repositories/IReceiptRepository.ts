@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IReceipt } from "../models/IReceipt";
 import { IQuery } from "../others/IQuery";
+import { IPagination } from "../others/IPagination";
 
 export interface IReceiptRepository {
   createReceipt(
@@ -21,5 +22,5 @@ export interface IReceiptRepository {
 
   getReceipt(id: string): Promise<IReceipt | null>;
 
-  getReceipts(query: IQuery, userId: string): Promise<IReceipt[] | []>;
+  getReceipts(query: IQuery, userId: string): Promise<IPagination>;
 }

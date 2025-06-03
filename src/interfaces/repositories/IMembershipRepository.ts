@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IMembership } from "../models/IMembership";
 import { IQuery } from "../others/IQuery";
+import { IPagination } from "../others/IPagination";
 
 export interface IMembershipRepository {
   createMembership(
@@ -21,7 +22,7 @@ export interface IMembershipRepository {
 
   getMembership(id: string): Promise<IMembership | null>;
 
-  getMemberships(query: IQuery): Promise<IMembership[] | []>;
+  getMemberships(query: IQuery): Promise<IPagination>;
 
   getExistingMembership(name: string, id?: string): Promise<IMembership | null>;
 }

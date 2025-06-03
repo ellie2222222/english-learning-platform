@@ -6,6 +6,7 @@ import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import ReceiptModel from "../models/ReceiptModel";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class ReceiptRepository implements IReceiptRepository {
@@ -17,10 +18,6 @@ class ReceiptRepository implements IReceiptRepository {
       const receipt = await ReceiptModel.create([data], { session });
       return receipt[0];
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
-
       if (error instanceof CustomException) {
         throw error;
       }
@@ -133,7 +130,7 @@ class ReceiptRepository implements IReceiptRepository {
     }
   }
 
-  async getReceipts(query: IQuery, userId: string): Promise<IReceipt[] | []> {
+  async getReceipts(query: IQuery, userId: string): Promise<IPagination> {
     type SearchQuery = {
       "membership.name"?: { $regex: string; $options: string };
       isDeleted?: boolean;
@@ -159,6 +156,7 @@ class ReceiptRepository implements IReceiptRepository {
       }
 
       const order = query.order === OrderType.ASC ? 1 : -1;
+      const skip = query.size * (query.page - 1);
       const receipts = await ReceiptModel.aggregate([
         {
           $lookup: {
@@ -171,10 +169,17 @@ class ReceiptRepository implements IReceiptRepository {
         { $unwind: "$membership" },
         { $match: matchQuery },
         { $sort: { [sortField]: order } },
+        { $skip: skip },
         { $limit: query.size },
       ]);
 
-      return receipts;
+      const total = await ReceiptModel.countDocuments(matchQuery);
+      return {
+        data: receipts,
+        page: query.page,
+        total: total,
+        totalPages: Math.ceil(total / query.size),
+      };
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

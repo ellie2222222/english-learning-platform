@@ -102,7 +102,7 @@ class MembershipController {
       });
 
       res.status(StatusCodeEnum.OK_200).json({
-        memberships: memberships,
+        ...memberships,
         message: "Memberships retrieved successfully",
       });
     } catch (error) {

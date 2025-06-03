@@ -13,6 +13,7 @@ import UserEnum from "../enums/UserEnum";
 import { IQuery } from "../interfaces/others/IQuery";
 import MembershipRepository from "../repositories/MembershipRepository";
 import { IMembershipRepository } from "../interfaces/repositories/IMembershipRepository";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class ReceiptService implements IReceiptService {
@@ -28,6 +29,7 @@ class ReceiptService implements IReceiptService {
     amount: number,
     userId: string,
     membershipId: string,
+    transactionId: string,
     paymentMethod: string,
     paymentGateway: string
   ): Promise<IReceipt | null> => {
@@ -52,7 +54,14 @@ class ReceiptService implements IReceiptService {
       }
 
       const receipt = await this.receiptRepository.createReceipt(
-        { amount, userId, membershipId, paymentMethod, paymentGateway },
+        {
+          amount,
+          userId,
+          membershipId,
+          transactionId,
+          paymentMethod,
+          paymentGateway,
+        },
         session
       );
 
@@ -120,7 +129,7 @@ class ReceiptService implements IReceiptService {
     query: IQuery,
     userId: string,
     requesterId: string
-  ): Promise<IReceipt[] | null> => {
+  ): Promise<IPagination> => {
     try {
       const requester = await this.userRepository.getUserById(
         requesterId,

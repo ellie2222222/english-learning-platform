@@ -21,6 +21,11 @@ const ReceiptModelSchema = new Schema<IReceipt>(
       ref: "Membership",
       required: true,
     },
+    transactionId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     paymentMethod: {
       type: String,
       required: true,

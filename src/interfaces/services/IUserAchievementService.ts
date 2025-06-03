@@ -1,4 +1,5 @@
 import { IUserAchievement } from "../models/IUserAchievement";
+import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
 
 export interface IUserAchievementService {
@@ -6,7 +7,7 @@ export interface IUserAchievementService {
     query: IQuery,
     userId: string,
     requesterId: string
-  ): Promise<IUserAchievement[] | []>;
+  ): Promise<IPagination>;
 
   getUserAchievement(
     id: string,

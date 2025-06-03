@@ -230,6 +230,26 @@ class UserRepository implements IUserRepository {
       );
     }
   }
+
+  async getExpiredUsers() {
+    try {
+      const users = await UserModel.find({
+        activeUntil: { $lte: new Date() },
+        isDeleted: false,
+      });
+
+      return users;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserRepository;

@@ -6,6 +6,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import MembershipModel from "../models/MembershipModel";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class MembershipRepository implements IMembershipRepository {
@@ -123,7 +124,7 @@ class MembershipRepository implements IMembershipRepository {
     }
   }
 
-  async getMemberships(query: IQuery): Promise<IMembership[] | []> {
+  async getMemberships(query: IQuery): Promise<IPagination> {
     type SearchQuery = {
       name?: { $regex: string; $options: string };
       isDeleted?: boolean;
@@ -157,7 +158,13 @@ class MembershipRepository implements IMembershipRepository {
         { $limit: query.size },
       ]);
 
-      return memberships;
+      const total = await MembershipModel.countDocuments(matchQuery);
+      return {
+        data: memberships,
+        page: query.page,
+        total: total,
+        totalPages: Math.ceil(total / query.size),
+      };
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

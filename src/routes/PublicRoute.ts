@@ -20,6 +20,11 @@ const publicRoutes: PublicRoutes[] = [
   //membership
   { path: "/api/memberships", method: "GET" },
   { path: "/api/memberships/:id", method: "GET" },
+
+  // Payment
+  { path: "/api/payments/paypal/success", method: "GET" },
+  { path: "/api/payments/paypal/failed", method: "GET" },
+  { path: "/api/payments/vnpay/callback", method: "GET" },
 ];
 
 export default publicRoutes;

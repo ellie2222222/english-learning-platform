@@ -14,6 +14,7 @@ import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import UserEnum from "../enums/UserEnum";
 import AchievementRepository from "../repositories/AchievementRepository";
 import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class UserAchievementService implements IUserAchievementService {
@@ -129,7 +130,7 @@ class UserAchievementService implements IUserAchievementService {
     query: IQuery,
     userId: string,
     requesterId: string
-  ): Promise<IUserAchievement[] | []> => {
+  ): Promise<IPagination> => {
     try {
       const requester = await this.userRepository.getUserById(
         requesterId,
@@ -165,4 +166,5 @@ class UserAchievementService implements IUserAchievementService {
     }
   };
 }
+
 export default UserAchievementService;
