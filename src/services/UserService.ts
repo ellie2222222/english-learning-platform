@@ -12,11 +12,16 @@ import { IPagination } from "../interfaces/others/IPagination";
 import { IQuery } from "../interfaces/others/IQuery";
 import { Inject, Service } from "typedi";
 import UserRepository from "../repositories/UserRepository";
+import MembershipRepository from "../repositories/MembershipRepository";
+import { IMembershipRepository } from "../interfaces/repositories/IMembershipRepository";
+import getLogger from "../utils/logger";
 
 @Service()
 class UserService implements IUserService {
   constructor(
     @Inject(() => UserRepository) private userRepository: IUserRepository,
+    @Inject(() => MembershipRepository)
+    private membershipRepository: IMembershipRepository,
     @Inject() private database: Database
   ) {}
 
@@ -210,6 +215,49 @@ class UserService implements IUserService {
 
       await this.database.commitTransaction(session);
       return true;
+    } catch (error) {
+      this.handleError(error, session);
+    }
+  }
+
+  async getExpiredUsers(): Promise<IUser[] | []> {
+    try {
+      const users = await this.userRepository.getExpiredUsers();
+      return users;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async handleExpiredUsers(users: IUser[] | []): Promise<number> {
+    const session = await this.database.startTransaction();
+    try {
+      const logger = await getLogger("MEMBERSHIP_EXPIRATION");
+      let value = 0;
+      await Promise.all(
+        users.map(async (user) => {
+          const checkUser = await this.userRepository.getUserById(
+            (user._id as ObjectId).toString()
+          );
+
+          if (!checkUser) {
+            logger.warn(
+              `User with userId: ${(user._id as ObjectId).toString()} not found`
+            );
+            return;
+          }
+
+          await this.userRepository.updateUserById(
+            (user._id as ObjectId).toString(),
+            { activeUntil: null },
+            session
+          );
+          value += 1;
+        })
+      );
+
+      await this.database.commitTransaction(session);
+      return value;
     } catch (error) {
       this.handleError(error, session);
     }

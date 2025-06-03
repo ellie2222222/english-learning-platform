@@ -2,10 +2,11 @@ import mongoose from "mongoose";
 import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
 import { IAchievement } from "../interfaces/models/IAchievement";
 import AchievementModel from "../models/AchievementModel";
-import { IQuery } from "../interfaces/others/IQuery";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { Service } from "typedi";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class AchievementRepository implements IAchievementRepository {
@@ -123,10 +124,7 @@ class AchievementRepository implements IAchievementRepository {
     }
   }
 
-  async getAchievements(
-    query: IQuery,
-    type?: string
-  ): Promise<IAchievement[] | []> {
+  async getAchievements(query: IQuery, type?: string): Promise<IPagination> {
     type SearchQuery = { type?: string; name?: string; isDeleted: false };
     try {
       const matchQuery: SearchQuery = { isDeleted: false };
@@ -141,16 +139,16 @@ class AchievementRepository implements IAchievementRepository {
 
       let sortField = "createdAt";
       switch (query.sortBy) {
-        case "date":
+        case SortByType.DATE:
           sortField = "createdAt";
           break;
-        case "name":
+        case SortByType.NAME:
           sortField = "name";
           break;
         default:
           break;
       }
-      const sortOrder: 1 | -1 = query.order === "asc" ? 1 : -1;
+      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
       const achievements = await AchievementModel.aggregate([
@@ -161,7 +159,15 @@ class AchievementRepository implements IAchievementRepository {
         { $skip: skip },
         { $limit: query.size },
       ]);
-      return achievements;
+
+      const total = await AchievementModel.countDocuments(matchQuery);
+
+      return {
+        data: achievements,
+        page: query.page,
+        total: total,
+        totalPages: Math.ceil(total / query.size),
+      };
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -178,7 +184,7 @@ class AchievementRepository implements IAchievementRepository {
     try {
       const achievement = await AchievementModel.findOne({
         type,
-        goal: { $gt: currentProgress },
+        goal: { $gte: currentProgress },
       })
         .sort({ goal: 1 })
         .lean();

@@ -8,21 +8,26 @@ import { IQuery } from "../interfaces/others/IQuery";
 import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
 import AchievementRepository from "../repositories/AchievementRepository";
 import { ObjectId } from "mongoose";
+import UserAchievementRepository from "../repositories/UserAchievementRepository";
+import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
+import { IPagination } from "../interfaces/others/IPagination";
 
 @Service()
 class AchievementService implements IAchievementService {
   constructor(
     @Inject(() => AchievementRepository)
     private achievementRepository: IAchievementRepository,
-    @Inject() private database: Database
+    @Inject() private database: Database,
+    @Inject(() => UserAchievementRepository)
+    private userAchievementRepository: IUserAchievementRepository
   ) {}
 
-  async createAchievement(
+  createAchievement = async (
     name: string,
     description: string,
     type: string,
     goal: number
-  ): Promise<IAchievement> {
+  ): Promise<IAchievement> => {
     const session = await this.database.startTransaction();
     try {
       const existingAchievement =
@@ -62,15 +67,15 @@ class AchievementService implements IAchievementService {
         error instanceof Error ? error.message : "Internal Server Error"
       );
     }
-  }
+  };
 
-  async updateAchievement(
+  updateAchievement = async (
     id: string,
     name?: string,
     description?: string,
     type?: string,
     goal?: number
-  ): Promise<IAchievement | null> {
+  ): Promise<IAchievement | null> => {
     const session = await this.database.startTransaction();
     try {
       const currentAchievement =
@@ -136,15 +141,28 @@ class AchievementService implements IAchievementService {
         error instanceof Error ? error.message : "Internal Server Error"
       );
     }
-  }
+  };
 
-  async deleteAchievement(id: string): Promise<IAchievement | null> {
+  deleteAchievement = async (id: string): Promise<IAchievement | null> => {
     const session = await this.database.startTransaction();
     try {
+      const result =
+        await this.userAchievementRepository.deleteBatchUserAchievements(
+          id,
+          session
+        );
+
+      if (result < 0) {
+        throw new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          "Failed to delete related user achievements"
+        );
+      }
       const achievement = await this.achievementRepository.deleteAchievement(
         id,
         session
       );
+
       await session.commitTransaction(session);
       return achievement;
     } catch (error) {
@@ -158,9 +176,9 @@ class AchievementService implements IAchievementService {
         error instanceof Error ? error.message : "Internal Server Error"
       );
     }
-  }
+  };
 
-  async getAchievement(id: string): Promise<IAchievement | null> {
+  getAchievement = async (id: string): Promise<IAchievement | null> => {
     try {
       const achievement = await this.achievementRepository.getAchievement(id);
 
@@ -170,18 +188,17 @@ class AchievementService implements IAchievementService {
         throw error;
       }
 
-      const achievement = await this.achievementRepository.getAchievement(id);
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
     }
-  }
+  };
 
-  async getAchievements(
+  getAchievements = async (
     query: IQuery,
     type?: string
-  ): Promise<IAchievement[] | []> {
+  ): Promise<IPagination> => {
     try {
       const achievements = await this.achievementRepository.getAchievements(
         query,
@@ -199,7 +216,7 @@ class AchievementService implements IAchievementService {
         error instanceof Error ? error.message : "Internal Server Error"
       );
     }
-  }
+  };
 }
 
 export default AchievementService;

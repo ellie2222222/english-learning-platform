@@ -6,7 +6,7 @@ import { IPagination } from "../others/IPagination";
 export interface IUserRepository {
   createUser(data: object, session?: mongoose.ClientSession): Promise<IUser>;
 
-  getUserById(userId: string, ignoreDeleted: boolean): Promise<IUser | null>;
+  getUserById(userId: string, ignoreDeleted?: boolean): Promise<IUser | null>;
 
   getUserByEmail(email: string): Promise<IUser | null>;
 
@@ -26,4 +26,6 @@ export interface IUserRepository {
   getUsers(query: IQuery): Promise<IPagination>;
 
   getAllUsersTimeInterval(startDate: Date, endDate: Date): Promise<IUser[]>;
+
+  getExpiredUsers(): Promise<IUser[] | []>;
 }

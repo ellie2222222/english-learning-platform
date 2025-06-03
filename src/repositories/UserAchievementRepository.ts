@@ -4,8 +4,11 @@ import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchi
 import UserAchieventModel from "../models/UserAchievementModel";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { IQuery } from "../interfaces/others/IQuery";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
+import getLogger from "../utils/logger";
+import { IPagination } from "../interfaces/others/IPagination";
+import UserModel from "../models/UserModel";
 
 @Service()
 class UserAchievementRepository implements IUserAchievementRepository {
@@ -108,7 +111,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
       const userAchievement = await UserAchieventModel.findOne({
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      });
+      }).populate("achievementId");
 
       if (!userAchievement) {
         throw new CustomException(
@@ -133,7 +136,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
   async getUserAchievements(
     query: IQuery,
     userId: string
-  ): Promise<IUserAchievement[] | []> {
+  ): Promise<IPagination> {
     type SearchQuery = {
       userId: mongoose.Types.ObjectId;
       isDeleted?: boolean;
@@ -154,36 +157,96 @@ class UserAchievementRepository implements IUserAchievementRepository {
 
       let sortField = "createdAt";
       switch (query.sortBy) {
-        case "date":
+        case SortByType.DATE:
           sortField = "createdAt";
           break;
-        case "name":
+        case SortByType.NAME:
           sortField = "achievement.name";
           break;
         default:
           break;
       }
 
-      const sortOrder: 1 | -1 = query.order === "asc" ? 1 : -1;
+      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
       const userAchievements = await UserAchieventModel.aggregate([
         {
           $lookup: {
-            from: "Achievement",
+            from: "achievements",
             localField: "achievementId",
             foreignField: "_id",
             as: "achievement",
           },
         },
-        { $unwind: "achievement" },
+        { $unwind: "$achievement" },
         { $match: matchQuery },
         { $sort: { [sortField]: sortOrder } },
         { $skip: skip },
         { $limit: query.size },
       ]);
 
-      return userAchievements;
+      const total = await UserModel.countDocuments(matchQuery);
+      return {
+        data: userAchievements,
+        page: query.page,
+        total: total,
+        totalPages: Math.ceil(total / query.size),
+      };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteBatchUserAchievements(
+    achievementId: string,
+    session?: mongoose.ClientSession
+  ): Promise<number> {
+    let count = -1;
+    try {
+      const logger = getLogger("USER ACHIEVEMENTS");
+      const result = await UserAchieventModel.deleteMany(
+        {
+          achievementId: new mongoose.Types.ObjectId(achievementId),
+          isDeleted: false,
+        },
+        { session }
+      );
+
+      logger.info(
+        `Achievement ${achievementId} has been removed along with ${result.deletedCount} related user achievement`
+      );
+      count = result.deletedCount;
+      return count;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async findExistingAchievement(
+    achievementId: string,
+    userId: string
+  ): Promise<IUserAchievement | null> {
+    try {
+      const achievement = await UserAchieventModel.findOne({
+        achievementId: new mongoose.Types.ObjectId(achievementId),
+        userId: new mongoose.Types.ObjectId(userId),
+      });
+      return achievement;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

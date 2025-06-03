@@ -11,8 +11,15 @@ import path from "path";
 //routes
 import authRoutes from "./routes/AuthRoute";
 import userRoutes from "./routes/UserRoute";
-import achievementRoute from "./routes/AchievementRoute";
+import achievementRoutes from "./routes/AchievementRoute";
+import userAchievementRoutes from "./routes/UserAchievementRoute";
+import membershipRoutes from "./routes/MembershipRoute";
+
+//middlewares
 import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
+import receiptRoutes from "./routes/ReceiptRoute";
+import paymentRoutes from "./routes/PaymentRoute";
+import cronJob from "./utils/cronJob";
 
 dotenv.config();
 
@@ -28,7 +35,11 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/achievements", achievementRoute);
+app.use("/api/achievements", achievementRoutes);
+app.use("/api/user-achievements", userAchievementRoutes);
+app.use("/api/memberships", membershipRoutes);
+app.use("/api/receipts", receiptRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");
@@ -49,6 +60,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(ErrorLogMiddleware);
 
+cronJob.start();
 const server = http.createServer(app);
 
 server.listen(PORT, async (err?: Error) => {

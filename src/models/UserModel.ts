@@ -36,6 +36,7 @@ const userModelSchema = new Schema<IUser>(
     },
     activeUntil: {
       type: Date,
+      default: null,
     },
     ...baseModelSchema.obj,
   },

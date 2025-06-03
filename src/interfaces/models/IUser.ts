@@ -9,7 +9,7 @@ export interface IUser extends Document {
   password: string;
   lastOnline: Date;
   onlineStreak: number;
-  activeUntil: Date;
+  activeUntil: Date | null;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

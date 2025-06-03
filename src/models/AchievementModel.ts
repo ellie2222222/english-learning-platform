@@ -28,6 +28,9 @@ const achievementModelSchema = new Schema<IAchievement>(
   { timestamps: true }
 );
 
+achievementModelSchema.index({ name: 1, isDeleted: 1 });
+achievementModelSchema.index({ type: 1, goal: 1, isDeleted: 1 });
+
 const AchievementModel: Model<IAchievement> = mongoose.model<IAchievement>(
   "Achievement",
   achievementModelSchema

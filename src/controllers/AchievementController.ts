@@ -101,7 +101,7 @@ class AchievementController {
         type as string
       );
       res.status(StatusCodeEnum.OK_200).json({
-        achievement: achievements,
+        ...achievements,
         message: "Achievement get successfully",
       });
     } catch (error) {

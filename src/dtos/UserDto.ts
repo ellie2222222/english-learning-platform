@@ -9,14 +9,19 @@ import {
 import CustomException from "../exceptions/CustomException";
 
 class UserDto {
-  async createUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async createUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { username, email, password } = req.body;
 
     try {
       validateName(username);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid username",
+        message:
+          error instanceof CustomException ? error.message : "Invalid username",
       });
       return;
     }
@@ -25,7 +30,8 @@ class UserDto {
       validateEmail(email);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid email",
+        message:
+          error instanceof CustomException ? error.message : "Invalid email",
       });
       return;
     }
@@ -34,7 +40,8 @@ class UserDto {
       validatePassword(password);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid password",
+        message:
+          error instanceof CustomException ? error.message : "Invalid password",
       });
       return;
     }
@@ -42,14 +49,19 @@ class UserDto {
     next();
   }
 
-  async getUserById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getUserById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { id } = req.params;
 
     try {
       validateMongooseObjectId(id);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid user ID",
+        message:
+          error instanceof CustomException ? error.message : "Invalid user ID",
       });
       return;
     }
@@ -57,7 +69,11 @@ class UserDto {
     next();
   }
 
-  async getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getUsers(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { page, size, order, sortBy } = req.query;
 
     const parsedPage = parseInt(page as string, 10);
@@ -100,7 +116,11 @@ class UserDto {
     next();
   }
 
-  async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { id } = req.params;
     const { username } = req.body;
 
@@ -108,7 +128,8 @@ class UserDto {
       validateMongooseObjectId(id);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid user ID",
+        message:
+          error instanceof CustomException ? error.message : "Invalid user ID",
       });
       return;
     }
@@ -118,7 +139,10 @@ class UserDto {
         validateName(username);
       } catch (error) {
         res.status(StatusCodeEnum.BadRequest_400).json({
-          message: error instanceof CustomException ? error.message : "Invalid username",
+          message:
+            error instanceof CustomException
+              ? error.message
+              : "Invalid username",
         });
         return;
       }
@@ -127,14 +151,19 @@ class UserDto {
     next();
   }
 
-  async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { id } = req.params;
 
     try {
       validateMongooseObjectId(id);
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
-        message: error instanceof CustomException ? error.message : "Invalid user ID",
+        message:
+          error instanceof CustomException ? error.message : "Invalid user ID",
       });
       return;
     }

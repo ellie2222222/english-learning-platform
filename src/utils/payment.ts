@@ -1,13 +1,15 @@
 import { client, redirectUrl } from "../configs/paypalConfig";
 import paypal from "@paypal/checkout-server-sdk";
 import { v4 as uuidv4 } from "uuid";
-import { ILink, VnpParams } from "../controllers/PaymentController";
+import { IPaypalLink } from "../interfaces/others/IPaypalLink";
+import { IVNPayParams } from "../interfaces/others/IVNPayParams";
 import { vnpayConfig } from "../configs/vnpayConfig";
 import querystring from "qs";
 import crypto from "crypto";
 import moment from "moment";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
+import { platform } from "os";
 
 const sortObject = (obj: Record<string, unknown>) => {
   const sortedKeys = Object.keys(obj).sort();
@@ -21,7 +23,8 @@ const sortObject = (obj: Record<string, unknown>) => {
 const PaypalPayment = async (
   price: number,
   userId: string,
-  packageId: string
+  packageId: string,
+  platform: string
 ) => {
   try {
     const request = new paypal.orders.OrdersCreateRequest();
@@ -35,7 +38,7 @@ const PaypalPayment = async (
             currency_code: "USD",
             value: price.toString(),
           },
-          custom_id: `${userId}|${packageId}`,
+          custom_id: `${userId}|${packageId}|${platform}`,
         },
       ],
 
@@ -54,7 +57,7 @@ const PaypalPayment = async (
 
     // Find the approval link
     const approvalLink = response.result.links?.find(
-      (link: ILink) => link.rel === "approve"
+      (link: IPaypalLink) => link.rel === "approve"
     )?.href;
 
     return approvalLink;
@@ -73,19 +76,20 @@ const VnpayPayment = async (
   price: number,
   userId: string,
   packageId: string,
-  ipAddr: string,
+  platform: string,
+  ipAddr?: string,
   bankCode?: string
 ) => {
   try {
     const createDate = moment(new Date()).format("YYYYMMDDHHmmss");
-    let vnp_Params: VnpParams = {
+    let vnp_Params: IVNPayParams = {
       vnp_Version: "2.1.0",
       vnp_Command: "pay",
       vnp_TmnCode: vnpayConfig.vnp_TmnCode,
       vnp_Locale: "vn",
       vnp_CurrCode: "VND",
       vnp_TxnRef: uuidv4(),
-      vnp_OrderInfo: `${userId}|${packageId}`,
+      vnp_OrderInfo: `${userId}|${packageId}|${platform}`,
       vnp_OrderType: "Membership package",
       vnp_Amount: String(price * 100),
       vnp_ReturnUrl: vnpayConfig.vnp_ReturnUrl,
@@ -97,7 +101,7 @@ const VnpayPayment = async (
       vnp_Params["vnp_BankCode"] = bankCode;
     }
 
-    vnp_Params = sortObject(vnp_Params) as VnpParams;
+    vnp_Params = sortObject(vnp_Params) as IVNPayParams;
     const signData = querystring.stringify(vnp_Params, { encode: false });
     const hmac = crypto.createHmac("sha512", vnpayConfig.vnp_HashSecret);
     vnp_Params["vnp_SecureHash"] = hmac

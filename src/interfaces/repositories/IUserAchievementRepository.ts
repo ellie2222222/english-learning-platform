@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IQuery } from "../others/IQuery";
 import { IUserAchievement } from "../models/IUserAchievement";
+import { IPagination } from "../others/IPagination";
 
 export interface IUserAchievementRepository {
   createUserAchievement(
@@ -24,9 +25,15 @@ export interface IUserAchievementRepository {
     session?: mongoose.ClientSession
   ): Promise<IUserAchievement | null>;
 
-  getUserAchievements(
-    query: IQuery,
-    userId: string,
-    ignoreDeleted?: boolean
-  ): Promise<IUserAchievement[] | []>;
+  getUserAchievements(query: IQuery, userId: string): Promise<IPagination>;
+
+  deleteBatchUserAchievements(
+    achievementId: string,
+    session?: mongoose.ClientSession
+  ): Promise<number>;
+
+  findExistingAchievement(
+    achievementId: string,
+    userId: string
+  ): Promise<IUserAchievement | null>;
 }
