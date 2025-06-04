@@ -26,7 +26,7 @@ const emailTemplatePath = path.resolve(
 
 const resetEmailTemplatePath = path.resolve(
   __dirname,
-  "../templates/EmailForgotPassword"
+  "../templates/EmailForgotPassword.ejs"
 );
 
 @Service()
@@ -682,7 +682,8 @@ class AuthService implements IAuthService {
       const salt = await bcrypt.genSalt(saltRounds);
       const hashedPin = await bcrypt.hash(pin, salt);
 
-      const emailTemplate = await ejs.render(resetEmailTemplatePath, {
+      const emailTemplate = await ejs.renderFile(resetEmailTemplatePath, {
+        name: user.username,
         pin: pin,
       });
 
@@ -707,6 +708,7 @@ class AuthService implements IAuthService {
         },
         session
       );
+
       await this.database.commitTransaction(session);
       await sendMail(mailOptions);
     } catch (error) {
