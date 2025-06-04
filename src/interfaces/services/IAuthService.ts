@@ -8,7 +8,7 @@ export interface IAuthService {
 
   login: (
     email: string,
-    password: string,
+    password: string
   ) => Promise<{
     accessToken: string;
     refreshToken: string;
@@ -16,9 +16,7 @@ export interface IAuthService {
 
   logout: (refreshToken: string) => Promise<void>;
 
-  loginGoogle: (
-    googleUser: any,
-  ) => Promise<{
+  loginGoogle: (googleUser: any) => Promise<{
     accessToken: string;
     refreshToken: string;
   }>;
@@ -34,4 +32,10 @@ export interface IAuthService {
   ) => Promise<void>;
 
   confirmEmailVerificationToken: (token: string) => Promise<void>;
+
+  sendResetPasswordPin: (email: string) => Promise<void>;
+
+  confirmResetPasswordPin: (email: string, pin: string) => Promise<void>;
+
+  resetPassword: (email: string, newPassword: string) => Promise<void>;
 }
