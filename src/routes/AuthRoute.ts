@@ -51,4 +51,22 @@ authRoutes.put(
   authController.changePassword
 );
 
+authRoutes.post(
+  "/send-reset-password-pin",
+  authDto.sendResetPasswordPin,
+  authController.sendResetPasswordPin
+);
+
+authRoutes.post(
+  "/confirm-reset-password-pin",
+  authDto.confirmResetPasswordPin,
+  authController.confirmResetPasswordPin
+);
+
+authRoutes.put(
+  "/reset-password",
+  authDto.resetPassword,
+  authController.resetPassword
+);
+
 export default authRoutes;

@@ -24,6 +24,11 @@ const emailTemplatePath = path.resolve(
   "../templates/EmailVerification.ejs"
 );
 
+const resetEmailTemplatePath = path.resolve(
+  __dirname,
+  "../templates/EmailForgotPassword"
+);
+
 @Service()
 class AuthService implements IAuthService {
   constructor(
@@ -37,6 +42,49 @@ class AuthService implements IAuthService {
    * @param attributes - The payload attributes to include in the token.
    * @returns The signed JWT as a string.
    */
+
+  private parseDuration(duration: string) {
+    try {
+      if (!duration || typeof duration !== "string") {
+        return 0;
+      }
+
+      const match = duration.match(/^(\d+)([smhd])$/);
+      if (!match) {
+        throw new Error(
+          `Invalid duration format: ${duration}. Expected format like "30s", "15m", "2h", or "1d".`
+        );
+      }
+
+      const value = parseInt(match[1], 10);
+      const unit = match[2] as "s" | "m" | "h" | "d";
+
+      const multipliers = {
+        s: 1000,
+        m: 60 * 1000,
+        h: 60 * 60 * 1000,
+        d: 24 * 60 * 60 * 1000,
+      };
+
+      if (!multipliers[unit]) {
+        throw new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          `Invalid unit: ${unit}. Supported units are s, m, h, d.`
+        );
+      }
+
+      return value * multipliers[unit];
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "InternalServerError"
+      );
+    }
+  }
+
   private generateAccessToken = (attributes: object): string => {
     try {
       const accessTokenSecret: string = process.env.ACCESS_TOKEN_SECRET!;
@@ -592,6 +640,200 @@ class AuthService implements IAuthService {
         }
       }
       if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Internal Server Error"
+      );
+    }
+  };
+
+  sendResetPasswordPin = async (email: string): Promise<void> => {
+    const session = await this.database.startTransaction();
+    try {
+      const user = await this.userRepository.getUserByEmail(email);
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User with specified email not found"
+        );
+      }
+
+      if (user.googleId !== null) {
+        throw new CustomException(
+          StatusCodeEnum.Forbidden_403,
+          "Google users do not use password"
+        );
+      }
+
+      if (
+        !process.env.RESET_TOKEN_SECRET ||
+        !process.env.RESET_TOKEN_EXPIRATION
+      ) {
+        throw new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          "Missing configuration for reset token"
+        );
+      }
+
+      const pin = Math.floor(100000 + Math.random() * 900000).toString();
+      const saltRounds = 10;
+      const salt = await bcrypt.genSalt(saltRounds);
+      const hashedPin = await bcrypt.hash(pin, salt);
+
+      const emailTemplate = await ejs.render(resetEmailTemplatePath, {
+        pin: pin,
+      });
+
+      const mailOptions: Mail.Options = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: `Reset Password Request`,
+        html: emailTemplate,
+      };
+
+      const updatedUser = await this.userRepository.updateUserById(
+        user._id as string,
+        {
+          resetPasswordPin: {
+            ...user.resetPasswordPin,
+            value: hashedPin,
+            expiresAt: new Date(
+              Date.now() +
+                this.parseDuration(process.env.RESET_TOKEN_EXPIRATION)
+            ),
+          },
+        },
+        session
+      );
+      await this.database.commitTransaction(session);
+      await sendMail(mailOptions);
+    } catch (error) {
+      await session.abortTransaction(session);
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
+
+  confirmResetPasswordPin = async (
+    email: string,
+    pin: string
+  ): Promise<void> => {
+    const session = await this.database.startTransaction();
+    try {
+      // Validate user ID
+      const user = await this.userRepository.getUserByEmail(email);
+
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+
+      if (!user.resetPasswordPin || !user.resetPasswordPin.value) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Invalid reset password PIN"
+        );
+      }
+
+      const isPinValid = await bcrypt.compare(pin, user.resetPasswordPin.value);
+      if (!isPinValid) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Invalid reset password PIN"
+        );
+      }
+
+      if (
+        !user.resetPasswordPin.expiresAt ||
+        user.resetPasswordPin.expiresAt < new Date()
+      ) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Reset password PIN expired"
+        );
+      }
+
+      // Change verify flag to true
+      const updatePinData: Partial<IUser> = {
+        resetPasswordPin: {
+          ...user.resetPasswordPin,
+          isVerified: true,
+        },
+      };
+
+      await this.userRepository.updateUserById(
+        user?._id as string,
+        updatePinData,
+        session
+      );
+
+      await this.database.commitTransaction(session);
+    } catch (error) {
+      await this.database.abortTransaction(session);
+      if (error instanceof Error || error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Internal Server Error"
+      );
+    }
+  };
+
+  resetPassword = async (email: string, newPassword: string): Promise<void> => {
+    const session = await this.database.startTransaction();
+    try {
+      // Validate user ID
+      const user = await this.userRepository.getUserByEmail(email);
+
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+
+      if (user.resetPasswordPin.isVerified !== true) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Reset password PIN is not verified"
+        );
+      }
+
+      // Hash new password
+      const saltRounds = 10;
+      const salt = await bcrypt.genSalt(saltRounds);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      // Clear password reset PIN and update password
+      const updatePinData: Partial<IUser> = {
+        password: hashedPassword,
+        resetPasswordPin: {
+          isVerified: false,
+          value: null,
+          expiresAt: null,
+        },
+      };
+      await this.userRepository.updateUserById(
+        user._id as string,
+        updatePinData,
+        session
+      );
+
+      await this.database.commitTransaction(session);
+    } catch (error) {
+      await this.database.abortTransaction(session);
+      if (error instanceof Error || error instanceof CustomException) {
         throw error;
       }
       throw new CustomException(

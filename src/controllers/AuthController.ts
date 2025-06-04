@@ -236,6 +236,68 @@ class AuthController {
         });
     }
   };
+  /**
+   * Handles resetting password
+   */
+  sendResetPasswordPin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email } = req.body;
+
+      await this.authService.sendResetPasswordPin(email);
+
+      res.status(StatusCodeEnum.OK_200).json({
+        message: "Success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Handles confirming reset password PIN
+   */
+  confirmResetPasswordPin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { pin, email } = req.body;
+
+      await this.authService.confirmResetPasswordPin(email, pin);
+
+      res.status(StatusCodeEnum.OK_200).json({
+        message: "Success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Handles resetting password
+   */
+  resetPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { newPassword, email } = req.body;
+
+      await this.authService.resetPassword(email, newPassword);
+
+      res.status(StatusCodeEnum.OK_200).json({
+        message: "Success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default AuthController;
