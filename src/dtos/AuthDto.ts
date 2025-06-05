@@ -129,6 +129,97 @@ class AuthDto {
 
     next();
   }
+
+  sendResetPasswordPin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email } = req.body;
+
+      if (!email || !validator.isEmail(email)) {
+        throw new Error("Invalid email");
+      }
+
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      });
+      return;
+    }
+  };
+
+  confirmResetPasswordPin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { pin, email } = req.body;
+      if (!pin || !email) {
+        throw new Error("Missing required field");
+      }
+
+      if (pin.length !== 6) {
+        throw new Error("Invalid pin");
+      }
+
+      if (!validator.isEmail(email)) {
+        throw new Error("Invalid email");
+      }
+
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      });
+      return;
+    }
+  };
+
+  resetPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { newPassword, email } = req.body;
+
+      if (!newPassword || !email) {
+        throw new Error("Missing required field");
+      }
+
+      if (!validator.isEmail(email)) {
+        throw new Error("Invalid email");
+      }
+
+      if (
+        !validator.isStrongPassword(newPassword, {
+          minLength: 8,
+          minLowercase: 1,
+          minUppercase: 1,
+          minNumbers: 1,
+          minSymbols: 1,
+        }) ||
+        newPassword.length > 50
+      ) {
+        throw new Error(
+          "Password must contain at least 1 lowercase letter, 1 uppercase letter, 1 number, 1 symbol, and be between 8-50 characters long"
+        );
+      }
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      });
+      return;
+    }
+  };
 }
 
 export default AuthDto;

@@ -4,24 +4,24 @@ import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
 
 export interface IAchievementService {
-  createAchievement(
+  createAchievement: (
     name: string,
     description: string,
     type: string,
     goal: number
-  ): Promise<IAchievement>;
+  ) => Promise<IAchievement>;
 
-  updateAchievement(
+  updateAchievement: (
     id: string,
     name?: string,
     description?: string,
     type?: string,
     goal?: number
-  ): Promise<IAchievement | null>;
+  ) => Promise<IAchievement | null>;
 
-  deleteAchievement(id: string): Promise<IAchievement | null>;
+  deleteAchievement: (id: string) => Promise<IAchievement | null>;
 
-  getAchievements(query: IQuery, type?: string): Promise<IPagination>;
+  getAchievements: (query: IQuery, type?: string) => Promise<IPagination>;
 
   getAchievement(id: string): Promise<IAchievement | null>;
 }

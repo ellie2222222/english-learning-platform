@@ -3,19 +3,19 @@ import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
 
 export interface IUserAchievementService {
-  getUserAchievements(
+  getUserAchievements: (
     query: IQuery,
     userId: string,
     requesterId: string
-  ): Promise<IPagination>;
+  ) => Promise<IPagination>;
 
-  getUserAchievement(
+  getUserAchievement: (
     id: string,
     requesterId: string
-  ): Promise<IUserAchievement | null>;
+  ) => Promise<IUserAchievement | null>;
 
-  createUserAchievement(
+  createUserAchievement: (
     userId: string,
     achievementId: string
-  ): Promise<IUserAchievement | null>;
+  ) => Promise<IUserAchievement | null>;
 }
