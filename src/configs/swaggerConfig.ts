@@ -47,7 +47,7 @@ const options: swaggerJsdoc.Options = {
     "./routes/*.ts",
     "./interfaces/*.ts",
     "./enums/*.ts",
-    "./swagger/*.ts",
+    "./swaggers/*.ts",
     "./**/*.ts",
   ],
 };
