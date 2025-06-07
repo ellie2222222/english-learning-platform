@@ -38,7 +38,7 @@ blogRoutes.delete(
   blogController.deleteBlog
 );
 
-blogRoutes.get("/", blogDto.getBlog, blogController.getBlog);
+blogRoutes.get("/", blogDto.getBlogs, blogController.getBlogs);
 
 blogRoutes.get("/:id", blogDto.getBlog, blogController.getBlog);
 

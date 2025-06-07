@@ -149,8 +149,7 @@ class BlogService implements IBlogService {
     try {
       const blog = await this.blogRepository.getBlog(id);
 
-      console.log(decodedHtml(blog?.content || ""));
-      return { ...blog, content: decodedHtml(blog?.content || "") } as IBlog;
+      return blog;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

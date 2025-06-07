@@ -236,7 +236,7 @@ const extractAndReplaceImages = (
 
       img.style.width = "100%";
       img.style.height = "auto";
-      img.style.maxWidth = "600px";
+      img.style.maxWidth = "800px";
 
       wrapper.appendChild(img.cloneNode(true));
       img.replaceWith(wrapper);
