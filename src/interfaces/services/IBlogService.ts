@@ -22,7 +22,7 @@ export interface IBlogService {
 
   deleteBlog: (id: string) => Promise<IBlog | null>;
 
-  getBlog: (id: string) => Promise<IBlog | null>;
+  getBlog: (id: string, userId?: string) => Promise<IBlog | null>;
 
-  getBlogs: (query: IQuery) => Promise<IPagination>;
+  getBlogs: (query: IQuery, userId?: string) => Promise<IPagination>;
 }

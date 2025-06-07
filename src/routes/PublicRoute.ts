@@ -12,6 +12,9 @@ const publicRoutes: PublicRoutes[] = [
   { path: "/api/auth/login", method: "POST" },
   { path: "/api/auth/signup", method: "POST" },
   { path: "/api/auth/logout", method: "POST" },
+  { path: "/send-reset-password-pin", method: "POST" },
+  { path: "/confirm-reset-password-pin", method: "POST" },
+  { path: "/reset-password", method: "PUT" },
 
   //achievement
   { path: "/api/achievements", method: "GET" },

@@ -125,7 +125,8 @@ class BlogController {
   getBlog = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const blog = await this.blogService.getBlog(id);
+      const userId = req.userInfo?.userId;
+      const blog = await this.blogService.getBlog(id, userId);
 
       res
         .status(StatusCodeEnum.OK_200)
@@ -138,14 +139,17 @@ class BlogController {
   getBlogs = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { page, size, order, sortBy, search } = req.query;
-
-      const blogs = await this.blogService.getBlogs({
-        page: parseInt(page as string) || 1,
-        size: parseInt(size as string) || 5,
-        order: (order as OrderType) || "asc",
-        sortBy: (sortBy as SortByType) || "date",
-        search: (search as string) || "",
-      });
+      const userId = req.userInfo?.userId || undefined;
+      const blogs = await this.blogService.getBlogs(
+        {
+          page: parseInt(page as string) || 1,
+          size: parseInt(size as string) || 5,
+          order: (order as OrderType) || "asc",
+          sortBy: (sortBy as SortByType) || "date",
+          search: (search as string) || "",
+        },
+        userId
+      );
 
       res
         .status(StatusCodeEnum.OK_200)
