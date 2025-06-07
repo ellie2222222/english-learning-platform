@@ -7,6 +7,7 @@ import getLogger from "./utils/logger";
 import { swaggerDoc } from "./configs/swaggerConfig";
 import http from "http";
 import path from "path";
+import cookieParser from "cookie-parser";
 
 //routes
 import authRoutes from "./routes/AuthRoute";
@@ -20,6 +21,7 @@ import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
 import receiptRoutes from "./routes/ReceiptRoute";
 import paymentRoutes from "./routes/PaymentRoute";
 import cronJob from "./utils/cronJob";
+import blogRoutes from "./routes/BlogRoute";
 import courseRoutes from "./routes/CourseRoute";
 import lessonRoutes from "./routes/LessonRoute";
 
@@ -30,6 +32,8 @@ const PORT = process.env.PORT || 4000;
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "templates"));
+app.use("/assets", express.static(path.join(__dirname, "..", "assets")));
+app.use(cookieParser());
 
 app.use(helmet());
 app.use(
@@ -49,6 +53,7 @@ app.use("/api/user-achievements", userAchievementRoutes);
 app.use("/api/memberships", membershipRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/blogs", blogRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
 

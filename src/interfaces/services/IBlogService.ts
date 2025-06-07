@@ -7,21 +7,22 @@ export interface IBlogService {
     title: string,
     userId: string,
     content: string,
-    coverImage: string
+    attachments: string[] | null,
+    coverImage: string | null,
+    status?: string
   ) => Promise<IBlog | null>;
 
   updateBlog: (
     id: string,
-    title: string,
     userId: string,
-    content: string,
-    coverImage: string,
-    status: string
+    title?: string,
+    coverImage?: string | null,
+    status?: string
   ) => Promise<IBlog | null>;
 
-  deleteBlog: (id: number) => Promise<IBlog | null>;
+  deleteBlog: (id: string) => Promise<IBlog | null>;
 
-  getBlog: (id: number) => Promise<IBlog | null>;
+  getBlog: (id: string) => Promise<IBlog | null>;
 
   getBlogs: (query: IQuery) => Promise<IPagination>;
 }

@@ -16,7 +16,6 @@ class BlogRepository implements IBlogRepository {
   ): Promise<IBlog | null> {
     try {
       const blog = await BlogModel.create([data], { session });
-
       return blog[0];
     } catch (error) {
       if (error instanceof CustomException) {
@@ -41,9 +40,9 @@ class BlogRepository implements IBlogRepository {
           _id: new mongoose.Types.ObjectId(id),
           isDeleted: false,
         },
-        { data },
+        { ...data },
         { session, new: true }
-      );
+      ).lean();
 
       if (!blog) {
         throw new CustomException(
@@ -74,7 +73,7 @@ class BlogRepository implements IBlogRepository {
         },
         { $set: { isDeleted: true } },
         { session, new: true }
-      );
+      ).lean();
 
       if (!blog) {
         throw new CustomException(
@@ -101,7 +100,9 @@ class BlogRepository implements IBlogRepository {
       const blog = await BlogModel.findOne({
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      }).populate("userId");
+      })
+        .populate("userId")
+        .lean();
 
       if (!blog) {
         throw new CustomException(
@@ -189,14 +190,24 @@ class BlogRepository implements IBlogRepository {
     }
   }
 
-  async getBlogByTitle(title: string): Promise<IBlog | null> {
+  async getBlogByTitle(title: string, id?: string): Promise<IBlog | null> {
+    type SearchQuery = {
+      title: { $regex: string; $options: string };
+      _id?: { $ne: mongoose.Types.ObjectId };
+      isDeleted: boolean;
+    };
     try {
       const escapeRegex = (str: string) =>
         str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-      const blog = await BlogModel.findOne({
-        title: { $regex: `^${escapeRegex(title)}$`, isDeleted: false },
-      });
+      const matchQuery: SearchQuery = {
+        title: { $regex: `^${escapeRegex(title)}$`, $options: "i" },
+        isDeleted: false,
+      };
+      if (id) {
+        matchQuery._id = { $ne: new mongoose.Types.ObjectId(id) };
+      }
+      const blog = await BlogModel.findOne(matchQuery);
 
       return blog;
     } catch (error) {

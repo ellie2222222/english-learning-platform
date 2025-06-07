@@ -23,4 +23,6 @@ export interface IBlogRepository {
   getBlog(id: string): Promise<IBlog | null>;
 
   getBlogs(query: IQuery): Promise<IPagination>;
+
+  getBlogByTitle(title: string, id?: string): Promise<IBlog | null>;
 }

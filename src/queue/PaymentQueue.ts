@@ -6,7 +6,8 @@ import { IPaymentQueue } from "../interfaces/queue/IPaymentQueue";
 import { closeConnection, createConnection } from "../utils/queueUtils";
 import PaymentService from "../services/PaymentService";
 import { IPaymentService } from "../interfaces/services/IPaymentService";
-
+import getLogger from "../utils/logger";
+const logger = getLogger("PAYMENT_QUEUE");
 const PAYMENT_QUEUE_NAME = "Payment_queue";
 @Service()
 class PaymentQueue implements IPaymentQueue {
@@ -66,13 +67,13 @@ class PaymentQueue implements IPaymentQueue {
                 channel.ack(msg);
                 resolve();
               } catch (processingError) {
-                console.error("Error processing message:", processingError);
+                logger.error("Error processing message:", processingError);
                 // Optionally, you can move the message to a DLQ here
                 channel.nack(msg, false, false); // Do not re-queue the message
                 reject(processingError);
               }
             } else {
-              console.log("No message returned");
+              logger.error("No message returned");
               resolve();
             }
           },

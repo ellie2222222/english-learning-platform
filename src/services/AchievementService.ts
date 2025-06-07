@@ -88,7 +88,6 @@ class AchievementService implements IAchievementService {
         );
       }
 
-      console.log(currentAchievement);
       // Use provided or current values for duplicate check
       const checkName = name ?? currentAchievement.name;
       const checkType = type ?? currentAchievement.type;
@@ -102,7 +101,6 @@ class AchievementService implements IAchievementService {
           String(currentAchievement._id as ObjectId)
         );
 
-      console.log(existingAchievement);
       if (existingAchievement) {
         throw new CustomException(
           StatusCodeEnum.Conflict_409,
