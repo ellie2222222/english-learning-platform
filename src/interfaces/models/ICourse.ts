@@ -4,7 +4,7 @@ export interface ICourse extends Document {
   name: string;
   description: string;
   level: string;
-  status: string;
+  type: string;
   totalLessons: number;
   isDeleted?: boolean;
   createdAt?: Date;

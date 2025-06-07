@@ -6,7 +6,7 @@ import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 
-const achiementController = Container.get(AchievementController);
+const achievementController = Container.get(AchievementController);
 const achievementDto = new AchievementDto();
 const achievementRoutes = Router();
 
@@ -16,33 +16,33 @@ achievementRoutes.post(
   "/",
   RoleMiddleware([UserEnum.ADMIN]),
   achievementDto.createAchievement,
-  achiementController.createAchievement
+  achievementController.createAchievement
 );
 
 achievementRoutes.get(
   "/",
   achievementDto.getAchievements,
-  achiementController.getAchievements
+  achievementController.getAchievements
 );
 
 achievementRoutes.get(
   "/:id",
   achievementDto.getAchievement,
-  achiementController.getAchievement
+  achievementController.getAchievement
 );
 
 achievementRoutes.patch(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   achievementDto.updateAchievement,
-  achiementController.updateAchievement
+  achievementController.updateAchievement
 );
 
 achievementRoutes.delete(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   achievementDto.deleteAchievement,
-  achiementController.deleteAchievement
+  achievementController.deleteAchievement
 );
 
 export default achievementRoutes;

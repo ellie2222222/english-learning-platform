@@ -2,7 +2,7 @@ import mongoose, { Model, Schema } from "mongoose";
 import baseModelSchema from "./BaseModel";
 import { ICourse } from "../interfaces/models/ICourse";
 import { CourseLevelEnum } from "../enums/CourseLevelEnum";
-import { CourseStatusEnum } from "../enums/CourseStatusEnum";
+import { CourseTypeEnum } from "../enums/CourseTypeEnum";
 
 const CourseModelSchema = new Schema<ICourse>(
   {
@@ -13,10 +13,10 @@ const CourseModelSchema = new Schema<ICourse>(
       required: true,
       enum: Object.values(CourseLevelEnum),
     },
-    status: {
+    type: {
       type: String,
       required: true,
-      enum: Object.values(CourseStatusEnum),
+      enum: Object.values(CourseTypeEnum),
     },
     totalLessons: {
       type: Number,
