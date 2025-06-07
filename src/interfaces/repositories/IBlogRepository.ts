@@ -20,9 +20,9 @@ export interface IBlogRepository {
     session?: mongoose.ClientSession
   ): Promise<IBlog | null>;
 
-  getBlog(id: string): Promise<IBlog | null>;
+  getBlog(id: string, isAdmin?: boolean): Promise<IBlog | null>;
 
-  getBlogs(query: IQuery): Promise<IPagination>;
+  getBlogs(query: IQuery, isAdmin?: boolean): Promise<IPagination>;
 
   getBlogByTitle(title: string, id?: string): Promise<IBlog | null>;
 }

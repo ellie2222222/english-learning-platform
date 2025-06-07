@@ -7,6 +7,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import BlogModel from "../models/BlogModel";
 import { IPagination } from "../interfaces/others/IPagination";
+import { BlogStatusEnum } from "../enums/BlogStatusEnum";
 
 @Service()
 class BlogRepository implements IBlogRepository {
@@ -95,12 +96,20 @@ class BlogRepository implements IBlogRepository {
     }
   }
 
-  async getBlog(id: string): Promise<IBlog | null> {
+  async getBlog(id: string, isAdmin?: boolean): Promise<IBlog | null> {
     try {
-      const blog = await BlogModel.findOne({
+      const matchQuery: {
+        _id: mongoose.Types.ObjectId;
+        isDeleted: boolean;
+        status?: string;
+      } = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      })
+      };
+      if (!isAdmin) {
+        matchQuery.status = BlogStatusEnum.PUBLISHED;
+      }
+      const blog = await BlogModel.findOne(matchQuery)
         .populate("userId")
         .lean();
 
@@ -124,13 +133,18 @@ class BlogRepository implements IBlogRepository {
     }
   }
 
-  async getBlogs(query: IQuery): Promise<IPagination> {
+  async getBlogs(query: IQuery, isAdmin?: boolean): Promise<IPagination> {
     type SearchQuery = {
       title?: { $regex: string; $options: string };
       isDeleted?: boolean;
+      status?: string;
     };
     try {
       const matchQuery: SearchQuery = { isDeleted: false };
+
+      if (!isAdmin) {
+        matchQuery.status = BlogStatusEnum.PUBLISHED;
+      }
 
       if (query.search) {
         matchQuery.title = {

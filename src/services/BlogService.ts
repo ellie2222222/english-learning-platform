@@ -13,15 +13,17 @@ import {
   cleanUpFileArray,
   extractAndReplaceImages,
   extractImageUrlsFromContent,
-  decodedHtml,
 } from "../utils/fileUtils";
 import { decode } from "punycode";
+import UserRepository from "../repositories/UserRepository";
+import UserEnum from "../enums/UserEnum";
 
 @Service()
 class BlogService implements IBlogService {
   constructor(
     @Inject() private database: Database,
-    @Inject(() => BlogRepository) private blogRepository: IBlogRepository
+    @Inject(() => BlogRepository) private blogRepository: IBlogRepository,
+    @Inject(() => UserRepository) private userRepository: UserRepository
   ) {}
   async createBlog(
     title: string,
@@ -145,9 +147,16 @@ class BlogService implements IBlogService {
     }
   };
 
-  async getBlog(id: string): Promise<IBlog | null> {
+  async getBlog(id: string, userId?: string): Promise<IBlog | null> {
     try {
-      const blog = await this.blogRepository.getBlog(id);
+      let isAdmin = false;
+      if (userId) {
+        const user = await this.userRepository.getUserById(userId, false);
+        if (user?.role === UserEnum.ADMIN) {
+          isAdmin = true;
+        }
+      }
+      const blog = await this.blogRepository.getBlog(id, isAdmin);
 
       return blog;
     } catch (error) {
@@ -161,9 +170,16 @@ class BlogService implements IBlogService {
       );
     }
   }
-  async getBlogs(query: IQuery): Promise<IPagination> {
+  async getBlogs(query: IQuery, userId?: string): Promise<IPagination> {
     try {
-      const blogs = await this.blogRepository.getBlogs(query);
+      let isAdmin = false;
+      if (userId) {
+        const user = await this.userRepository.getUserById(userId, false);
+        if (user?.role === UserEnum.ADMIN) {
+          isAdmin = true;
+        }
+      }
+      const blogs = await this.blogRepository.getBlogs(query, isAdmin);
 
       return blogs;
     } catch (error) {
