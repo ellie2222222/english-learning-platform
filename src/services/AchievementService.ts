@@ -144,6 +144,7 @@ class AchievementService implements IAchievementService {
   deleteAchievement = async (id: string): Promise<IAchievement | null> => {
     const session = await this.database.startTransaction();
     try {
+      //delete user achievement when achievement is deleted, or may be just ignore => limited achievement
       const result =
         await this.userAchievementRepository.deleteBatchUserAchievements(
           id,

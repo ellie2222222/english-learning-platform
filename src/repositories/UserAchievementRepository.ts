@@ -212,18 +212,21 @@ class UserAchievementRepository implements IUserAchievementRepository {
     let count = -1;
     try {
       const logger = getLogger("USER ACHIEVEMENTS");
-      const result = await UserAchieventModel.deleteMany(
+      const result = await UserAchieventModel.updateMany(
         {
           achievementId: new mongoose.Types.ObjectId(achievementId),
           isDeleted: false,
+        },
+        {
+          $set: { isDeleted: false },
         },
         { session }
       );
 
       logger.info(
-        `Achievement ${achievementId} has been removed along with ${result.deletedCount} related user achievement`
+        `Achievement ${achievementId} has been removed along with ${result.modifiedCount} related user achievement`
       );
-      count = result.deletedCount;
+      count = result.modifiedCount;
       return count;
     } catch (error) {
       if (error instanceof CustomException) {

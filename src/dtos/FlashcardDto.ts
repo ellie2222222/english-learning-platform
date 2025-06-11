@@ -3,24 +3,12 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import mongoose from "mongoose";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 
-class MembershipDto {
-  createMembership = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+class FlashcardDto {
+  createFlashcard = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { name, description, price, duration } = req.body;
-      if (!name || !description || !price || !duration) {
-        throw new Error("Missing required field");
-      }
-
-      if (parseFloat(price) <= 0) {
-        throw new Error("Price must be greater than 0");
-      }
-
-      if (parseInt(duration) <= 0) {
-        throw new Error("Duration (in days) must be greater than 0");
+      const { englishContent, vietnameseContent, flashcardSetId } = req.body;
+      if (!englishContent || !vietnameseContent || !flashcardSetId) {
+        throw new Error("Missing required fields");
       }
 
       next();
@@ -28,33 +16,19 @@ class MembershipDto {
       res
         .status(StatusCodeEnum.BadRequest_400)
         .json({ message: (error as Error).message });
+      return;
     }
   };
 
-  updateMembership = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  updateFlashcard = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-
-      const { name, description, price, duration } = req.body;
-
       if (!id) {
-        throw new Error("Missing membership id");
+        throw new Error("Flashcard ID is required");
       }
 
       if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Invalid membership id");
-      }
-
-      if (price && parseFloat(price) <= 0) {
-        throw new Error("Price must be greater than 0");
-      }
-
-      if (duration && parseInt(duration) <= 0) {
-        throw new Error("Duration (in days) must be greater than 0");
+        throw new Error("Invalid Flashcard ID");
       }
 
       next();
@@ -62,54 +36,53 @@ class MembershipDto {
       res
         .status(StatusCodeEnum.BadRequest_400)
         .json({ message: (error as Error).message });
+      return;
     }
   };
 
-  deleteMembership = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  deleteFlashcard = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-
       if (!id) {
-        throw new Error("Missing membership id");
+        throw new Error("Flashcard ID is required");
       }
 
       if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Invalid membership id");
+        throw new Error("Invalid Flashcard ID");
       }
+
       next();
     } catch (error) {
       res
         .status(StatusCodeEnum.BadRequest_400)
         .json({ message: (error as Error).message });
+      return;
     }
   };
 
-  getMembership = async (req: Request, res: Response, next: NextFunction) => {
+  getFlashcard = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-
       if (!id) {
-        throw new Error("Missing membership id");
+        throw new Error("Flashcard ID is required");
       }
 
       if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Invalid membership id");
+        throw new Error("Invalid Flashcard ID");
       }
+
       next();
     } catch (error) {
       res
         .status(StatusCodeEnum.BadRequest_400)
         .json({ message: (error as Error).message });
+      return;
     }
   };
 
-  getMemberships = async (req: Request, res: Response, next: NextFunction) => {
+  getFlashcards = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page, size, search, order, sortBy } = req.query;
+      const { page, size, search, order, sortBy, userId } = req.query;
 
       if (page && parseInt(page as string) < 1) {
         throw new Error("Invalid page number");
@@ -123,13 +96,18 @@ class MembershipDto {
       if (sortBy && !Object.values(SortByType).includes(sortBy as SortByType)) {
         throw new Error("Invalid sort by");
       }
+      if (userId && !mongoose.isValidObjectId(userId)) {
+        throw new Error("Invalid user ID");
+      }
 
       next();
     } catch (error) {
       res
         .status(StatusCodeEnum.BadRequest_400)
         .json({ message: (error as Error).message });
+      return;
     }
   };
 }
-export default MembershipDto;
+
+export default FlashcardDto;
