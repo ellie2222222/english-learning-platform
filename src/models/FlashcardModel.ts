@@ -12,6 +12,11 @@ const FlashcardModelSchema = new Schema<IFlashcard>(
     flashcardSetId: {
       type: Schema.Types.ObjectId,
       ref: "FlashcardSet",
+      required: true,
+    },
+    order: {
+      type: Number,
+      default: 1,
     },
     ...baseModelSchema.obj,
   },

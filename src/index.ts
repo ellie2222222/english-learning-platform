@@ -24,6 +24,8 @@ import cronJob from "./utils/cronJob";
 import blogRoutes from "./routes/BlogRoute";
 import courseRoutes from "./routes/CourseRoute";
 import lessonRoutes from "./routes/LessonRoute";
+import flashcardSetRoutes from "./routes/FlashcardSetRoute";
+import flashcardRoutes from "./routes/FlashcardRoute";
 
 dotenv.config();
 
@@ -56,6 +58,8 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
+app.use("/api/flashcards", flashcardRoutes);
+app.use("/api/flashcard-sets", flashcardSetRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");
