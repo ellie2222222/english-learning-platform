@@ -4,7 +4,7 @@ import { ILessonService } from "../interfaces/services/ILessonService";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import Database from "../db/database";
-import { IQuery } from "../interfaces/others/IQuery"; 
+import { IQuery } from "../interfaces/others/IQuery";
 import { IPagination } from "../interfaces/others/IPagination";
 import LessonRepository from "../repositories/LessonRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
@@ -46,6 +46,8 @@ class LessonService implements ILessonService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to create lesson"
       );
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -60,7 +62,10 @@ class LessonService implements ILessonService {
     try {
       const lesson = await this.lessonRepository.getLessonById(id);
       if (!lesson) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Lesson not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
       }
 
       const updateData: Partial<ILesson> = {};
@@ -69,9 +74,16 @@ class LessonService implements ILessonService {
       if (description !== undefined) updateData.description = description;
       if (length !== undefined) updateData.length = length;
 
-      const updatedLesson = await this.lessonRepository.updateLesson(id, updateData, session);
+      const updatedLesson = await this.lessonRepository.updateLesson(
+        id,
+        updateData,
+        session
+      );
       if (!updatedLesson) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Lesson not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
       }
 
       await this.database.commitTransaction(session);
@@ -85,6 +97,8 @@ class LessonService implements ILessonService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to update lesson"
       );
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -93,10 +107,17 @@ class LessonService implements ILessonService {
     try {
       const lesson = await this.lessonRepository.getLessonById(id);
       if (!lesson) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Lesson not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
       }
 
-      const deletedLesson = await this.lessonRepository.updateLesson(id, { isDeleted: true }, session);
+      const deletedLesson = await this.lessonRepository.updateLesson(
+        id,
+        { isDeleted: true },
+        session
+      );
       await this.database.commitTransaction(session);
       return deletedLesson;
     } catch (error) {
@@ -108,6 +129,8 @@ class LessonService implements ILessonService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to delete lesson"
       );
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -141,9 +164,15 @@ class LessonService implements ILessonService {
     }
   }
 
-  async getLessonsByCourseId(courseId: string, query: IQuery): Promise<IPagination> {
+  async getLessonsByCourseId(
+    courseId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
-      const lessons = await this.lessonRepository.getLessonsByCourseId(courseId, query);
+      const lessons = await this.lessonRepository.getLessonsByCourseId(
+        courseId,
+        query
+      );
       return lessons;
     } catch (error) {
       if (error instanceof CustomException) {

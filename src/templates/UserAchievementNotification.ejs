@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Congratulations on Your Achievement!</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: #ffd700;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header img {
+      width: 60px;
+      height: 60px;
+    }
+
+    .content {
+      padding: 30px;
+      text-align: center;
+      color: #333333;
+    }
+
+    .content h1 {
+      font-size: 24px;
+      margin: 0 0 20px;
+    }
+
+    .content p {
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 20px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #007bff;
+      color: #fff !important;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+      color: #fff;
+    }
+
+    .footer {
+      background-color: #f4f4f4;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #666666;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 100%;
+        margin: 0;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .header img {
+        width: 50px;
+        height: 50px;
+      }
+
+      .content h1 {
+        font-size: 20px;
+      }
+
+      .button {
+        padding: 10px 20px;
+        font-size: 14px;
+      }
+
+      .white_text {
+        color: #fff;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://img.icons8.com/emoji/48/000000/trophy-emoji.png" alt="Gold Trophy">
+    </div>
+    <div class="content">
+      <h1>Congratulations!</h1>
+      <p>You've earned the <strong><%= achievementName %></strong> achievement!</p>
+      <p>Keep up the great work, and check out your progress on our platform.</p>
+      <a href="<%= serverUrl %>" class="button">
+        View Your Achievements
+      </a>
+    </div>
+    <div class="footer">
+      <p>&copy; <%=new Date().getFullYear() %> English Learning Platform. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+
+</html>

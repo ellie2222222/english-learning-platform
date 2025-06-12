@@ -36,4 +36,6 @@ export interface IUserAchievementRepository {
     achievementId: string,
     userId: string
   ): Promise<IUserAchievement | null>;
+
+  countUserAchievement(achievementId: string): Promise<number>;
 }
