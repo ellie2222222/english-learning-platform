@@ -57,6 +57,8 @@ class FlashcardSetService implements IFlashcardSetService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 
@@ -118,6 +120,8 @@ class FlashcardSetService implements IFlashcardSetService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 
@@ -163,6 +167,8 @@ class FlashcardSetService implements IFlashcardSetService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 

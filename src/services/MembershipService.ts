@@ -59,8 +59,11 @@ class MembershipService implements IMembershipService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
+
   updateMembership = async (
     id: string,
     name: string,
@@ -119,6 +122,8 @@ class MembershipService implements IMembershipService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 
@@ -144,6 +149,8 @@ class MembershipService implements IMembershipService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 

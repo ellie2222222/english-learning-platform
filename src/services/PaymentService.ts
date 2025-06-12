@@ -196,6 +196,8 @@ class PaymentService implements IPaymentService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 

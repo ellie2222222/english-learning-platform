@@ -78,6 +78,8 @@ class UserAchievementService implements IUserAchievementService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 
@@ -136,6 +138,7 @@ class UserAchievementService implements IUserAchievementService {
         requesterId,
         false
       );
+
       if (!requester) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
