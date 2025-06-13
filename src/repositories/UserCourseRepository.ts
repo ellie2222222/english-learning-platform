@@ -1,22 +1,22 @@
 import mongoose from "mongoose";
-import { ILesson } from "../interfaces/models/ILesson";
-import LessonModel from "../models/LessonModel";
+import { IUserCourse } from "../interfaces/models/IUserCourse";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { Service } from "typedi";
 import { IPagination } from "../interfaces/others/IPagination";
-import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
+import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
+import UserCourseModel from "../models/UserCourseModel";
 
 @Service()
-class LessonRepository implements ILessonRepository {
-  async createLesson(
+class UserCourseRepository implements IUserCourseRepository {
+  async createUserCourse(
     data: object,
     session?: mongoose.ClientSession
-  ): Promise<ILesson> {
+  ): Promise<IUserCourse> {
     try {
-      const lesson = await LessonModel.create([data], { session });
-      return lesson[0];
+      const userCourse = await UserCourseModel.create([data], { session });
+      return userCourse[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -28,13 +28,13 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async updateLesson(
+  async updateUserCourse(
     id: string,
     data: object,
     session?: mongoose.ClientSession
-  ): Promise<ILesson | null> {
+  ): Promise<IUserCourse | null> {
     try {
-      const lesson = await LessonModel.findOneAndUpdate(
+      const userCourse = await UserCourseModel.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
           isDeleted: false,
@@ -42,13 +42,13 @@ class LessonRepository implements ILessonRepository {
         { ...data },
         { session, new: true }
       );
-      if (!lesson) {
+      if (!userCourse) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+          "UserCourse not found"
         );
       }
-      return lesson;
+      return userCourse;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -60,25 +60,25 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async deleteLesson(
+  async deleteUserCourse(
     id: string,
     session?: mongoose.ClientSession
-  ): Promise<ILesson | null> {
+  ): Promise<IUserCourse | null> {
     try {
-      const lesson = await LessonModel.findOneAndUpdate(
+      const userCourse = await UserCourseModel.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
         },
         { $set: { isDeleted: true } },
         { session, new: true }
       );
-      if (!lesson) {
+      if (!userCourse) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+          "UserCourse not found"
         );
       }
-      return lesson;
+      return userCourse;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -90,14 +90,23 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async getLessonById(id: string): Promise<ILesson | null> {
+  async getUserCourseById(id: string): Promise<IUserCourse | null> {
     try {
       const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
       };
-      const lesson = await LessonModel.aggregate([
+      const userCourse = await UserCourseModel.aggregate([
         { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
             from: "courses",
@@ -107,16 +116,22 @@ class LessonRepository implements ILessonRepository {
           },
         },
         { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
       ]);
 
-      if (!lesson || lesson.length === 0) {
+      if (!userCourse || userCourse.length === 0) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+          "UserCourse not found"
         );
       }
 
-      return lesson[0];
+      return userCourse[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -128,67 +143,13 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async getLessons(query: IQuery): Promise<IPagination> {
-    try {
-      const matchQuery = { isDeleted: false };
-      let sortField = "createdAt";
-      switch (query.sortBy) {
-        case SortByType.DATE:
-          sortField = "createdAt";
-          break;
-        case SortByType.NAME:
-          sortField = "name";
-          break;
-        default:
-          break;
-      }
-      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
-      const skip = (query.page - 1) * query.size;
-
-      const lessons = await LessonModel.aggregate([
-        { $match: matchQuery },
-        {
-          $lookup: {
-            from: "courses",
-            localField: "courseId",
-            foreignField: "_id",
-            as: "course",
-          },
-        },
-        { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
-        {
-          $sort: { [sortField]: sortOrder },
-        },
-        { $skip: skip },
-        { $limit: query.size },
-      ]);
-
-      const total = await LessonModel.countDocuments(matchQuery);
-
-      return {
-        data: lessons,
-        page: query.page,
-        total: total,
-        totalPages: Math.ceil(total / query.size),
-      };
-    } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
-      throw new CustomException(
-        StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
-      );
-    }
-  }
-
-  async getLessonsByCourseId(
-    courseId: string,
+  async getUserCoursesByUserId(
+    userId: string,
     query: IQuery
   ): Promise<IPagination> {
     try {
       const matchQuery = {
-        courseId: new mongoose.Types.ObjectId(courseId),
+        userId: new mongoose.Types.ObjectId(userId),
         isDeleted: false,
       };
       let sortField = "createdAt";
@@ -205,8 +166,17 @@ class LessonRepository implements ILessonRepository {
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
-      const lessons = await LessonModel.aggregate([
+      const userCourses = await UserCourseModel.aggregate([
         { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
             from: "courses",
@@ -217,16 +187,22 @@ class LessonRepository implements ILessonRepository {
         },
         { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
         {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
+        {
           $sort: { [sortField]: sortOrder },
         },
         { $skip: skip },
         { $limit: query.size },
       ]);
 
-      const total = await LessonModel.countDocuments(matchQuery);
+      const total = await UserCourseModel.countDocuments(matchQuery);
 
       return {
-        data: lessons,
+        data: userCourses,
         page: query.page,
         total: total,
         totalPages: Math.ceil(total / query.size),
@@ -243,4 +219,4 @@ class LessonRepository implements ILessonRepository {
   }
 }
 
-export default LessonRepository;
+export default UserCourseRepository;

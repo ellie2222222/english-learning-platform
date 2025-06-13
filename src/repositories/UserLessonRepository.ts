@@ -1,22 +1,22 @@
 import mongoose from "mongoose";
-import { ILesson } from "../interfaces/models/ILesson";
-import LessonModel from "../models/LessonModel";
+import { IUserLesson } from "../interfaces/models/IUserLesson";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { Service } from "typedi";
 import { IPagination } from "../interfaces/others/IPagination";
-import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
+import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
+import UserLessonModel from "../models/UserLessonModel";
 
 @Service()
-class LessonRepository implements ILessonRepository {
-  async createLesson(
+class UserLessonRepository implements IUserLessonRepository {
+  async createUserLesson(
     data: object,
     session?: mongoose.ClientSession
-  ): Promise<ILesson> {
+  ): Promise<IUserLesson> {
     try {
-      const lesson = await LessonModel.create([data], { session });
-      return lesson[0];
+      const userLesson = await UserLessonModel.create([data], { session });
+      return userLesson[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -28,13 +28,13 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async updateLesson(
+  async updateUserLesson(
     id: string,
     data: object,
     session?: mongoose.ClientSession
-  ): Promise<ILesson | null> {
+  ): Promise<IUserLesson | null> {
     try {
-      const lesson = await LessonModel.findOneAndUpdate(
+      const userLesson = await UserLessonModel.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
           isDeleted: false,
@@ -42,13 +42,13 @@ class LessonRepository implements ILessonRepository {
         { ...data },
         { session, new: true }
       );
-      if (!lesson) {
+      if (!userLesson) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+          "UserLesson not found"
         );
       }
-      return lesson;
+      return userLesson;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -60,25 +60,25 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async deleteLesson(
+  async deleteUserLesson(
     id: string,
     session?: mongoose.ClientSession
-  ): Promise<ILesson | null> {
+  ): Promise<IUserLesson | null> {
     try {
-      const lesson = await LessonModel.findOneAndUpdate(
+      const userLesson = await UserLessonModel.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
         },
         { $set: { isDeleted: true } },
         { session, new: true }
       );
-      if (!lesson) {
+      if (!userLesson) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+          "UserLesson not found"
         );
       }
-      return lesson;
+      return userLesson;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -90,33 +90,48 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async getLessonById(id: string): Promise<ILesson | null> {
+  async getUserLessonById(id: string): Promise<IUserLesson | null> {
     try {
       const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
       };
-      const lesson = await LessonModel.aggregate([
+      const userLesson = await UserLessonModel.aggregate([
         { $match: matchQuery },
         {
           $lookup: {
-            from: "courses",
-            localField: "courseId",
+            from: "users",
+            localField: "userId",
             foreignField: "_id",
-            as: "course",
+            as: "user",
           },
         },
-        { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
       ]);
 
-      if (!lesson || lesson.length === 0) {
+      if (!userLesson || userLesson.length === 0) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+          "UserLesson not found"
         );
       }
 
-      return lesson[0];
+      return userLesson[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -128,67 +143,13 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async getLessons(query: IQuery): Promise<IPagination> {
-    try {
-      const matchQuery = { isDeleted: false };
-      let sortField = "createdAt";
-      switch (query.sortBy) {
-        case SortByType.DATE:
-          sortField = "createdAt";
-          break;
-        case SortByType.NAME:
-          sortField = "name";
-          break;
-        default:
-          break;
-      }
-      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
-      const skip = (query.page - 1) * query.size;
-
-      const lessons = await LessonModel.aggregate([
-        { $match: matchQuery },
-        {
-          $lookup: {
-            from: "courses",
-            localField: "courseId",
-            foreignField: "_id",
-            as: "course",
-          },
-        },
-        { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
-        {
-          $sort: { [sortField]: sortOrder },
-        },
-        { $skip: skip },
-        { $limit: query.size },
-      ]);
-
-      const total = await LessonModel.countDocuments(matchQuery);
-
-      return {
-        data: lessons,
-        page: query.page,
-        total: total,
-        totalPages: Math.ceil(total / query.size),
-      };
-    } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
-      throw new CustomException(
-        StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
-      );
-    }
-  }
-
-  async getLessonsByCourseId(
-    courseId: string,
+  async getUserLessonsByUserId(
+    userId: string,
     query: IQuery
   ): Promise<IPagination> {
     try {
       const matchQuery = {
-        courseId: new mongoose.Types.ObjectId(courseId),
+        userId: new mongoose.Types.ObjectId(userId),
         isDeleted: false,
       };
       let sortField = "createdAt";
@@ -205,17 +166,32 @@ class LessonRepository implements ILessonRepository {
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
-      const lessons = await LessonModel.aggregate([
+      const userLessons = await UserLessonModel.aggregate([
         { $match: matchQuery },
         {
           $lookup: {
-            from: "courses",
-            localField: "courseId",
+            from: "users",
+            localField: "userId",
             foreignField: "_id",
-            as: "course",
+            as: "user",
           },
         },
-        { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
         {
           $sort: { [sortField]: sortOrder },
         },
@@ -223,14 +199,37 @@ class LessonRepository implements ILessonRepository {
         { $limit: query.size },
       ]);
 
-      const total = await LessonModel.countDocuments(matchQuery);
+      const total = await UserLessonModel.countDocuments(matchQuery);
 
       return {
-        data: lessons,
+        data: userLessons,
         page: query.page,
         total: total,
         totalPages: Math.ceil(total / query.size),
       };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async checkExistingUserLesson(
+    userId: string,
+    lessonId: string
+  ): Promise<boolean> {
+    try {
+      const matchQuery = {
+        userId: new mongoose.Types.ObjectId(userId),
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      };
+      const existingUserLesson = await UserLessonModel.findOne(matchQuery);
+      return !!existingUserLesson;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -243,4 +242,4 @@ class LessonRepository implements ILessonRepository {
   }
 }
 
-export default LessonRepository;
+export default UserLessonRepository;

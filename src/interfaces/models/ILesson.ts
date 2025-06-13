@@ -5,6 +5,7 @@ export interface ILesson extends Document {
   name: string;
   description: string;
   length: number;
+  order: number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

@@ -1,7 +1,7 @@
 import mongoose, { Document } from "mongoose";
 
 export interface ITest extends Document {
-  lessonIds: mongoose.Schema.Types.ObjectId[];
+  lessonIds: mongoose.Schema.Types.ObjectId[] | string[];
   name: string;
   description: string;
   totalQuestions: number;

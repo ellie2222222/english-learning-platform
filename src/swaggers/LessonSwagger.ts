@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /lessons:
+ * /api/lessons:
  *   post:
  *     tags: [Lesson]
  *     summary: Create a new lesson
@@ -40,7 +40,7 @@
 
 /**
  * @swagger
- * /lessons/{lessonId}:
+ * /api/lessons/{lessonId}:
  *   get:
  *     tags: [Lesson]
  *     summary: Get lesson by ID

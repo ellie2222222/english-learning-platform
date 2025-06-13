@@ -22,6 +22,7 @@ import paymentRoutes from "./routes/PaymentRoute";
 import cronJob from "./utils/cronJob";
 import courseRoutes from "./routes/CourseRoute";
 import lessonRoutes from "./routes/LessonRoute";
+import testRoutes from "./routes/TestRoute";
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use("/api/receipts", receiptRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
+app.use("/api/tests", testRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

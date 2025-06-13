@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /courses:
+ * /api/courses:
  *   post:
  *     tags: [Course]
  *     summary: Create a new course
@@ -40,7 +40,7 @@
 
 /**
  * @swagger
- * /courses/{courseId}:
+ * /api/courses/{courseId}:
  *   get:
  *     tags: [Course]
  *     summary: Get course by ID
@@ -99,7 +99,7 @@
 
 /**
  * @swagger
- * /courses/{courseId}/lessons:
+ * /api/courses/{courseId}/lessons:
  *   get:
  *     tags: [Course]
  *     summary: Get lessons by course ID

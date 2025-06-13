@@ -1,6 +1,7 @@
 import mongoose, { Model, Schema } from "mongoose";
 import { IUserCourse } from "../interfaces/models/IUserCourse";
 import baseModelSchema from "./BaseModel";
+import { UserCourseStatus } from "../enums/UserCourseStatus";
 
 const UserCourseModelSchema = new Schema<IUserCourse>(
   {
@@ -24,6 +25,11 @@ const UserCourseModelSchema = new Schema<IUserCourse>(
       default: null,
       min: 0,
       max: 100,
+    },
+    status: {
+      type: String,
+      enum: Object.values(UserCourseStatus),
+      default: UserCourseStatus.ONGOING,
     },
     ...baseModelSchema.obj,
   },

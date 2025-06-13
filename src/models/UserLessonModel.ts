@@ -22,7 +22,7 @@ const UserLessonModelSchema = new Schema<IUserLesson>(
     status: {
       type: String,
       enum: Object.values(UserLessonStatus),
-      default: UserLessonStatus.ON_GOING,
+      default: UserLessonStatus.ONGOING,
     },
     ...baseModelSchema.obj,
   },

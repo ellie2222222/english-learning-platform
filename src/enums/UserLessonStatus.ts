@@ -1,4 +1,6 @@
 export const UserLessonStatus = {
-  ON_GOING: "on_going",
+  ONGOING: "ongoing",
   COMPLETED: "completed",
 };
+
+export type UserLessonStatusType = typeof UserLessonStatus[keyof typeof UserLessonStatus];

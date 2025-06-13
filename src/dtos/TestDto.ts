@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { OrderType, SortByType } from "../interfaces/others/IQuery";
+import { OrderType, SortByType } from "../interfaces/others/IQuery";  
 
-class LessonDto {
-  private validateObjectId = (lessonId: string): void => {
-    if (!lessonId) {
+class TestDto {
+  private validateObjectId = (id: string): void => {
+    if (!id) {
       throw new Error("ID is required");
     }
-    if (!mongoose.isValidObjectId(lessonId)) {
+    if (!mongoose.isValidObjectId(id)) {
       throw new Error("Invalid ID");
     }
   };
@@ -35,14 +35,14 @@ class LessonDto {
     if (order !== undefined && (isNaN(order) || order < 0)) {
       throw new Error("Order must be a number greater than or equal to 0");
     }
-  };
+  }; 
 
-  createLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { courseId, name, description, length, order } = req.body;
+      const { courseId, name, description, length, order, lessonIds, totalQuestions } = req.body;
 
-      if (!courseId || !name || !length) {
-        throw new Error("Missing required fields: courseId, name, and length are required");
+      if (!courseId || !name || !length || !lessonIds || !totalQuestions) {
+        throw new Error("Missing required fields: courseId, name, length, lessonIds, and totalQuestions are required");
       }
 
       this.validateObjectId(courseId);
@@ -50,6 +50,10 @@ class LessonDto {
       this.validateDescription(description);
       this.validateLength(length);
       this.validateOrder(order);
+      lessonIds.forEach((lessonId: string) => this.validateObjectId(lessonId));
+      if (isNaN(totalQuestions) || totalQuestions < 0) {
+        throw new Error("Total questions must be a number greater than or equal to 0");
+      }
 
       next();
     } catch (error) {
@@ -59,17 +63,21 @@ class LessonDto {
     }
   };
 
-  updateLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
-      const { courseId, name, description, length, order } = req.body;
+      const { testId } = req.params;
+      const { courseId, name, description, length, order, lessonIds, totalQuestions } = req.body;
 
-      this.validateObjectId(lessonId);
+      this.validateObjectId(testId);
       if (courseId) this.validateObjectId(courseId);
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
       this.validateLength(length);
       this.validateOrder(order);
+      if (lessonIds) lessonIds.forEach((lessonId: string) => this.validateObjectId(lessonId));
+      if (totalQuestions !== undefined && (isNaN(totalQuestions) || totalQuestions < 0)) {
+        throw new Error("Total questions must be a number greater than or equal to 0");
+      }
 
       next();
     } catch (error) {
@@ -79,10 +87,10 @@ class LessonDto {
     }
   };
 
-  deleteLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
-      this.validateObjectId(lessonId);
+      const { testId } = req.params;
+      this.validateObjectId(testId);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -91,10 +99,10 @@ class LessonDto {
     }
   };
 
-  getLessonById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
-      this.validateObjectId(lessonId);
+      const { testId } = req.params;
+      this.validateObjectId(testId);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -103,7 +111,7 @@ class LessonDto {
     }
   };
 
-  getLessons = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
 
@@ -128,12 +136,12 @@ class LessonDto {
     }
   };
 
-  getLessonsByCourseId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestsByLessonId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { courseId } = req.params;
+      const { lessonId } = req.params;
       const { page, size, order, sortBy } = req.query;
 
-      this.validateObjectId(courseId);
+      this.validateObjectId(lessonId);
 
       if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
         throw new Error("Invalid page number");
@@ -154,7 +162,35 @@ class LessonDto {
         message: (error as Error).message,
       });
     }
-  };
+  }; 
+
+  getTestsByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { userId } = req.params;
+      const { page, size, order, sortBy } = req.query;
+
+      this.validateObjectId(userId);
+
+      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+        throw new Error("Invalid page number");
+      }
+      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+        throw new Error("Invalid size");
+      }
+      if (order && !Object.values(OrderType).includes(order as OrderType)) {
+        throw new Error("Invalid order");
+      }
+      if (sortBy && !Object.values(SortByType).includes(sortBy as SortByType)) {
+        throw new Error("Invalid sort by");
+      }
+
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message: (error as Error).message,
+      });
+    }
+  }; 
 }
 
-export default LessonDto;
+export default TestDto;

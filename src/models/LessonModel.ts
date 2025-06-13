@@ -16,6 +16,11 @@ const LessonModelSchema = new Schema<ILesson>(
       required: false,
       min: 0,
     },
+    order: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     ...baseModelSchema.obj,
   },
   { timestamps: true }
