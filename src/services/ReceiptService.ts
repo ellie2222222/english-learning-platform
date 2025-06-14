@@ -79,8 +79,11 @@ class ReceiptService implements IReceiptService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
+
   getReceipt = async (
     id: string,
     requesterId: string
@@ -125,6 +128,7 @@ class ReceiptService implements IReceiptService {
       );
     }
   };
+
   getReceipts = async (
     query: IQuery,
     userId: string,

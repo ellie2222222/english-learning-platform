@@ -7,6 +7,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import BlogModel from "../models/BlogModel";
 import { IPagination } from "../interfaces/others/IPagination";
+import { BlogStatusEnum } from "../enums/BlogStatusEnum";
 
 @Service()
 class BlogRepository implements IBlogRepository {
@@ -16,7 +17,6 @@ class BlogRepository implements IBlogRepository {
   ): Promise<IBlog | null> {
     try {
       const blog = await BlogModel.create([data], { session });
-
       return blog[0];
     } catch (error) {
       if (error instanceof CustomException) {
@@ -41,9 +41,9 @@ class BlogRepository implements IBlogRepository {
           _id: new mongoose.Types.ObjectId(id),
           isDeleted: false,
         },
-        { data },
+        { ...data },
         { session, new: true }
-      );
+      ).lean();
 
       if (!blog) {
         throw new CustomException(
@@ -74,7 +74,7 @@ class BlogRepository implements IBlogRepository {
         },
         { $set: { isDeleted: true } },
         { session, new: true }
-      );
+      ).lean();
 
       if (!blog) {
         throw new CustomException(
@@ -96,12 +96,22 @@ class BlogRepository implements IBlogRepository {
     }
   }
 
-  async getBlog(id: string): Promise<IBlog | null> {
+  async getBlog(id: string, isAdmin?: boolean): Promise<IBlog | null> {
     try {
-      const blog = await BlogModel.findOne({
+      const matchQuery: {
+        _id: mongoose.Types.ObjectId;
+        isDeleted: boolean;
+        status?: string;
+      } = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      }).populate("userId");
+      };
+      if (!isAdmin) {
+        matchQuery.status = BlogStatusEnum.PUBLISHED;
+      }
+      const blog = await BlogModel.findOne(matchQuery)
+        .populate("userId")
+        .lean();
 
       if (!blog) {
         throw new CustomException(
@@ -123,13 +133,18 @@ class BlogRepository implements IBlogRepository {
     }
   }
 
-  async getBlogs(query: IQuery): Promise<IPagination> {
+  async getBlogs(query: IQuery, isAdmin?: boolean): Promise<IPagination> {
     type SearchQuery = {
       title?: { $regex: string; $options: string };
       isDeleted?: boolean;
+      status?: string;
     };
     try {
       const matchQuery: SearchQuery = { isDeleted: false };
+
+      if (!isAdmin) {
+        matchQuery.status = BlogStatusEnum.PUBLISHED;
+      }
 
       if (query.search) {
         matchQuery.title = {
@@ -189,14 +204,24 @@ class BlogRepository implements IBlogRepository {
     }
   }
 
-  async getBlogByTitle(title: string): Promise<IBlog | null> {
+  async getBlogByTitle(title: string, id?: string): Promise<IBlog | null> {
+    type SearchQuery = {
+      title: { $regex: string; $options: string };
+      _id?: { $ne: mongoose.Types.ObjectId };
+      isDeleted: boolean;
+    };
     try {
       const escapeRegex = (str: string) =>
         str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-      const blog = await BlogModel.findOne({
-        title: { $regex: `^${escapeRegex(title)}$`, isDeleted: false },
-      });
+      const matchQuery: SearchQuery = {
+        title: { $regex: `^${escapeRegex(title)}$`, $options: "i" },
+        isDeleted: false,
+      };
+      if (id) {
+        matchQuery._id = { $ne: new mongoose.Types.ObjectId(id) };
+      }
+      const blog = await BlogModel.findOne(matchQuery);
 
       return blog;
     } catch (error) {

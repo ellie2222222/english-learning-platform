@@ -120,7 +120,7 @@ class MembershipDto {
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
         throw new Error("Invalid order");
       }
-      if (sortBy && !Object.values(SortByType).includes) {
+      if (sortBy && !Object.values(SortByType).includes(sortBy as SortByType)) {
         throw new Error("Invalid sort by");
       }
 

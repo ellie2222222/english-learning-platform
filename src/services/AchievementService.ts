@@ -66,6 +66,8 @@ class AchievementService implements IAchievementService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 
@@ -88,7 +90,6 @@ class AchievementService implements IAchievementService {
         );
       }
 
-      console.log(currentAchievement);
       // Use provided or current values for duplicate check
       const checkName = name ?? currentAchievement.name;
       const checkType = type ?? currentAchievement.type;
@@ -102,7 +103,6 @@ class AchievementService implements IAchievementService {
           String(currentAchievement._id as ObjectId)
         );
 
-      console.log(existingAchievement);
       if (existingAchievement) {
         throw new CustomException(
           StatusCodeEnum.Conflict_409,
@@ -140,24 +140,46 @@ class AchievementService implements IAchievementService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 
   deleteAchievement = async (id: string): Promise<IAchievement | null> => {
     const session = await this.database.startTransaction();
     try {
-      const result =
-        await this.userAchievementRepository.deleteBatchUserAchievements(
-          id,
-          session
-        );
+      const checkAchievement = await this.achievementRepository.getAchievement(
+        id
+      );
 
-      if (result < 0) {
+      if (!checkAchievement) {
         throw new CustomException(
-          StatusCodeEnum.InternalServerError_500,
-          "Failed to delete related user achievements"
+          StatusCodeEnum.NotFound_404,
+          "Achievement not found"
         );
       }
+      // //option 1: delete all related user achievement
+      // const result =
+      //   await this.userAchievementRepository.deleteBatchUserAchievements(
+      //     id,
+      //     session
+      //   );
+
+      // if (result < 0) {
+      //   throw new CustomException(
+      //     StatusCodeEnum.InternalServerError_500,
+      //     "Failed to delete related user achievements"
+      //   );
+      // }
+
+      //option 2: notify user about it's status and rarerity
+      const achievevers =
+        await this.userAchievementRepository.countUserAchievement(id);
+      const updatedAchievement =
+        await this.achievementRepository.updateAchievement(id, {
+          description: `${checkAchievement.description} This achievement has been retired, making it one of a kind! Only ${achievevers} user(s), including you, have earned this exclusive honor.`,
+        });
+
       const achievement = await this.achievementRepository.deleteAchievement(
         id,
         session
@@ -175,6 +197,8 @@ class AchievementService implements IAchievementService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    } finally {
+      await session.endSession();
     }
   };
 

@@ -48,6 +48,8 @@ class CourseService implements ICourseService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to create course"
       );
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -63,7 +65,10 @@ class CourseService implements ICourseService {
     try {
       const course = await this.courseRepository.getCourseById(id);
       if (!course) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Course not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
       }
 
       const updateData: Partial<ICourse> = {};
@@ -73,9 +78,16 @@ class CourseService implements ICourseService {
       if (level !== undefined) updateData.level = level;
       if (totalLessons !== undefined) updateData.totalLessons = totalLessons;
 
-      const updatedCourse = await this.courseRepository.updateCourse(id, updateData, session);
+      const updatedCourse = await this.courseRepository.updateCourse(
+        id,
+        updateData,
+        session
+      );
       if (!updatedCourse) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Course not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
       }
 
       await this.database.commitTransaction(session);
@@ -89,6 +101,8 @@ class CourseService implements ICourseService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to update course"
       );
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -97,10 +111,16 @@ class CourseService implements ICourseService {
     try {
       const course = await this.courseRepository.getCourseById(id);
       if (!course) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Course not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
       }
 
-      const deletedCourse = await this.courseRepository.deleteCourse(id, session);
+      const deletedCourse = await this.courseRepository.deleteCourse(
+        id,
+        session
+      );
       await this.database.commitTransaction(session);
       return deletedCourse;
     } catch (error) {
@@ -112,6 +132,8 @@ class CourseService implements ICourseService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to delete course"
       );
+    } finally {
+      await session.endSession();
     }
   }
 

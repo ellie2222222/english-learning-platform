@@ -79,7 +79,7 @@ class UserAchievementDto {
         throw new Error("Invalid order");
       }
 
-      if (sortBy && !Object.values(SortByType).includes) {
+      if (sortBy && !Object.values(SortByType).includes(sortBy as SortByType)) {
         throw new Error("Invalid sort by");
       }
 

@@ -17,7 +17,11 @@ class CourseDto {
 
   private validateCourseType = (type: string): void => {
     if (type && !Object.values(CourseTypeEnum).includes(type)) {
-      throw new Error(`Invalid course type. Must be one of: ${Object.values(CourseTypeEnum).join(", ")}`);
+      throw new Error(
+        `Invalid course type. Must be one of: ${Object.values(
+          CourseTypeEnum
+        ).join(", ")}`
+      );
     }
   };
 
@@ -35,16 +39,26 @@ class CourseDto {
 
   private validateLevel = (level: string): void => {
     if (level && !Object.values(CourseLevelEnum).includes(level)) {
-      throw new Error(`Invalid level. Must be one of: ${Object.values(CourseLevelEnum).join(", ")}`);
+      throw new Error(
+        `Invalid level. Must be one of: ${Object.values(CourseLevelEnum).join(
+          ", "
+        )}`
+      );
     }
   };
 
-  createCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { name, description, type, level, totalLessons } = req.body;
 
       if (!name || !type || !level) {
-        throw new Error("Missing required fields: name, type, and level are required");
+        throw new Error(
+          "Missing required fields: name, type, and level are required"
+        );
       }
 
       this.validateName(name);
@@ -52,7 +66,10 @@ class CourseDto {
       this.validateCourseType(type);
       this.validateLevel(level);
 
-      if (totalLessons !== undefined && (isNaN(totalLessons) || totalLessons < 1)) {
+      if (
+        totalLessons !== undefined &&
+        (isNaN(totalLessons) || totalLessons < 1)
+      ) {
         throw new Error("Total lessons must be a number greater than 0");
       }
 
@@ -64,7 +81,11 @@ class CourseDto {
     }
   };
 
-  updateCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { courseId } = req.params;
       const { name, description, type, level, totalLessons } = req.body;
@@ -75,7 +96,10 @@ class CourseDto {
       this.validateCourseType(type);
       if (level) this.validateLevel(level);
 
-      if (totalLessons !== undefined && (isNaN(totalLessons) || totalLessons < 1)) {
+      if (
+        totalLessons !== undefined &&
+        (isNaN(totalLessons) || totalLessons < 1)
+      ) {
         throw new Error("Total lessons must be a number greater than 0");
       }
 
@@ -87,7 +111,11 @@ class CourseDto {
     }
   };
 
-  deleteCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { courseId } = req.params;
       this.validateObjectId(courseId);
@@ -99,7 +127,11 @@ class CourseDto {
     }
   };
 
-  getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getCourseById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { courseId } = req.params;
       this.validateObjectId(courseId);
@@ -111,14 +143,24 @@ class CourseDto {
     }
   };
 
-  getCourses = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, type } = req.query;
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {

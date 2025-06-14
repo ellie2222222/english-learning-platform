@@ -16,7 +16,7 @@ const FlashcardSetModelSchema = new Schema<IFlashcardSet>(
 );
 
 const FlashcardSetModel: Model<IFlashcardSet> = mongoose.model<IFlashcardSet>(
-  "Flashcard",
+  "FlashcardSet",
   FlashcardSetModelSchema
 );
 

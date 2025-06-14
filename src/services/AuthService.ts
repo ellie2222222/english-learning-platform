@@ -16,6 +16,13 @@ import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import Database from "../db/database";
 import Container, { Inject, Service } from "typedi";
 import UserRepository from "../repositories/UserRepository";
+import AchievementRepository from "../repositories/AchievementRepository";
+import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
+import UserAchievementRepository from "../repositories/UserAchievementRepository";
+import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
+import { AchievementTypeEnum } from "../enums/AchievementTypeEnum";
+import { ObjectId } from "mongoose";
+import getLogger from "../utils/logger";
 
 dotenv.config();
 
@@ -29,11 +36,20 @@ const resetEmailTemplatePath = path.resolve(
   "../templates/EmailForgotPassword.ejs"
 );
 
+const achievementEmailTemplatePath = path.resolve(
+  __dirname,
+  "../templates/UserAchievementNotification.ejs"
+);
+
 @Service()
 class AuthService implements IAuthService {
   constructor(
     @Inject(() => UserRepository) private userRepository: IUserRepository,
-    @Inject() private database: Database
+    @Inject() private database: Database,
+    @Inject(() => AchievementRepository)
+    private achievementRepository: IAchievementRepository,
+    @Inject(() => UserAchievementRepository)
+    private userAchievementRepository: IUserAchievementRepository
   ) {}
 
   /**
@@ -280,9 +296,11 @@ class AuthService implements IAuthService {
         role: user.role,
         timestamp,
       };
+
       const accessToken = this.generateAccessToken(payload);
       const refreshToken = this.generateRefreshToken(payload);
 
+      await this.loginAchievementTrigger((user._id as ObjectId).toString());
       return {
         accessToken,
         refreshToken,
@@ -842,6 +860,149 @@ class AuthService implements IAuthService {
         StatusCodeEnum.InternalServerError_500,
         "Internal Server Error"
       );
+    }
+  };
+
+  private loginAchievementTrigger = async (userId: string): Promise<void> => {
+    const session = await this.database.startTransaction();
+    const logger = getLogger("LOGIN_STREAK");
+    try {
+      const user = await this.userRepository.getUserById(userId);
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+
+      const now = new Date(); // Current time in UTC
+      const updateData: Partial<IUser> = { lastOnline: now };
+
+      // First login
+      if (!user.lastOnline) {
+        updateData.onlineStreak = 1;
+      } else {
+        const last = new Date(user.lastOnline);
+
+        // Normalize to midnight UTC
+        last.setUTCHours(0, 0, 0, 0);
+
+        const today = new Date(now);
+
+        // Normalize to midnight UTC
+        today.setUTCHours(0, 0, 0, 0);
+
+        const oneDayMs = 24 * 60 * 60 * 1000;
+
+        const diffMs = today.getTime() - last.getTime();
+
+        // Consecutive day
+        if (diffMs === oneDayMs) {
+          updateData.onlineStreak = user.onlineStreak + 1;
+
+          // Gap > 1 day, reset streak
+        } else if (diffMs > oneDayMs) {
+          updateData.onlineStreak = 1;
+        }
+      }
+
+      const updatedUser = await this.userRepository.updateUserById(
+        userId,
+        updateData,
+        session
+      );
+      if (!updatedUser) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Failed to update user"
+        );
+      }
+
+      const closestAchievement =
+        await this.achievementRepository.getClosestAchievement(
+          AchievementTypeEnum.LoginStreak,
+          updatedUser.onlineStreak
+        );
+
+      if (!closestAchievement) {
+        logger.info(
+          `No login streak achievement found for streak: ${updatedUser.onlineStreak}`
+        );
+        await this.database.commitTransaction(session);
+        return;
+      }
+
+      // Check if achievement goal matches current streak
+      if (closestAchievement.goal > updatedUser.onlineStreak) {
+        logger.info(
+          `Closest achievement goal (${closestAchievement.goal}) not yet reached for streak: ${updatedUser.onlineStreak}`
+        );
+        await this.database.commitTransaction(session);
+        return;
+      }
+
+      // Check if user already has this achievement
+      const achievedAchievement =
+        await this.userAchievementRepository.findExistingAchievement(
+          (closestAchievement._id as ObjectId).toString(),
+          userId
+        );
+      if (achievedAchievement) {
+        logger.info(
+          `User ${userId} already has achievement ${closestAchievement._id}`
+        );
+        await this.database.commitTransaction(session);
+        return;
+      }
+
+      // Create new user achievement
+      const achievement =
+        await this.userAchievementRepository.createUserAchievement(
+          {
+            userId,
+            achievementId: closestAchievement._id,
+          },
+          session
+        );
+
+      if (!achievement) {
+        logger.error(
+          `Failed to create user achievement for user: ${userId}, achievement: ${closestAchievement._id}`
+        );
+        await this.database.commitTransaction(session);
+        return;
+      }
+
+      logger.info(
+        `Awarded achievement ${closestAchievement._id} to user ${userId} for streak: ${updatedUser.onlineStreak}`
+      );
+      await this.database.commitTransaction(session);
+
+      //notify user
+      const emailHtml = await ejs.renderFile(achievementEmailTemplatePath, {
+        achievementName: closestAchievement.name,
+        serverUrl: `${process.env.SERVER_URL}` || "http://localhost:3000",
+      });
+
+      const mailOptions: Mail.Options = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: `English Learning System Achievement`,
+        html: emailHtml,
+      };
+      await sendMail(mailOptions);
+    } catch (error) {
+      await this.database.abortTransaction(session);
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    } finally {
+      await session.endSession();
     }
   };
 }

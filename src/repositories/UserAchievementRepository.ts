@@ -21,7 +21,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
         session,
       });
 
-      return userAchievement[0];
+      return userAchievement[0].populate("achievementId");
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -212,18 +212,24 @@ class UserAchievementRepository implements IUserAchievementRepository {
     let count = -1;
     try {
       const logger = getLogger("USER ACHIEVEMENTS");
-      const result = await UserAchieventModel.deleteMany(
+      const totalEarner = await UserAchieventModel.countDocuments({
+        achievementId: new mongoose.Types.ObjectId(achievementId),
+      });
+      const result = await UserAchieventModel.updateMany(
         {
           achievementId: new mongoose.Types.ObjectId(achievementId),
           isDeleted: false,
+        },
+        {
+          $set: { isDeleted: true },
         },
         { session }
       );
 
       logger.info(
-        `Achievement ${achievementId} has been removed along with ${result.deletedCount} related user achievement`
+        `Achievement ${achievementId} has been removed along with ${result.modifiedCount} related user achievement`
       );
-      count = result.deletedCount;
+      count = result.modifiedCount;
       return count;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -239,7 +245,7 @@ class UserAchievementRepository implements IUserAchievementRepository {
 
   async findExistingAchievement(
     achievementId: string,
-    userId: string
+    userId?: string
   ): Promise<IUserAchievement | null> {
     try {
       const achievement = await UserAchieventModel.findOne({
@@ -247,6 +253,26 @@ class UserAchievementRepository implements IUserAchievementRepository {
         userId: new mongoose.Types.ObjectId(userId),
       });
       return achievement;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async countUserAchievement(achievementId: string): Promise<number> {
+    try {
+      const count = await UserAchieventModel.countDocuments({
+        achievementId: new mongoose.Types.ObjectId(achievementId),
+        isDeleted: false,
+      });
+
+      return count | 0;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
