@@ -102,19 +102,31 @@ class FlashcardSetRepository implements IFlashcardSetRepository {
 
   async getFlashcardSet(id: string): Promise<IFlashcardSet | null> {
     try {
-      const flashcardSet = await FlashcardSetModel.findOne({
+      const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      });
+      };
+      const flashcardSet = await FlashcardSetModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+      ]);
 
-      if (!flashcardSet) {
+      if (!flashcardSet[0]) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "Flashcard set not found"
         );
       }
 
-      return flashcardSet;
+      return flashcardSet[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -174,6 +186,7 @@ class FlashcardSetRepository implements IFlashcardSetRepository {
         { $unwind: "$user" },
         { $sort: { [sortField]: sortOrder } },
         { $skip: skip },
+        { $limit: query.size },
       ]);
       const totalCount = await FlashcardSetModel.countDocuments(matchQuery);
       return {

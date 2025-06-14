@@ -108,19 +108,40 @@ class UserAchievementRepository implements IUserAchievementRepository {
 
   async getUserAchievement(id: string): Promise<IUserAchievement | null> {
     try {
-      const userAchievement = await UserAchieventModel.findOne({
+      const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      }).populate("achievementId");
+      };
+      const userAchievement = await UserAchieventModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "achievements",
+            localField: "achievementId",
+            foreignField: "_id",
+            as: "achievement",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        { $unwind: "$achievement" },
+      ]);
 
-      if (!userAchievement) {
+      if (!userAchievement[0]) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "User Achievement not found"
         );
       }
 
-      return userAchievement;
+      return userAchievement[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -180,6 +201,15 @@ class UserAchievementRepository implements IUserAchievementRepository {
           },
         },
         { $unwind: "$achievement" },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
         { $match: matchQuery },
         { $sort: { [sortField]: sortOrder } },
         { $skip: skip },
