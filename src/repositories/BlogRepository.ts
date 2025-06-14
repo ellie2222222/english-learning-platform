@@ -109,18 +109,29 @@ class BlogRepository implements IBlogRepository {
       if (!isAdmin) {
         matchQuery.status = BlogStatusEnum.PUBLISHED;
       }
-      const blog = await BlogModel.findOne(matchQuery)
-        .populate("userId")
-        .lean();
+      const blog = await BlogModel.aggregate([
+        {
+          $match: matchQuery,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+      ]);
 
-      if (!blog) {
+      if (!blog[0]) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "Blog not found"
         );
       }
 
-      return blog;
+      return blog[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

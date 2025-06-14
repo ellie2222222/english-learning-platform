@@ -38,8 +38,18 @@ blogRoutes.delete(
   blogController.deleteBlog
 );
 
-blogRoutes.get("/", blogDto.getBlogs, blogController.getBlogs);
+blogRoutes.get(
+  "/",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  blogDto.getBlogs,
+  blogController.getBlogs
+);
 
-blogRoutes.get("/:id", blogDto.getBlog, blogController.getBlog);
+blogRoutes.get(
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  blogDto.getBlog,
+  blogController.getBlog
+);
 
 export default blogRoutes;

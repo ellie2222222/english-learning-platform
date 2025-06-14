@@ -95,19 +95,31 @@ class FlashcardRepository implements IFlashcardRepository {
 
   async getFlashcard(id: string): Promise<IFlashcard | null> {
     try {
-      const flashcard = await FlashcardModel.findOne({
+      const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      }).lean();
+      };
+      const flashcard = await FlashcardModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "flashcardsets",
+            localField: "flashcardSetId",
+            foreignField: "_id",
+            as: "flashcardSet",
+          },
+        },
+        { $unwind: "$flashcardSet" },
+      ]);
 
-      if (!flashcard) {
+      if (!flashcard[0]) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "Flashcard not found"
         );
       }
 
-      return flashcard;
+      return flashcard[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -161,6 +173,15 @@ class FlashcardRepository implements IFlashcardRepository {
         {
           $match: matchQuery,
         },
+        {
+          $lookup: {
+            from: "flashcardsets",
+            localField: "flashcardSetId",
+            foreignField: "_id",
+            as: "flashcardSet",
+          },
+        },
+        { $unwind: "$flashcardSet" },
         { $sort: { order: 1, [sortField]: sortOrder } },
         { $skip: skip },
         { $limit: query.size },
