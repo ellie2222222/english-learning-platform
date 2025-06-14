@@ -31,14 +31,14 @@ userRoutes.use(AuthMiddleware);
 
 userRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userDto.getUsers,
   userController.getUsers
 );
 
 userRoutes.get(
   "/:id",
-  RoleMiddleware([UserEnum.ADMIN]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userDto.getUserById,
   userController.getUserById
 );
@@ -102,21 +102,21 @@ userRoutes.post(
 );
 
 userRoutes.get(
-  "/lessons/:userLessonId",
+  "/lessons/:id",
   RoleMiddleware([UserEnum.USER, UserEnum.ADMIN]),
   userLessonDto.getUserLessonById,
   userLessonController.getUserLessonById
 );
 
 userRoutes.get(
-  "/courses/:userCourseId",
+  "/courses/:id",
   RoleMiddleware([UserEnum.USER, UserEnum.ADMIN]),
   userCourseDto.getUserCourseById,
   userCourseController.getUserCourseById
 );
 
 userRoutes.get(
-  "/tests/:userTestId",
+  "/tests/:id",
   RoleMiddleware([UserEnum.USER, UserEnum.ADMIN]),
   userTestDto.getUserTestById,
   userTestController.getUserTestById

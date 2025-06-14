@@ -27,9 +27,9 @@ class UserCourseController {
 
   updateUserCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { userCourseId } = req.params;
+      const { id } = req.params;
       const { status } = req.body;
-      const userCourse = await this.userCourseService.updateUserCourse(userCourseId, status);
+      const userCourse = await this.userCourseService.updateUserCourse(id, status);
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
         message: "User lesson updated successfully",
@@ -41,8 +41,8 @@ class UserCourseController {
 
   deleteUserCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { userCourseId } = req.params;
-      const userCourse = await this.userCourseService.deleteUserCourse(userCourseId);
+      const { id } = req.params;
+      const userCourse = await this.userCourseService.deleteUserCourse(id);
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
         message: "User lesson deleted successfully",
@@ -54,8 +54,8 @@ class UserCourseController {
 
   getUserCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { userCourseId } = req.params;
-      const userCourse = await this.userCourseService.getUserCourseById(userCourseId);
+      const { id } = req.params;
+      const userCourse = await this.userCourseService.getUserCourseById(id);
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
         message: "User lesson retrieved successfully",
@@ -67,10 +67,10 @@ class UserCourseController {
 
   getUserCoursesByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { userId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
       const userCourses = await this.userCourseService.getUserCoursesByUserId(
-        userId,
+        id,
         {
           page: page ? parseInt(page as string) : 1,
           size: size ? parseInt(size as string) : 10,

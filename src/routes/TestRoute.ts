@@ -5,6 +5,7 @@ import TestDto from "../dtos/TestDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
+import { LessonResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
 
 const testController = Container.get(TestController);
 const testDto = new TestDto();
@@ -21,32 +22,36 @@ testRoutes.post(
 
 testRoutes.get(
   "/",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  LessonResourceAccessMiddleware,
   testDto.getTests,
   testController.getTests
 );
 
 testRoutes.get(
-  "/:testId",
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  LessonResourceAccessMiddleware,
   testDto.getTestById,
   testController.getTestById
 );
 
 testRoutes.patch(
-  "/:testId",
+  "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   testDto.updateTest,
   testController.updateTest
 );
 
 testRoutes.delete(
-  "/:testId",
+  "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   testDto.deleteTest,
   testController.deleteTest
 );
 
 testRoutes.get(
-  "/:testId/lesson/:lessonId",
+  "/lesson/:id",
   testDto.getTestsByLessonId,
   testController.getTestsByLessonId
 );

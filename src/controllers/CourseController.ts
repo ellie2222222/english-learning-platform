@@ -27,9 +27,9 @@ class CourseController {
 
   updateCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { courseId } = req.params;
+      const { id } = req.params;
       const { name, description, type, level, totalLessons } = req.body;
-      const course = await this.courseService.updateCourse(courseId, name, description, type, level, totalLessons);
+      const course = await this.courseService.updateCourse(id, name, description, type, level, totalLessons);
       res.status(StatusCodeEnum.OK_200).json({
         course,
         message: "Course updated successfully",
@@ -41,8 +41,8 @@ class CourseController {
 
   deleteCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { courseId } = req.params;
-      const course = await this.courseService.deleteCourse(courseId);
+      const { id } = req.params;
+      const course = await this.courseService.deleteCourse(id);
       res.status(StatusCodeEnum.OK_200).json({
         course,
         message: "Course deleted successfully",
@@ -54,8 +54,8 @@ class CourseController {
 
   getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { courseId } = req.params;
-      const course = await this.courseService.getCourseById(courseId);
+      const { id } = req.params;
+      const course = await this.courseService.getCourseById(id);
       res.status(StatusCodeEnum.OK_200).json({
         course,
         message: "Course retrieved successfully",

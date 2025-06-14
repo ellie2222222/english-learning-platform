@@ -27,9 +27,9 @@ class LessonController {
 
   updateLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
+      const { id } = req.params;
       const { courseId, name, description, length } = req.body;
-      const lesson = await this.lessonService.updateLesson(lessonId, courseId, name, description, length);
+      const lesson = await this.lessonService.updateLesson(id, courseId, name, description, length);
       res.status(StatusCodeEnum.OK_200).json({
         lesson,
         message: "Lesson updated successfully",
@@ -41,8 +41,8 @@ class LessonController {
 
   deleteLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
-      const lesson = await this.lessonService.deleteLesson(lessonId);
+      const { id } = req.params;
+      const lesson = await this.lessonService.deleteLesson(id);
       res.status(StatusCodeEnum.OK_200).json({
         lesson,
         message: "Lesson deleted successfully",
@@ -54,8 +54,8 @@ class LessonController {
 
   getLessonById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
-      const lesson = await this.lessonService.getLessonById(lessonId);
+      const { id } = req.params;
+      const lesson = await this.lessonService.getLessonById(id);
       res.status(StatusCodeEnum.OK_200).json({
         lesson,
         message: "Lesson retrieved successfully",
@@ -85,9 +85,9 @@ class LessonController {
 
   getLessonsByCourseId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { courseId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
-      const lessons = await this.lessonService.getLessonsByCourseId(courseId, {
+      const lessons = await this.lessonService.getLessonsByCourseId(id, {
         page: page ? parseInt(page as string) : 1,
         size: size ? parseInt(size as string) : 10,
         order: order as OrderType,

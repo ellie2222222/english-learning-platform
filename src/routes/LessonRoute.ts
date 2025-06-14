@@ -5,6 +5,7 @@ import LessonDto from "../dtos/LessonDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
+import { CourseResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
 
 const lessonController = Container.get(LessonController);
 const lessonDto = new LessonDto();
@@ -21,25 +22,29 @@ lessonRoutes.post(
 
 lessonRoutes.get(
   "/",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  CourseResourceAccessMiddleware,
   lessonDto.getLessons,
   lessonController.getLessons
 );
 
 lessonRoutes.get(
-  "/:lessonId",
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  CourseResourceAccessMiddleware,
   lessonDto.getLessonById,
   lessonController.getLessonById
 );
 
 lessonRoutes.patch(
-  "/:lessonId",
+  "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   lessonDto.updateLesson,
   lessonController.updateLesson
 );
 
 lessonRoutes.delete(
-  "/:lessonId",
+  "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   lessonDto.deleteLesson,
   lessonController.deleteLesson

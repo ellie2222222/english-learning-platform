@@ -27,9 +27,9 @@ class TestController {
 
   updateTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { testId } = req.params;
+      const { id } = req.params;
       const { lessonIds, name, description, totalQuestions } = req.body;
-      const test = await this.testService.updateTest(testId, lessonIds, name, description, totalQuestions);
+      const test = await this.testService.updateTest(id, lessonIds, name, description, totalQuestions);
       res.status(StatusCodeEnum.OK_200).json({
         test,
         message: "Test updated successfully",
@@ -41,8 +41,8 @@ class TestController {
 
   deleteTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { testId } = req.params;
-      const test = await this.testService.deleteTest(testId);
+      const { id } = req.params;
+      const test = await this.testService.deleteTest(id);
       res.status(StatusCodeEnum.OK_200).json({
         test,
         message: "Test deleted successfully",
@@ -54,8 +54,8 @@ class TestController {
 
   getTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { testId } = req.params;
-      const test = await this.testService.getTestById(testId);
+      const { id } = req.params;
+      const test = await this.testService.getTestById(id);
       res.status(StatusCodeEnum.OK_200).json({
         test,
         message: "Test retrieved successfully",
@@ -87,10 +87,10 @@ class TestController {
 
   getTestsByLessonId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { lessonId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
       const tests = await this.testService.getTestsByLessonId(
-        lessonId,
+        id,
         {
           page: page ? parseInt(page as string) : 1,
           size: size ? parseInt(size as string) : 10,

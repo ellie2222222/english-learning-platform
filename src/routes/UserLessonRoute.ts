@@ -5,6 +5,7 @@ import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import UserLessonController from "../controllers/UserLessonController";
 import UserLessonDto from "../dtos/UserLessonDto";
+import { OwnershipMiddleware, ResourceModel } from "../middlewares/OwnershipMiddleware";
 
 const userLessonController = Container.get(UserLessonController);
 const userLessonDto = new UserLessonDto();
@@ -20,7 +21,9 @@ userLessonRoutes.post(
 ); 
 
 userLessonRoutes.get(
-  "/:userLessonId",
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  OwnershipMiddleware(ResourceModel.USER_LESSON),
   userLessonDto.getUserLessonById,
   userLessonController.getUserLessonById
 );
