@@ -40,10 +40,10 @@ class UserTestController {
 
   getUserTestsByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { userId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
       const userTests = await this.testService.getUserTestsByUserId(
-        userId,
+        id,
         {
           page: page ? parseInt(page as string) : 1,
           size: size ? parseInt(size as string) : 10,
@@ -62,10 +62,10 @@ class UserTestController {
 
   getUserTestsByTestId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { testId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
       const userTests = await this.testService.getUserTestsByTestId(
-        testId,
+        id,
         {
           page: page ? parseInt(page as string) : 1,
           size: size ? parseInt(size as string) : 10,

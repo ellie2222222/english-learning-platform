@@ -30,26 +30,26 @@ courseRoutes.get(
 );
 
 courseRoutes.get(
-  "/:courseId",
+  "/:id",
   courseDto.getCourseById,
   courseController.getCourseById
 );
 
 courseRoutes.get(
-  "/:courseId/lessons",
+  "/:id/lessons",
   lessonDto.getLessonsByCourseId,
   lessonController.getLessonsByCourseId
 );
 
 courseRoutes.patch(
-  "/:courseId",
+  "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   courseDto.updateCourse,
   courseController.updateCourse
 );
 
 courseRoutes.delete(
-  "/:courseId",
+  "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
   courseDto.deleteCourse,
   courseController.deleteCourse
