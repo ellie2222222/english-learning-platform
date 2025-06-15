@@ -71,6 +71,10 @@ const localStorage = multer.diskStorage({
         dir = path.join(`assets/images/blogsCover/`);
         break;
 
+      case "exerciseImage":
+        dir = path.join("assets/images/exerciseImage");
+        break;
+
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(
@@ -136,6 +140,10 @@ const localStorage = multer.diskStorage({
         dirPath = path.join(`assets/images/blogsCover`);
         break;
 
+      case "exerciseImage":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/exerciseImage`);
+        break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(new Error(`Unknown field name '${file.fieldname}'`), "");
@@ -178,6 +186,11 @@ const allowedFormats = {
     message: "Allowed formats: jpeg, jpg, png, gif",
   },
   blogCover: {
+    regex: /\.(jpeg|jpg|png|gif)$/i,
+    mime: ["image/jpeg", "image/png", "image/gif"],
+    message: "Allowed formats: jpeg, jpg, png, gif",
+  },
+  exerciseImage: {
     regex: /\.(jpeg|jpg|png|gif)$/i,
     mime: ["image/jpeg", "image/png", "image/gif"],
     message: "Allowed formats: jpeg, jpg, png, gif",

@@ -1,0 +1,268 @@
+import mongoose, { ClientSession, Types } from "mongoose";
+import { IExercise } from "../interfaces/models/IExercise";
+import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
+import CustomException from "../exceptions/CustomException";
+import StatusCodeEnum from "../enums/StatusCodeEnum";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
+import ExerciseModel from "../models/ExerciseModel";
+import { IPagination } from "../interfaces/others/IPagination";
+import { Service } from "typedi";
+
+@Service()
+class ExerciseRepository implements IExerciseRepository {
+  async createExercise(
+    data: object,
+    session?: ClientSession
+  ): Promise<IExercise | null> {
+    try {
+      const exercise = await ExerciseModel.create([data], { session });
+      return exercise[0];
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async updateExercise(
+    id: string,
+    data: object,
+    session?: ClientSession
+  ): Promise<IExercise | null> {
+    try {
+      const exercise = await ExerciseModel.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          isDeleted: false,
+        },
+        { $set: data },
+        {
+          session,
+          new: true,
+        }
+      );
+
+      if (!exercise) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Exercise not found"
+        );
+      }
+
+      return exercise;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteExercise(
+    id: string,
+    session?: ClientSession
+  ): Promise<IExercise | null> {
+    try {
+      const exercise = await ExerciseModel.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          isDeleted: false,
+        },
+        {
+          $set: { isDeleted: true },
+        },
+        {
+          session,
+          new: true,
+        }
+      );
+
+      if (!exercise) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Exercise not found"
+        );
+      }
+
+      return exercise;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getExercise(id: string): Promise<IExercise | null> {
+    try {
+      const matchQuery = {
+        _id: new mongoose.Types.ObjectId(id),
+        isDeleted: false,
+      };
+      const exercise = await ExerciseModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        { $unwind: "$lesson" },
+      ]);
+
+      if (!exercise[0]) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Exercise not found"
+        );
+      }
+
+      return exercise[0];
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getExercises(query: IQuery, lessonId?: string): Promise<IPagination> {
+    type seachQuery = {
+      isDeleted: boolean;
+      question?: { $regex: string; $options: string };
+      lessonId?: mongoose.Types.ObjectId;
+    };
+
+    try {
+      const matchQuery: seachQuery = {
+        isDeleted: false,
+      };
+
+      if (query.search) {
+        matchQuery.question = { $regex: query.search, $options: "i" };
+      }
+
+      if (lessonId) {
+        matchQuery.lessonId = new mongoose.Types.ObjectId(lessonId);
+      }
+
+      let sortField = "createdAt";
+      switch (query.sortBy) {
+        case SortByType.DATE:
+          sortField = "createdAt";
+          break;
+        case SortByType.NAME:
+          sortField = "question";
+          break;
+        default:
+          break;
+      }
+      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
+      const skip = (query.page - 1) * query.size;
+
+      const exercises = await ExerciseModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        {
+          $unwind: "$lesson",
+        },
+        {
+          $sort: { [sortField]: sortOrder },
+        },
+        { $skip: skip },
+        { $limit: query.size },
+      ]);
+
+      const totalCount = await ExerciseModel.countDocuments(matchQuery);
+
+      return {
+        data: exercises,
+        total: totalCount,
+        page: query.page,
+        totalPages: Math.ceil(totalCount / query.size),
+      };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getExercisesForTest(
+    length: number,
+    lessonIds: Types.ObjectId[]
+  ): Promise<IExercise[]> {
+    try {
+      const matchQuery = {
+        lessonId: { $in: lessonIds },
+      };
+
+      const exercises = await ExerciseModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        {
+          $unwind: "$lesson",
+        },
+        { $sample: { size: length } },
+      ]);
+
+      if (exercises.length < length) {
+        throw new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          "This test does not have enough exercise for you to paticipate, please report this issue to admin"
+        );
+      }
+
+      return exercises;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+}
+
+export default ExerciseRepository;
