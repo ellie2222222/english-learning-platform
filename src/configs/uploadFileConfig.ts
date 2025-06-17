@@ -221,6 +221,11 @@ const allowedFormats = {
     mime: ["image/jpeg", "image/png", "image/gif"],
     message: "Allowed formats: jpeg, jpg, png, gif",
   },
+  courseCover: {
+    regex: /\.(jpeg|jpg|png|gif)$/i,
+    mime: ["image/jpeg", "image/png", "image/gif"],
+    message: "Allowed formats: jpeg, jpg, png, gif",
+  },
 };
 
 const fileFilter = (
