@@ -52,7 +52,10 @@ const userModelSchema = new Schema<IUser>(
         default: false,
       },
     },
-
+    xp: {
+      type: Number,
+      default: 0,
+    },
     ...baseModelSchema.obj,
   },
   { timestamps: true, strict: true }

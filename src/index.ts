@@ -9,24 +9,30 @@ import http from "http";
 import path from "path";
 import cookieParser from "cookie-parser";
 
+//middlewares
+import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
+
+//utils
+import cronJob from "./utils/cronJob";
+
 //routes
 import authRoutes from "./routes/AuthRoute";
 import userRoutes from "./routes/UserRoute";
 import achievementRoutes from "./routes/AchievementRoute";
 import userAchievementRoutes from "./routes/UserAchievementRoute";
 import membershipRoutes from "./routes/MembershipRoute";
-
-//middlewares
-import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
-import receiptRoutes from "./routes/ReceiptRoute";
-import paymentRoutes from "./routes/PaymentRoute";
-import cronJob from "./utils/cronJob";
 import blogRoutes from "./routes/BlogRoute";
 import courseRoutes from "./routes/CourseRoute";
 import lessonRoutes from "./routes/LessonRoute";
 import flashcardSetRoutes from "./routes/FlashcardSetRoute";
 import flashcardRoutes from "./routes/FlashcardRoute";
 import testRoutes from "./routes/TestRoute";
+import receiptRoutes from "./routes/ReceiptRoute";
+import paymentRoutes from "./routes/PaymentRoute";
+import exerciseRoutes from "./routes/ExerciseRoute";
+import userExerciseRoutes from "./routes/UserExerciseRoute";
+import userCourseRoutes from "./routes/UserCourseRoute";
+import userLessonRoutes from "./routes/UserLessonRoute";
 
 dotenv.config();
 
@@ -65,6 +71,10 @@ app.use("/api/lessons", lessonRoutes);
 app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/flashcard-sets", flashcardSetRoutes);
 app.use("/api/tests", testRoutes);
+app.use("/api/exercises", exerciseRoutes);
+app.use("/api/user-exercises", userExerciseRoutes);
+app.use("/api/user-courses", userCourseRoutes);
+app.use("/api/user-lessons", userLessonRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

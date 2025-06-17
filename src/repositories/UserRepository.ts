@@ -250,6 +250,25 @@ class UserRepository implements IUserRepository {
       );
     }
   }
+
+  async getAllUserForLoginAchievement(goal: number): Promise<IUser[]> {
+    try {
+      const users = await UserModel.find({
+        onlineStreak: { $gte: goal },
+        isDeleted: false,
+      }).lean();
+      return users;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserRepository;

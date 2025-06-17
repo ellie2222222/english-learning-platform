@@ -138,6 +138,10 @@ class BlogService implements IBlogService {
       return blog;
     } catch (error) {
       await this.database.abortTransaction(session);
+
+      if (coverImage) {
+        cleanUpFile(coverImage, "create");
+      }
       if (error instanceof CustomException) {
         throw error;
       }

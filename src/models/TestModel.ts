@@ -16,6 +16,10 @@ const TestModelSchema = new Schema<ITest>(
       required: true,
       min: 0,
     },
+    order: {
+      type: Number,
+      required: true,
+    },
     ...baseModelSchema.obj,
   },
   { timestamps: true }

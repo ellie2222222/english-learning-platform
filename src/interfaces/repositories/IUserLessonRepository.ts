@@ -8,7 +8,7 @@ export interface IUserLessonRepository {
     data: object,
     session?: mongoose.ClientSession
   ): Promise<IUserLesson>;
-  
+
   updateUserLesson(
     userLessonId: string,
     data: object,
@@ -25,4 +25,9 @@ export interface IUserLessonRepository {
   getUserLessonsByUserId(userId: string, query: IQuery): Promise<IPagination>;
 
   checkExistingUserLesson(userId: string, lessonId: string): Promise<boolean>;
+
+  getExistingUserLesson(
+    userId: string,
+    lessonId: string
+  ): Promise<IUserLesson | null>;
 }

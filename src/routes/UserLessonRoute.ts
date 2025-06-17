@@ -1,11 +1,14 @@
 import { Router } from "express";
-import AuthMiddleware from "../middlewares/AuthMiddleware";         
+import AuthMiddleware from "../middlewares/AuthMiddleware";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import UserLessonController from "../controllers/UserLessonController";
 import UserLessonDto from "../dtos/UserLessonDto";
-import { OwnershipMiddleware, ResourceModel } from "../middlewares/OwnershipMiddleware";
+import {
+  OwnershipMiddleware,
+  ResourceModel,
+} from "../middlewares/OwnershipMiddleware";
 
 const userLessonController = Container.get(UserLessonController);
 const userLessonDto = new UserLessonDto();
@@ -18,7 +21,23 @@ userLessonRoutes.post(
   RoleMiddleware([UserEnum.ADMIN]),
   userLessonDto.createUserLesson,
   userLessonController.createUserLesson
-); 
+);
+
+userLessonRoutes.patch(
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  OwnershipMiddleware(ResourceModel.USER_LESSON),
+  userLessonDto.updateUserLesson,
+  userLessonController.updateUserLesson
+);
+
+userLessonRoutes.get(
+  "/:id/lesson",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  OwnershipMiddleware(ResourceModel.USER_COURSE),
+  userLessonDto.getUserLessonByLessonId,
+  userLessonController.getUserLessonByLessonId
+);
 
 userLessonRoutes.get(
   "/:id",

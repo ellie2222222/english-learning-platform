@@ -7,12 +7,12 @@ export interface IUserLessonService {
     userId: string,
     lessonId: string,
     currentOrder: number,
-    status: string,
+    status: string
   ): Promise<IUserLesson>;
 
   updateUserLesson(
     userLessonId: string,
-    status?: string,
+    status?: string
   ): Promise<IUserLesson | null>;
 
   deleteUserLesson(userLessonId: string): Promise<IUserLesson | null>;
@@ -20,4 +20,9 @@ export interface IUserLessonService {
   getUserLessonById(userLessonId: string): Promise<IUserLesson | null>;
 
   getUserLessonsByUserId(userId: string, query: IQuery): Promise<IPagination>;
+
+  getUserLessonByLessonId: (
+    lessonId: string,
+    userId: string
+  ) => Promise<IUserLesson>;
 }

@@ -142,9 +142,11 @@ class AuthController {
 
   getUserByToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.cookies?.accessToken;
+      const { authorization } = req.headers;
+      const token =
+        authorization?.split(" ")[1] || req.cookies?.accessToken || "";
 
-      const user = await this.authService.getUserByToken(accessToken);
+      const user = await this.authService.getUserByToken(token);
 
       res.status(StatusCodeEnum.OK_200).json({
         message: "Success",

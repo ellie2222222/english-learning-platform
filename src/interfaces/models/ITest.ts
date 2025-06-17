@@ -5,6 +5,7 @@ export interface ITest extends Document {
   name: string;
   description: string;
   totalQuestions: number;
+  order: number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
