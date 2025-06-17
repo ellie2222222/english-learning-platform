@@ -47,13 +47,22 @@ class CourseDto {
     }
   };
 
+  private validateImage = (req: Request, isRequired: boolean): void => {
+    if (isRequired && !req.file) {
+      throw new Error("Image file is required");
+    }
+    if (req.file && req.file.path.length > 500) {
+      throw new Error("Image URL must not exceed 500 characters");
+    }
+  };
+
   createCourse = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { name, description, type, level, totalLessons } = req.body;
+      const { name, description, type, level, totalLessons, coverImage } = req.body;
 
       if (!name || !type || !level) {
         throw new Error(
@@ -65,6 +74,7 @@ class CourseDto {
       this.validateDescription(description);
       this.validateCourseType(type);
       this.validateLevel(level);
+      this.validateImage(coverImage, true);
 
       if (
         totalLessons !== undefined &&
@@ -88,13 +98,14 @@ class CourseDto {
   ): Promise<void> => {
     try {
       const { courseId } = req.params;
-      const { name, description, type, level, totalLessons } = req.body;
+      const { name, description, type, level, totalLessons, coverImage } = req.body;
 
       this.validateObjectId(courseId);
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
       this.validateCourseType(type);
       if (level) this.validateLevel(level);
+      if (coverImage) this.validateImage(coverImage, false);
 
       if (
         totalLessons !== undefined &&

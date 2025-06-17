@@ -97,7 +97,7 @@ const cleanUpFile = async (
           logger.warn(
             `Local file ${filePath} does not exist, skipping cleanup`
           );
-        }
+        } 
       } else {
         // Extract public_id from Cloudinary URL
         const urlParts = fileUrl.split("/");

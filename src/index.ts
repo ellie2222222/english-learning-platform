@@ -27,6 +27,8 @@ import lessonRoutes from "./routes/LessonRoute";
 import flashcardSetRoutes from "./routes/FlashcardSetRoute";
 import flashcardRoutes from "./routes/FlashcardRoute";
 import testRoutes from "./routes/TestRoute";
+import grammarRoutes from "./routes/GrammarRoute";
+import vocabularyRoutes from "./routes/VocabularyRoute";
 
 dotenv.config();
 
@@ -65,6 +67,8 @@ app.use("/api/lessons", lessonRoutes);
 app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/flashcard-sets", flashcardSetRoutes);
 app.use("/api/tests", testRoutes);
+app.use("/api/grammars", grammarRoutes);
+app.use("/api/vocabularies", vocabularyRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

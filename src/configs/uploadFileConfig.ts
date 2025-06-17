@@ -10,7 +10,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 type DestinationCallback = (error: Error | null, destination: string) => void;
-
 type FileNameCallback = (error: Error | null, filename: string) => void;
 
 const logger = getLogger("FILE_UPLOAD");
@@ -49,7 +48,6 @@ const localStorage = multer.diskStorage({
 
     switch (file.fieldname) {
       case "avatar":
-        userId = req.userInfo.userId;
         if (!mongoose.Types.ObjectId.isValid(userId)) {
           logger.error(`Invalid user ID: ${userId}`);
           return cb(
@@ -69,6 +67,14 @@ const localStorage = multer.diskStorage({
 
       case "blogCover":
         dir = path.join(`assets/images/blogsCover/`);
+        break;
+
+      case "vocabularyImage":
+        dir = path.join(`assets/images/vocabularies/`);
+        break;
+
+      case "courseCover":
+        dir = path.join(`assets/images/courses/`);
         break;
 
       default:
@@ -102,7 +108,7 @@ const localStorage = multer.diskStorage({
     file: Express.Multer.File,
     cb: FileNameCallback
   ) => {
-    const baseName = req.headers["content-length"] + "_" + Date.now(); // the file is named by the size of the file
+    const baseName = req.headers["content-length"] + "_" + Date.now();
     const ext = path.extname(file.originalname);
 
     let fileName = "";
@@ -111,7 +117,6 @@ const localStorage = multer.diskStorage({
 
     switch (file.fieldname) {
       case "avatar":
-        userId = req.userInfo.userId;
         if (!mongoose.Types.ObjectId.isValid(userId)) {
           logger.error(`Invalid user ID: ${userId}`);
           return cb(
@@ -136,9 +141,25 @@ const localStorage = multer.diskStorage({
         dirPath = path.join(`assets/images/blogsCover`);
         break;
 
+      case "vocabularyImage":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/vocabularies`);
+        break;
+
+      case "courseCover":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/courses`);
+        break;
+
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
-        return cb(new Error(`Unknown field name '${file.fieldname}'`), "");
+        return cb(
+          new CustomException(
+            StatusCodeEnum.BadRequest_400,
+            `Unknown field name '${file.fieldname}'`
+          ),
+          ""
+        );
     }
     cb(null, fileName);
     if (process.env.STORAGE_TYPE === "cloudinary") {
@@ -167,8 +188,8 @@ const allowedFormats = {
   excelFile: {
     regex: /\.(xls|xlsx)$/i,
     mime: [
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-      "application/vnd.ms-excel", // .xls
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
     ],
     message: "Allowed format: xlsx or xls",
   },
@@ -178,6 +199,11 @@ const allowedFormats = {
     message: "Allowed formats: jpeg, jpg, png, gif",
   },
   blogCover: {
+    regex: /\.(jpeg|jpg|png|gif)$/i,
+    mime: ["image/jpeg", "image/png", "image/gif"],
+    message: "Allowed formats: jpeg, jpg, png, gif",
+  },
+  vocabularyImage: {
     regex: /\.(jpeg|jpg|png|gif)$/i,
     mime: ["image/jpeg", "image/png", "image/gif"],
     message: "Allowed formats: jpeg, jpg, png, gif",
@@ -202,7 +228,6 @@ const fileFilter = (
   }
 
   const isMimeTypeValid = fileType.mime.includes(file.mimetype);
-
   const expectedExtension = fileType.regex.test(
     `.${file.mimetype.split("/")[1]}`
   );

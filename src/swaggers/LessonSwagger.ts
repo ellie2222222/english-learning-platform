@@ -99,6 +99,49 @@
 
 /**
  * @swagger
+ * /api/lessons/{lessonId}/grammars:
+ *   get:
+ *     tags: [Lesson]
+ *     summary: Get grammars by lesson ID
+ *     parameters:
+ *       - name: lessonId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Grammars for the lesson
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Grammar'
+ *
+ * /api/lessons/{lessonId}/vocabularies:
+ *   get:
+ *     tags: [Lesson]
+ *     summary: Get vocabularies by lesson ID
+ *     parameters:
+ *       - name: lessonId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Vocabularies for the lesson
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Vocabulary'
+ */
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     Lesson:
@@ -137,4 +180,114 @@
  *           type: string
  *         content:
  *           type: string
+ *     Grammar:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         lessonId:
+ *           type: string
+ *         title:
+ *           type: string
+ *         structure:
+ *           type: string
+ *         example:
+ *           type: string
+ *         explanation:
+ *           type: string
+ *         order:
+ *           type: number
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     GrammarCreate:
+ *       type: object
+ *       required:
+ *         - lessonId
+ *         - title
+ *         - structure
+ *         - order
+ *       properties:
+ *         lessonId:
+ *           type: string
+ *         title:
+ *           type: string
+ *         structure:
+ *           type: string
+ *         example:
+ *           type: string
+ *         explanation:
+ *           type: string
+ *         order:
+ *           type: number
+ *     GrammarUpdate:
+ *       type: object
+ *       properties:
+ *         lessonId:
+ *           type: string
+ *         title:
+ *           type: string
+ *         structure:
+ *           type: string
+ *         example:
+ *           type: string
+ *         explanation:
+ *           type: string
+ *         order:
+ *           type: number
+ *     Vocabulary:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         lessonId:
+ *           type: string
+ *         englishContent:
+ *           type: string
+ *         vietnameseContent:
+ *           type: string
+ *         imageUrl:
+ *           type: string
+ *         order:
+ *           type: number
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     VocabularyCreate:
+ *       type: object
+ *       required:
+ *         - lessonId
+ *         - englishContent
+ *         - vietnameseContent
+ *         - order
+ *       properties:
+ *         lessonId:
+ *           type: string
+ *         englishContent:
+ *           type: string
+ *         vietnameseContent:
+ *           type: string
+ *         imageUrl:
+ *           type: string
+ *         order:
+ *           type: number
+ *     VocabularyUpdate:
+ *       type: object
+ *       properties:
+ *         lessonId:
+ *           type: string
+ *         englishContent:
+ *           type: string
+ *         vietnameseContent:
+ *           type: string
+ *         imageUrl:
+ *           type: string
+ *         order:
+ *           type: number
  */

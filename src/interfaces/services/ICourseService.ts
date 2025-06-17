@@ -8,7 +8,8 @@ export interface ICourseService {
     description: string | undefined,
     type: string,
     level: string,
-    totalLessons: number | undefined
+    totalLessons: number | undefined,
+    coverImage?: string | undefined,
   ): Promise<ICourse>;
 
   updateCourse(
@@ -17,7 +18,8 @@ export interface ICourseService {
     description?: string,
     type?: string,
     level?: string,
-    totalLessons?: number
+    totalLessons?: number,
+    coverImage?: string | undefined,
   ): Promise<ICourse | null>;
 
   deleteCourse(id: string): Promise<ICourse | null>;

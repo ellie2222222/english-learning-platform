@@ -4,6 +4,7 @@ import { ICourseService } from "../interfaces/services/ICourseService";
 import { NextFunction, Request, Response } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
+import { formatPathSingle, uploadToCloudinary } from "../utils/fileUtils";
 
 @Service()
 class CourseController {
@@ -15,7 +16,16 @@ class CourseController {
   createCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { name, description, type, level, totalLessons } = req.body;
-      const course = await this.courseService.createCourse(name, description, type, level, totalLessons);
+      const imageFile = req.file as Express.Multer.File | undefined; 
+      
+      let imageUrl: string;
+      if (process.env.STORAGE_TYPE === "cloudinary") {
+        imageUrl = await uploadToCloudinary(imageFile!);
+      } else {
+        imageUrl = formatPathSingle(imageFile!);
+      }
+
+      const course = await this.courseService.createCourse(name, description, type, level, totalLessons, imageUrl);
       res.status(StatusCodeEnum.Created_201).json({
         course,
         message: "Course created successfully",
