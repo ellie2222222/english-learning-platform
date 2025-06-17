@@ -108,12 +108,42 @@ class ReceiptRepository implements IReceiptRepository {
 
   async getReceipt(id: string): Promise<IReceipt | null> {
     try {
-      const receipt = await ReceiptModel.findOne({
+      const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
-      }).populate("membershipId");
+      };
+      const receipt = await ReceiptModel.aggregate([
+        {
+          $match: matchQuery,
+        },
+        {
+          $lookup: {
+            from: "memberships",
+            localField: "membershipId",
+            foreignField: "_id",
+            as: "membership",
+          },
+        },
+        { $unwind: "$membership" },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+      ]);
 
-      return receipt;
+      if (!receipt[0]) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Receipt not found"
+        );
+      }
+
+      return receipt[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -166,6 +196,15 @@ class ReceiptRepository implements IReceiptRepository {
             as: "membership",
           },
         },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
         { $unwind: "$membership" },
         { $match: matchQuery },
         { $sort: { [sortField]: order } },

@@ -42,6 +42,10 @@ const ExerciseModelSchema = new Schema<IExercise>(
       type: String,
       required: false,
     },
+    order: {
+      type: Number,
+      required: true,
+    },
     ...baseModelSchema.obj,
   },
   { timestamps: true }

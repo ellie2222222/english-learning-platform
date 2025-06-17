@@ -1,7 +1,7 @@
-import { Inject, Service } from "typedi"; 
+import { Inject, Service } from "typedi";
 import { NextFunction, Request, Response } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { OrderType, SortByType } from "../interfaces/others/IQuery"; 
+import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import { IUserCourseService } from "../interfaces/services/IUserCourseService";
 import UserCourseService from "../services/UserCourseService";
 
@@ -12,10 +12,19 @@ class UserCourseController {
     private userCourseService: IUserCourseService
   ) {}
 
-  createUserCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createUserCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { userId, lessonId, currentOrder, status  } = req.body;
-      const userCourse = await this.userCourseService.createUserCourse(userId, lessonId, currentOrder, status);
+      const { userId, courseId, currentOrder, status } = req.body;
+      const userCourse = await this.userCourseService.createUserCourse(
+        userId,
+        courseId,
+        currentOrder,
+        status
+      );
       res.status(StatusCodeEnum.Created_201).json({
         userCourse,
         message: "User lesson created successfully",
@@ -25,11 +34,18 @@ class UserCourseController {
     }
   };
 
-  updateUserCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateUserCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userCourse = await this.userCourseService.updateUserCourse(id, status);
+      const userCourse = await this.userCourseService.updateUserCourse(
+        id,
+        status
+      );
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
         message: "User lesson updated successfully",
@@ -39,7 +55,11 @@ class UserCourseController {
     }
   };
 
-  deleteUserCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteUserCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const userCourse = await this.userCourseService.deleteUserCourse(id);
@@ -52,7 +72,11 @@ class UserCourseController {
     }
   };
 
-  getUserCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getUserCourseById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const userCourse = await this.userCourseService.getUserCourseById(id);
@@ -65,7 +89,11 @@ class UserCourseController {
     }
   };
 
-  getUserCoursesByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getUserCoursesByUserId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
@@ -76,7 +104,7 @@ class UserCourseController {
           size: size ? parseInt(size as string) : 10,
           order: order as OrderType,
           sortBy: sortBy as SortByType,
-        },
+        }
       );
       res.status(StatusCodeEnum.OK_200).json({
         ...userCourses,

@@ -3,6 +3,8 @@ import Container from "typedi";
 import ReceiptController from "../controllers/ReceiptController";
 import ReceiptDto from "../dtos/ReceiptDto";
 import AuthMiddleware from "../middlewares/AuthMiddleware";
+import RoleMiddleware from "../middlewares/RoleMiddleware";
+import UserEnum from "../enums/UserEnum";
 
 const receiptRoutes = Router();
 const receiptController = Container.get(ReceiptController);
@@ -19,6 +21,7 @@ receiptRoutes.use(AuthMiddleware);
 
 receiptRoutes.get(
   "/:id/users",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   receiptDto.getReceipts,
   receiptController.getReceipts
 );

@@ -8,7 +8,7 @@ import { IQuery } from "../interfaces/others/IQuery";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
-import { ICourseRepository } from "../interfaces/repositories/ICourseRepository"; 
+import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
 import CourseRepository from "../repositories/CourseRepository";
 import UserRepository from "../repositories/UserRepository";
 import { UserCourseStatusType } from "../enums/UserCourseStatus";
@@ -48,7 +48,7 @@ class UserCourseService implements IUserCourseService {
           StatusCodeEnum.NotFound_404,
           "Course not found"
         );
-      } 
+      }
 
       const userCourse = await this.userCourseRepository.createUserCourse(
         {
@@ -91,7 +91,8 @@ class UserCourseService implements IUserCourseService {
       }
 
       const updateData: Partial<IUserCourse> = {};
-      if (status !== undefined) updateData.status = status as UserCourseStatusType;
+      if (status !== undefined)
+        updateData.status = status as UserCourseStatusType;
 
       const updatedUserCourse =
         await this.userCourseRepository.updateUserCourse(

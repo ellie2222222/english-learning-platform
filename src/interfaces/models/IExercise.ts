@@ -9,7 +9,7 @@ export interface IExercise extends Document {
   explanation?: string;
   focus: string;
   image?: string;
-  order: String;
+  order: Number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

@@ -1,26 +1,27 @@
-import mongoose from "mongoose";
-import { IUserLesson } from "../interfaces/models/IUserLesson";
-import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
+import mongoose, { ClientSession, Types } from "mongoose";
+import { IExercise } from "../interfaces/models/IExercise";
+import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { Service } from "typedi";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
+import ExerciseModel from "../models/ExerciseModel";
 import { IPagination } from "../interfaces/others/IPagination";
-import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
-import UserLessonModel from "../models/UserLessonModel";
+import { Service } from "typedi";
 
 @Service()
-class UserLessonRepository implements IUserLessonRepository {
-  async createUserLesson(
+class ExerciseRepository implements IExerciseRepository {
+  async createExercise(
     data: object,
-    session?: mongoose.ClientSession
-  ): Promise<IUserLesson> {
+    session?: ClientSession
+  ): Promise<IExercise | null> {
     try {
-      const userLesson = await UserLessonModel.create([data], { session });
-      return userLesson[0];
+      const exercise = await ExerciseModel.create([data], { session });
+      return exercise[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -28,31 +29,37 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
-  async updateUserLesson(
+  async updateExercise(
     id: string,
     data: object,
-    session?: mongoose.ClientSession
-  ): Promise<IUserLesson | null> {
+    session?: ClientSession
+  ): Promise<IExercise | null> {
     try {
-      const userLesson = await UserLessonModel.findOneAndUpdate(
+      const exercise = await ExerciseModel.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
           isDeleted: false,
         },
-        { ...data },
-        { session, new: true }
+        { $set: data },
+        {
+          session,
+          new: true,
+        }
       );
-      if (!userLesson) {
+
+      if (!exercise) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "UserLesson not found"
+          "Exercise not found"
         );
       }
-      return userLesson;
+
+      return exercise;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -60,29 +67,38 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
-  async deleteUserLesson(
+  async deleteExercise(
     id: string,
-    session?: mongoose.ClientSession
-  ): Promise<IUserLesson | null> {
+    session?: ClientSession
+  ): Promise<IExercise | null> {
     try {
-      const userLesson = await UserLessonModel.findOneAndUpdate(
+      const exercise = await ExerciseModel.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
+          isDeleted: false,
         },
-        { $set: { isDeleted: true } },
-        { session, new: true }
+        {
+          $set: { isDeleted: true },
+        },
+        {
+          session,
+          new: true,
+        }
       );
-      if (!userLesson) {
+
+      if (!exercise) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "UserLesson not found"
+          "Exercise not found"
         );
       }
-      return userLesson;
+
+      return exercise;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -90,23 +106,14 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
-  async getUserLessonById(id: string): Promise<IUserLesson | null> {
+  async getExercise(id: string): Promise<IExercise | null> {
     try {
       const matchQuery = {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
       };
-      const userLesson = await UserLessonModel.aggregate([
+      const exercise = await ExerciseModel.aggregate([
         { $match: matchQuery },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
             from: "lessons",
@@ -115,27 +122,22 @@ class UserLessonRepository implements IUserLessonRepository {
             as: "lesson",
           },
         },
-        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
-        {
-          $project: {
-            "user.password": 0,
-            "user.resetPasswordPin": 0,
-          },
-        },
+        { $unwind: "$lesson" },
       ]);
 
-      if (!userLesson || userLesson.length === 0) {
+      if (!exercise[0]) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          "UserLesson not found"
+          "Exercise not found"
         );
       }
 
-      return userLesson[0];
+      return exercise[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -143,22 +145,33 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
-  async getUserLessonsByUserId(
-    userId: string,
-    query: IQuery
-  ): Promise<IPagination> {
+  async getExercises(query: IQuery, lessonId?: string): Promise<IPagination> {
+    type seachQuery = {
+      isDeleted: boolean;
+      question?: { $regex: string; $options: string };
+      lessonId?: mongoose.Types.ObjectId;
+    };
+
     try {
-      const matchQuery = {
-        userId: new mongoose.Types.ObjectId(userId),
+      const matchQuery: seachQuery = {
         isDeleted: false,
       };
+
+      if (query.search) {
+        matchQuery.question = { $regex: query.search, $options: "i" };
+      }
+
+      if (lessonId) {
+        matchQuery.lessonId = new mongoose.Types.ObjectId(lessonId);
+      }
+
       let sortField = "createdAt";
       switch (query.sortBy) {
         case SortByType.DATE:
           sortField = "createdAt";
           break;
         case SortByType.NAME:
-          sortField = "name";
+          sortField = "question";
           break;
         default:
           break;
@@ -166,17 +179,8 @@ class UserLessonRepository implements IUserLessonRepository {
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
-      const userLessons = await UserLessonModel.aggregate([
+      const exercises = await ExerciseModel.aggregate([
         { $match: matchQuery },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
             from: "lessons",
@@ -185,32 +189,29 @@ class UserLessonRepository implements IUserLessonRepository {
             as: "lesson",
           },
         },
-        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
         {
-          $project: {
-            "user.password": 0,
-            "user.resetPasswordPin": 0,
-          },
+          $unwind: "$lesson",
         },
         {
-          $sort: { [sortField]: sortOrder },
+          $sort: { order: 1, [sortField]: sortOrder },
         },
         { $skip: skip },
         { $limit: query.size },
       ]);
 
-      const total = await UserLessonModel.countDocuments(matchQuery);
+      const totalCount = await ExerciseModel.countDocuments(matchQuery);
 
       return {
-        data: userLessons,
+        data: exercises,
+        total: totalCount,
         page: query.page,
-        total: total,
-        totalPages: Math.ceil(total / query.size),
+        totalPages: Math.ceil(totalCount / query.size),
       };
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -218,22 +219,44 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
-  async checkExistingUserLesson(
-    userId: string,
-    lessonId: string
-  ): Promise<boolean> {
+  async getExercisesForTest(
+    length: number,
+    lessonIds: Types.ObjectId[]
+  ): Promise<IExercise[]> {
     try {
       const matchQuery = {
-        userId: new mongoose.Types.ObjectId(userId),
-        lessonId: new mongoose.Types.ObjectId(lessonId),
-        isDeleted: false,
+        lessonId: { $in: lessonIds },
       };
-      const existingUserLesson = await UserLessonModel.findOne(matchQuery);
-      return !!existingUserLesson;
+
+      const exercises = await ExerciseModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        {
+          $unwind: "$lesson",
+        },
+        { $sample: { size: length } },
+      ]);
+
+      if (exercises.length < length) {
+        throw new CustomException(
+          StatusCodeEnum.InternalServerError_500,
+          "This test does not have enough exercise for you to paticipate, please report this issue to admin"
+        );
+      }
+
+      return exercises;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -241,22 +264,43 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
-  async getExistingUserLesson(
-    userId: string,
-    lessonId: string
-  ): Promise<IUserLesson | null> {
+  async getExerciseOrder(lessonId: string): Promise<number> {
     try {
-      const matchQuery = {
-        userId: new mongoose.Types.ObjectId(userId),
+      const exerciseOrder = await ExerciseModel.find({
         lessonId: new mongoose.Types.ObjectId(lessonId),
         isDeleted: false,
-      };
-      const existingUserLesson = await UserLessonModel.findOne(matchQuery);
-      return existingUserLesson;
+      }).sort({ order: -1 });
+
+      if (!exerciseOrder[0]) {
+        return 1;
+      }
+
+      return exerciseOrder[0].order.valueOf() + 1;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getAllLessonExercise(lessonId: string): Promise<IExercise[]> {
+    try {
+      const exercises = await ExerciseModel.find({
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      });
+
+      return exercises;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -265,4 +309,4 @@ class UserLessonRepository implements IUserLessonRepository {
   }
 }
 
-export default UserLessonRepository;
+export default ExerciseRepository;

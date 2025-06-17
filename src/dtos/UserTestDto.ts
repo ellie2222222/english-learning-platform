@@ -1,8 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { OrderType, SortByType } from "../interfaces/others/IQuery"; 
-import { UserTestStatusEnum, UserTestStatusEnumType } from "../enums/UserTestStatusEnum";
+import { OrderType, SortByType } from "../interfaces/others/IQuery";
+import {
+  UserTestStatusEnum,
+  UserTestStatusEnumType,
+} from "../enums/UserTestStatusEnum";
 
 class UserTestDto {
   private validateObjectId = (id: string): void => {
@@ -12,7 +15,7 @@ class UserTestDto {
     if (!mongoose.isValidObjectId(id)) {
       throw new Error("Invalid ID");
     }
-  }; 
+  };
 
   private validateDescription = (description: string): void => {
     if (description && description.length > 2000) {
@@ -33,17 +36,30 @@ class UserTestDto {
   };
 
   private validateStatus = (status: string): void => {
-    if (status && !Object.values(UserTestStatusEnum).includes(status as UserTestStatusEnumType)) {
+    if (
+      status &&
+      !Object.values(UserTestStatusEnum).includes(
+        status as UserTestStatusEnumType
+      )
+    ) {
       throw new Error("Invalid status");
     }
   };
 
-  createUserTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createUserTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { testId, userId, attemptNo, score, status, description } = req.body;
+      //remove attemptNo, score,status,description, add array of object informat : "id", "answer" => calculate score, status, description
+      const { testId, userId, attemptNo, score, status, description } =
+        req.body;
 
       if (!testId || !userId || !attemptNo || score === undefined || !status) {
-        throw new Error("Missing required fields: testId, userId, attemptNo, score, and status are required");
+        throw new Error(
+          "Missing required fields: testId, userId, attemptNo, score, and status are required"
+        );
       }
 
       this.validateObjectId(testId);
@@ -61,7 +77,11 @@ class UserTestDto {
     }
   };
 
-  getUserTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getUserTestById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { userTestId } = req.params;
       this.validateObjectId(userTestId);
@@ -73,17 +93,27 @@ class UserTestDto {
     }
   };
 
-  getUserTestsByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getUserTestsByUserId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { userId } = req.params;
       const { page, size, order, sortBy } = req.query;
 
       this.validateObjectId(userId);
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {

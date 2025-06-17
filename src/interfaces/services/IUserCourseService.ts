@@ -5,14 +5,14 @@ import { IPagination } from "../others/IPagination";
 export interface IUserCourseService {
   createUserCourse(
     userId: string,
-    lessonId: string,
+    courseId: string,
     currentOrder: number,
-    status: string,
+    status: string
   ): Promise<IUserCourse>;
 
   updateUserCourse(
     userCourseId: string,
-    status?: string,
+    status?: string
   ): Promise<IUserCourse | null>;
 
   deleteUserCourse(userCourseId: string): Promise<IUserCourse | null>;

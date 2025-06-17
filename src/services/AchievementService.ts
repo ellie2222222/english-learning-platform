@@ -11,6 +11,9 @@ import { ObjectId } from "mongoose";
 import UserAchievementRepository from "../repositories/UserAchievementRepository";
 import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
 import { IPagination } from "../interfaces/others/IPagination";
+import UserRepository from "../repositories/UserRepository";
+import { IUserRepository } from "../interfaces/repositories/IUserRepository";
+import { AchievementTypeEnum } from "../enums/AchievementTypeEnum";
 
 @Service()
 class AchievementService implements IAchievementService {
@@ -19,7 +22,9 @@ class AchievementService implements IAchievementService {
     private achievementRepository: IAchievementRepository,
     @Inject() private database: Database,
     @Inject(() => UserAchievementRepository)
-    private userAchievementRepository: IUserAchievementRepository
+    private userAchievementRepository: IUserAchievementRepository,
+    @Inject(() => UserRepository)
+    private userRepository: IUserRepository
   ) {}
 
   createAchievement = async (
@@ -44,6 +49,7 @@ class AchievementService implements IAchievementService {
         );
       }
 
+      //create achievement
       const achievement = await this.achievementRepository.createAchievement(
         {
           name,
@@ -53,6 +59,21 @@ class AchievementService implements IAchievementService {
         },
         session
       );
+
+      //handle existing user has login streak larger than current achievement
+      if (type === AchievementTypeEnum.LoginStreak) {
+        const users = this.userRepository.getAllUserForLoginAchievement(goal);
+        await Promise.all(
+          (
+            await users
+          ).map((user) =>
+            this.userAchievementRepository.createUserAchievement(
+              { userId: user._id, achievementId: achievement._id },
+              session
+            )
+          )
+        );
+      }
 
       await session.commitTransaction(session);
       return achievement;
@@ -114,7 +135,18 @@ class AchievementService implements IAchievementService {
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (type !== undefined) updateData.type = type;
-      if (goal !== undefined) updateData.goal = goal;
+      if (goal !== undefined) {
+        const confict =
+          await this.userAchievementRepository.countUserAchievement(id);
+        if (confict > 0) {
+          throw new CustomException(
+            StatusCodeEnum.Conflict_409,
+            "This achievement has already been earned by users. Modifying its goal could compromise data integrity and affect existing records. Please consider creating a new achievement instead."
+          );
+        }
+
+        updateData.goal = goal;
+      }
 
       // Perform update
       const achievement = await this.achievementRepository.updateAchievement(
@@ -122,6 +154,7 @@ class AchievementService implements IAchievementService {
         updateData,
         session
       );
+
       if (!achievement) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
