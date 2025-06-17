@@ -102,6 +102,7 @@ class ExerciseController {
       const { id } = req.params;
 
       const exercise = await this.exerciseService.deleteExercise(id);
+
       res
         .status(StatusCodeEnum.OK_200)
         .json({ exercise: exercise, message: "Exercise deleted successfully" });

@@ -28,4 +28,6 @@ export interface IExerciseRepository {
     length: number,
     lessonIds: mongoose.Types.ObjectId[]
   ): Promise<IExercise[]>;
+
+  getAllLessonExercise(lessonId: string): Promise<IExercise[]>;
 }

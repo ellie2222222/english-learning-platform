@@ -240,6 +240,29 @@ class UserLessonRepository implements IUserLessonRepository {
       );
     }
   }
+
+  async getExistingUserLesson(
+    userId: string,
+    lessonId: string
+  ): Promise<IUserLesson | null> {
+    try {
+      const matchQuery = {
+        userId: new mongoose.Types.ObjectId(userId),
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      };
+      const existingUserLesson = await UserLessonModel.findOne(matchQuery);
+      return existingUserLesson;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserLessonRepository;

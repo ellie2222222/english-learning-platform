@@ -40,15 +40,50 @@ class ExerciseDto {
       ) {
         throw new Error("Missing image file for image translate exercise");
       }
+      if (type === ExerciseTypeEnum.MULTIPLE_CHOICE) {
+        if (
+          !options ||
+          !Array.isArray(options) ||
+          options.some((opt: any) => typeof opt !== "string" || !opt)
+        ) {
+          throw new Error(
+            "Options must be a non-empty array of strings for multiple choice exercise"
+          );
+        }
+        if (
+          !Array.isArray(answer) ||
+          answer.length !== 1 ||
+          typeof answer[0] !== "string" ||
+          !options.includes(answer[0])
+        ) {
+          throw new Error(
+            "Answer must be an array with one valid option for multiple choice exercise"
+          );
+        }
+      }
 
       if (
-        type === ExerciseTypeEnum.MULTIPLE_CHOICE &&
-        (!options || !Array.isArray(options))
+        [
+          ExerciseTypeEnum.IMAGE_TRANSLATE,
+          ExerciseTypeEnum.FILL_IN_THE_BLANK,
+          ExerciseTypeEnum.TRANSLATE,
+        ].includes(type)
       ) {
-        throw new Error(
-          "Invalid options for multiple choice exercise, must be array of string"
-        );
+        if (
+          !Array.isArray(answer) ||
+          answer.length === 0 ||
+          answer.some((ans: any) => typeof ans !== "string" || !ans)
+        ) {
+          throw new Error(
+            "Answer must be a non-empty array of strings for this exercise type"
+          );
+        }
       }
+
+      if (typeof question !== "string" || typeof explanation !== "string") {
+        throw new Error("Question and explanation must be strings");
+      }
+
       next();
     } catch (error) {
       res

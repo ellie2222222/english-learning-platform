@@ -30,6 +30,9 @@ import testRoutes from "./routes/TestRoute";
 import receiptRoutes from "./routes/ReceiptRoute";
 import paymentRoutes from "./routes/PaymentRoute";
 import exerciseRoutes from "./routes/ExerciseRoute";
+import userExerciseRoutes from "./routes/UserExerciseRoute";
+import userCourseRoutes from "./routes/UserCourseRoute";
+import userLessonRoutes from "./routes/UserLessonRoute";
 
 dotenv.config();
 
@@ -69,6 +72,9 @@ app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/flashcard-sets", flashcardSetRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/exercises", exerciseRoutes);
+app.use("/api/user-exercises", userExerciseRoutes);
+app.use("/api/user-courses", userCourseRoutes);
+app.use("/api/user-lessons", userLessonRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

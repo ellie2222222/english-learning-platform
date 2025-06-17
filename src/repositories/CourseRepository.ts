@@ -103,6 +103,7 @@ class CourseRepository implements ICourseRepository {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
       };
+
       const course = await CourseModel.findOne(matchQuery);
 
       if (!course) {
@@ -147,7 +148,7 @@ class CourseRepository implements ICourseRepository {
           break;
         default:
           break;
-      } 
+      }
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 

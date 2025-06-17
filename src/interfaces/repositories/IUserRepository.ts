@@ -28,4 +28,6 @@ export interface IUserRepository {
   getAllUsersTimeInterval(startDate: Date, endDate: Date): Promise<IUser[]>;
 
   getExpiredUsers(): Promise<IUser[] | []>;
+
+  getAllUserForLoginAchievement(goal: number): Promise<IUser[]>;
 }

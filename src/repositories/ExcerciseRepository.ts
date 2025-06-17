@@ -193,7 +193,7 @@ class ExerciseRepository implements IExerciseRepository {
           $unwind: "$lesson",
         },
         {
-          $sort: { [sortField]: sortOrder },
+          $sort: { order: 1, [sortField]: sortOrder },
         },
         { $skip: skip },
         { $limit: query.size },
@@ -250,6 +250,50 @@ class ExerciseRepository implements IExerciseRepository {
           "This test does not have enough exercise for you to paticipate, please report this issue to admin"
         );
       }
+
+      return exercises;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getExerciseOrder(lessonId: string): Promise<number> {
+    try {
+      const exerciseOrder = await ExerciseModel.find({
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      }).sort({ order: -1 });
+
+      if (!exerciseOrder[0]) {
+        return 1;
+      }
+
+      return exerciseOrder[0].order.valueOf() + 1;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getAllLessonExercise(lessonId: string): Promise<IExercise[]> {
+    try {
+      const exercises = await ExerciseModel.find({
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      });
 
       return exercises;
     } catch (error) {

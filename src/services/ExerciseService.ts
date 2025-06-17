@@ -22,6 +22,19 @@ class ExerciseService implements IExerciseService {
     @Inject() private database: Database
   ) {}
 
+  private arraysEqual(
+    a: string | string[] | undefined,
+    b: string | string[] | undefined
+  ): boolean {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (typeof a === "string" && typeof b === "string") return a === b;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      return a.length === b.length && a.every((val, index) => val === b[index]);
+    }
+    return false;
+  }
+
   createExercise = async (
     lessonId: string,
     type: string,
@@ -42,26 +55,19 @@ class ExerciseService implements IExerciseService {
         );
       }
 
-      let formatedAnswer = answer;
-      if (
-        typeof answer === "string" &&
-        (type === ExerciseTypeEnum.TRANSLATE ||
-          type === ExerciseTypeEnum.IMAGE_TRANSLATE ||
-          type === ExerciseTypeEnum.FILL_IN_THE_BLANK)
-      ) {
-        formatedAnswer = (answer as string).trim().split(/\s+/);
-      }
+      const order = await this.exerciseRepository.getExerciseOrder(lessonId);
 
       const exercise = await this.exerciseRepository.createExercise(
         {
           lessonId: new mongoose.Types.ObjectId(lessonId),
           type,
           question,
-          answer: formatedAnswer,
+          answer,
           focus,
           options,
           explanation,
           image,
+          order,
         },
         session
       );
@@ -87,7 +93,6 @@ class ExerciseService implements IExerciseService {
       await session.endSession();
     }
   };
-
   updateExercise = async (
     id: string,
     question: string,
@@ -99,6 +104,7 @@ class ExerciseService implements IExerciseService {
   ): Promise<IExercise | null> => {
     const session = await this.database.startTransaction();
     try {
+      // Exercise existence
       const checkExercise = await this.exerciseRepository.getExercise(id);
       let cleanUpImage = false;
       if (!checkExercise) {
@@ -108,6 +114,7 @@ class ExerciseService implements IExerciseService {
         );
       }
 
+      // Lesson existence
       const checkLesson = await this.lessonRepository.getLessonById(
         (checkExercise.lessonId as ObjectId).toString()
       );
@@ -119,50 +126,94 @@ class ExerciseService implements IExerciseService {
         );
       }
 
+      // Validate answer based on exercise type
+      if (answer !== undefined || options !== undefined) {
+        const checkOptions = options ?? checkExercise.options;
+        const checkAnswer = answer ?? checkExercise.answer;
+
+        if (checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE) {
+          // Ensure checkAnswer is an array with one string and exists in checkOptions
+          if (
+            !Array.isArray(checkAnswer) ||
+            checkAnswer.length !== 1 ||
+            typeof checkAnswer[0] !== "string" ||
+            (checkOptions && !checkOptions.includes(checkAnswer[0]))
+          ) {
+            throw new CustomException(
+              StatusCodeEnum.BadRequest_400,
+              "Answer must be an array with one valid option for multiple choice"
+            );
+          }
+
+          // Validate options if provided
+          if (options) {
+            if (
+              !Array.isArray(options) ||
+              options.length === 0 ||
+              options.some((opt) => typeof opt !== "string" || !opt)
+            ) {
+              throw new CustomException(
+                StatusCodeEnum.BadRequest_400,
+                "Options must be a non-empty array of strings"
+              );
+            }
+          }
+        } else if (
+          [
+            ExerciseTypeEnum.IMAGE_TRANSLATE,
+            ExerciseTypeEnum.FILL_IN_THE_BLANK,
+            ExerciseTypeEnum.TRANSLATE,
+          ].includes(checkExercise.type)
+        ) {
+          if (
+            !Array.isArray(checkAnswer) ||
+            checkAnswer.length === 0 ||
+            checkAnswer.some((ans) => typeof ans !== "string" || !ans)
+          ) {
+            throw new CustomException(
+              StatusCodeEnum.BadRequest_400,
+              "Answer must be a non-empty array of strings"
+            );
+          }
+        }
+      }
+
       const data: Partial<IExercise> = {};
       if (question && question !== checkExercise.question)
         data.question = question;
-
-      if (answer && answer !== checkExercise.answer) {
-        let formatedAnswer = answer;
-        if (
-          typeof answer === "string" &&
-          (checkExercise.type === ExerciseTypeEnum.TRANSLATE ||
-            checkExercise.type === ExerciseTypeEnum.IMAGE_TRANSLATE ||
-            checkExercise.type === ExerciseTypeEnum.FILL_IN_THE_BLANK)
-        ) {
-          formatedAnswer = (answer as string).trim().split(/\s+/);
-        }
-        data.answer = formatedAnswer;
-      }
-
-      if (focus && focus !== checkExercise.focus) {
-        data.focus = focus;
-      }
-
       if (
-        checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE &&
+        answer !== undefined &&
+        !this.arraysEqual(answer, checkExercise.answer)
+      ) {
+        // Normalize answer to array for multiple-choice if it's a string
+        data.answer =
+          checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE &&
+          typeof answer === "string"
+            ? [answer]
+            : answer;
+      }
+      if (focus && focus !== checkExercise.focus) data.focus = focus;
+      if (
         options &&
-        options.length &&
-        JSON.stringify(options) !== JSON.stringify(checkExercise.options)
+        checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE &&
+        !this.arraysEqual(options, checkExercise.options)
       ) {
         data.options = options;
       }
-
       if (explanation && explanation !== checkExercise.explanation) {
         data.explanation = explanation;
       }
-
-      console.log(image);
       if (
         image &&
         checkExercise.type === ExerciseTypeEnum.IMAGE_TRANSLATE &&
         image !== checkExercise.image
       ) {
         if (checkExercise.image) {
-          cleanUpImage = true;
+          data.image = image;
+          cleanUpImage = true; // Flag for cleanup
+        } else {
+          data.image = image;
         }
-        data.image = image;
       }
 
       const exercise = await this.exerciseRepository.updateExercise(

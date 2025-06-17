@@ -18,4 +18,5 @@ export interface IUser extends Document {
     expiresAt: Date | null;
     isVerified: boolean;
   };
+  xp: number;
 }
