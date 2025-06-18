@@ -1,0 +1,53 @@
+import { Router } from "express";
+import GrammarController from "../controllers/GrammarController";
+import AuthMiddleware from "../middlewares/AuthMiddleware";
+import GrammarDto from "../dtos/GrammarDto";
+import Container from "typedi";
+import RoleMiddleware from "../middlewares/RoleMiddleware";
+import UserEnum from "../enums/UserEnum";
+import { CourseResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+
+const lessonController = Container.get(GrammarController);
+const lessonDto = new GrammarDto();
+const grammarRoutes = Router();
+
+grammarRoutes.use(AuthMiddleware);
+
+grammarRoutes.post(
+  "/",
+  RoleMiddleware([UserEnum.ADMIN]),
+  lessonDto.createGrammar,
+  lessonController.createGrammar
+);
+
+grammarRoutes.get(
+  "/",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  CourseResourceAccessMiddleware,
+  lessonDto.getGrammars,
+  lessonController.getGrammars
+);
+
+grammarRoutes.get(
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  CourseResourceAccessMiddleware,
+  lessonDto.getGrammarById,
+  lessonController.getGrammarById
+);
+
+grammarRoutes.patch(
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN]),
+  lessonDto.updateGrammar,
+  lessonController.updateGrammar
+);
+
+grammarRoutes.delete(
+  "/:id",
+  RoleMiddleware([UserEnum.ADMIN]),
+  lessonDto.deleteGrammar,
+  lessonController.deleteGrammar
+);
+
+export default grammarRoutes;

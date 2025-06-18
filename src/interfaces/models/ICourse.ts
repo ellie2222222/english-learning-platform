@@ -6,6 +6,7 @@ export interface ICourse extends Document {
   level: string;
   type: string;
   totalLessons: number;
+  coverImage: string,
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;

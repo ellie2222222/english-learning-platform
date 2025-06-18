@@ -34,6 +34,8 @@ import userExerciseRoutes from "./routes/UserExerciseRoute";
 import userCourseRoutes from "./routes/UserCourseRoute";
 import userLessonRoutes from "./routes/UserLessonRoute";
 import userTestRoutes from "./routes/UserTestRoute";
+import grammarRoutes from "./routes/GrammarRoute";
+import vocabularyRoutes from "./routes/VocabularyRoute";
 
 dotenv.config();
 
@@ -77,6 +79,8 @@ app.use("/api/user-exercises", userExerciseRoutes);
 app.use("/api/user-courses", userCourseRoutes);
 app.use("/api/user-lessons", userLessonRoutes);
 app.use("/api/user-tests", userTestRoutes);
+app.use("/api/grammars", grammarRoutes);
+app.use("/api/vocabularies", vocabularyRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");

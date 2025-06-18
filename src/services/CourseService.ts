@@ -8,6 +8,7 @@ import { IQuery } from "../interfaces/others/IQuery";
 import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
 import CourseRepository from "../repositories/CourseRepository";
 import { IPagination } from "../interfaces/others/IPagination";
+import { cleanUpFile } from "../utils/fileUtils";
 
 @Service()
 class CourseService implements ICourseService {
@@ -22,7 +23,8 @@ class CourseService implements ICourseService {
     description: string | undefined,
     type: string,
     level: string,
-    totalLessons: number | undefined
+    totalLessons: number | undefined,
+    coverImage?: string | undefined,
   ): Promise<ICourse> {
     const session = await this.database.startTransaction();
     try {
@@ -33,13 +35,21 @@ class CourseService implements ICourseService {
           type,
           level,
           totalLessons,
+          coverImage,
         },
         session
       );
+ 
+      if (coverImage) {
+        await cleanUpFile(coverImage, "create");
+      }
 
       await this.database.commitTransaction(session);
       return course;
     } catch (error) {
+      if (coverImage) {
+        await cleanUpFile(coverImage, "create");
+      }
       await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
@@ -59,7 +69,8 @@ class CourseService implements ICourseService {
     description?: string,
     type?: string,
     level?: string,
-    totalLessons?: number
+    totalLessons?: number,
+    coverImage?: string | undefined,
   ): Promise<ICourse | null> {
     const session = await this.database.startTransaction();
     try {
@@ -77,6 +88,7 @@ class CourseService implements ICourseService {
       if (type !== undefined) updateData.type = type;
       if (level !== undefined) updateData.level = level;
       if (totalLessons !== undefined) updateData.totalLessons = totalLessons;
+      if (coverImage !== undefined) updateData.coverImage = coverImage;
 
       const updatedCourse = await this.courseRepository.updateCourse(
         id,
@@ -90,9 +102,20 @@ class CourseService implements ICourseService {
         );
       }
 
+      if (coverImage && course.coverImage) {
+        await cleanUpFile(course.coverImage, "update");
+      }
+
+      if (coverImage) {
+        await cleanUpFile(coverImage, "create");
+      }
+
       await this.database.commitTransaction(session);
       return updatedCourse;
     } catch (error) {
+      if (coverImage) {
+        await cleanUpFile(coverImage, "create");
+      }
       await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;

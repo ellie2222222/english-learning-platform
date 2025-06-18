@@ -7,6 +7,7 @@ import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import LessonDto from "../dtos/LessonDto";
 import LessonController from "../controllers/LessonController";
+import { uploadFile } from "../middlewares/storeFile";
 
 const courseController = Container.get(CourseController);
 const lessonController = Container.get(LessonController);
@@ -19,6 +20,7 @@ courseRoutes.use(AuthMiddleware);
 courseRoutes.post(
   "/",
   RoleMiddleware([UserEnum.ADMIN]),
+  uploadFile.single("courseCover"),
   courseDto.createCourse,
   courseController.createCourse
 );
@@ -44,6 +46,7 @@ courseRoutes.get(
 courseRoutes.patch(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN]),
+  uploadFile.single("courseCover"),
   courseDto.updateCourse,
   courseController.updateCourse
 );

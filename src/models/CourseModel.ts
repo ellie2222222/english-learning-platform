@@ -23,6 +23,10 @@ const CourseModelSchema = new Schema<ICourse>(
       required: false,
       min: 1,
     },
+    coverImage: {
+      type: String,
+      required: true,
+    },
     ...baseModelSchema.obj,
   },
   { timestamps: true }

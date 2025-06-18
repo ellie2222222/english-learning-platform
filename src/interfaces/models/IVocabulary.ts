@@ -1,7 +1,7 @@
 import mongoose, { Document } from "mongoose";
 
 export interface IVocabulary extends Document {
-  lessonId: mongoose.Schema.Types.ObjectId;
+  lessonId: mongoose.Schema.Types.ObjectId | string;
   englishContent: string;
   vietnameseContent: string;
   imageUrl?: string;
