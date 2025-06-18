@@ -4,12 +4,12 @@ import Container from "typedi";
 import UserExerciseController from "../controllers/UserExerciseController";
 
 const userExerciseRoutes = Router();
-const userExercistController = Container.get(UserExerciseController);
+const userExerciseController = Container.get(UserExerciseController);
 
 userExerciseRoutes.use(AuthMiddleware);
 
-userExerciseRoutes.post("/submit", userExercistController.submitExercise);
-userExerciseRoutes.get("/:id/user", userExercistController.getUserExercises);
-userExerciseRoutes.get("/:id", userExercistController.getUserExercise);
+userExerciseRoutes.post("/submition", userExerciseController.submitExercise);
+userExerciseRoutes.get("/:id/user", userExerciseController.getUserExercises);
+userExerciseRoutes.get("/:id", userExerciseController.getUserExercise);
 
 export default userExerciseRoutes;

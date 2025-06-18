@@ -15,6 +15,7 @@ import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import ExerciseRepository from "../repositories/ExcerciseRepository";
 import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 
 @Service()
 class TestService implements ITestService {
@@ -49,11 +50,16 @@ class TestService implements ITestService {
           );
         }
 
-        if (courseId !== null) {
+        if (courseId === null) {
           courseId = lesson.courseId.toString();
-        }
-
-        if (courseId?.toString() !== lesson.courseId.toString()) {
+        } else if (courseId !== lesson.courseId.toString()) {
+          console.log(
+            courseId === lesson.courseId.toString(),
+            courseId,
+            lesson.courseId,
+            typeof courseId,
+            typeof lesson.courseId.toString()
+          );
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             "A test's lessonIds must be inside the same course"
@@ -77,12 +83,15 @@ class TestService implements ITestService {
         );
       }
 
+      const order = await this.testRepository.getTestOrder(courseId as string);
       const test = await this.testRepository.createTest(
         {
-          lessonIds,
           name,
           description,
           totalQuestions,
+          lessonIds,
+          courseId: new ObjectId(courseId as string),
+          order,
         },
         session
       );
@@ -118,6 +127,29 @@ class TestService implements ITestService {
         );
       }
 
+      let courseId: string | null = null;
+      if (lessonIds) {
+        for (const lessonId of lessonIds) {
+          const lesson = await this.lessonRepository.getLessonById(lessonId);
+          if (!lesson) {
+            throw new CustomException(
+              StatusCodeEnum.NotFound_404,
+              `Lesson with ID ${lessonId} not found`
+            );
+          }
+
+          if (courseId !== null) {
+            courseId = lesson.courseId.toString();
+          }
+
+          if (courseId?.toString() !== lesson.courseId.toString()) {
+            throw new CustomException(
+              StatusCodeEnum.Conflict_409,
+              "A test's lessonIds must be inside the same course"
+            );
+          }
+        }
+      }
       // Validate lesson IDs
       for (const lessonId of lessonIds) {
         const lesson = await this.lessonRepository.getLessonById(lessonId);
@@ -129,11 +161,30 @@ class TestService implements ITestService {
         }
       }
 
-      const updateData: Partial<ITest> = {
+      if (totalQuestions && totalQuestions !== test.totalQuestions) {
+        const lessonObjectIds = lessonIds.map((id: any) =>
+          typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
+        );
+
+        const exercise = await this.exerciseRepository.getExercisesForTest(
+          totalQuestions,
+          lessonObjectIds
+        );
+
+        if (exercise.length < totalQuestions) {
+          throw new CustomException(
+            StatusCodeEnum.NotFound_404,
+            `Not enough exercises for test`
+          );
+        }
+      }
+
+      const updateData = {
         lessonIds,
         name,
         description,
         totalQuestions,
+        courseId: new ObjectId(courseId as string),
       };
 
       const updatedTest = await this.testRepository.updateTest(

@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /api/user-exercises/submit:
+ * /api/user-exercises/submition:
  *   post:
  *     summary: Submit a user exercise
  *     tags: [UserExercise]

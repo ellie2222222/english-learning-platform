@@ -171,6 +171,26 @@ class TestRepository implements ITestRepository {
     }
   }
 
+  async getTestOrder(courseId: string): Promise<number> {
+    try {
+      const test = await TestModel.findOne({
+        courseId: new mongoose.Types.ObjectId(courseId),
+        isDeleted: false,
+      }).sort({ order: -1 });
+
+      if (!test) return 1;
+      return test.order + 1;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
   // async getTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
   //   try {
   //     const matchQuery = {
