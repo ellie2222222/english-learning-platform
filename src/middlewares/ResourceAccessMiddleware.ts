@@ -149,7 +149,11 @@ const LessonResourceAccessMiddleware = async (
 };
 
 const GenericResourceAccessMiddleware = (resourceType: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       if (!req.userInfo || !req.userInfo.userId) {
         throw new CustomException(
@@ -251,9 +255,10 @@ const GenericResourceAccessMiddleware = (resourceType: string) => {
       }
 
       if (!hasAccess) {
-        return res
+        res
           .status(StatusCodeEnum.Forbidden_403)
           .json({ message: "You do not have access to this resource" });
+        return;
       }
 
       next();

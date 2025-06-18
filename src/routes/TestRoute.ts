@@ -25,9 +25,9 @@ testRoutes.post(
 );
 
 testRoutes.get(
-  "/",
+  "/:id/course",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  LessonResourceAccessMiddleware,
+  // GenericResourceAccessMiddleware(ResourceType.COURSE)
   testDto.getTests,
   testController.getTests
 );
