@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import UserTestModel from "../models/UserTestModel";
-import UserCourseModel from "../models/UserCourseModel"; 
-import UserLessonModel from "../models/UserLessonModel"; 
+import UserCourseModel from "../models/UserCourseModel";
+import UserLessonModel from "../models/UserLessonModel";
 import { ResourceModel } from "../enums/ResourceModelEnum";
- 
+
 const OwnershipMiddleware = (model: ResourceModel) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,7 +32,7 @@ const OwnershipMiddleware = (model: ResourceModel) => {
       switch (model) {
         case ResourceModel.USER_COURSE:
           resource = await UserCourseModel.findOne({
-            _id: resourceId,
+            _id: new mongoose.Types.ObjectId(resourceId),
             userId: new mongoose.Types.ObjectId(userId),
             isDeleted: false,
           }).exec();
@@ -40,15 +40,16 @@ const OwnershipMiddleware = (model: ResourceModel) => {
 
         case ResourceModel.USER_LESSON:
           resource = await UserLessonModel.findOne({
-            _id: resourceId,
+            _id: new mongoose.Types.ObjectId(resourceId),
             userId: new mongoose.Types.ObjectId(userId),
             isDeleted: false,
           }).exec();
+
           break;
 
         case ResourceModel.USER_TEST:
           resource = await UserTestModel.findOne({
-            _id: resourceId,
+            _id: new mongoose.Types.ObjectId(resourceId),
             userId: new mongoose.Types.ObjectId(userId),
             isDeleted: false,
           }).exec();

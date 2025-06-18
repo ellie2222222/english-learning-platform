@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { OrderType, SortByType } from "../interfaces/others/IQuery";  
+import { OrderType, SortByType } from "../interfaces/others/IQuery";
 
 class TestDto {
   private validateObjectId = (id: string): void => {
@@ -35,24 +35,31 @@ class TestDto {
     if (order !== undefined && (isNaN(order) || order < 0)) {
       throw new Error("Order must be a number greater than or equal to 0");
     }
-  }; 
+  };
 
-  createTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { courseId, name, description, length, order, lessonIds, totalQuestions } = req.body;
+      const { name, description, order, lessonIds, totalQuestions } = req.body;
 
-      if (!courseId || !name || !length || !lessonIds || !totalQuestions) {
-        throw new Error("Missing required fields: courseId, name, length, lessonIds, and totalQuestions are required");
+      if (!name || !lessonIds || !totalQuestions) {
+        throw new Error(
+          "Missing required fields:  name, length, lessonIds, and totalQuestions are required"
+        );
       }
 
-      this.validateObjectId(courseId);
       this.validateName(name);
       this.validateDescription(description);
-      this.validateLength(length);
+      this.validateLength(totalQuestions);
       this.validateOrder(order);
       lessonIds.forEach((lessonId: string) => this.validateObjectId(lessonId));
       if (isNaN(totalQuestions) || totalQuestions < 0) {
-        throw new Error("Total questions must be a number greater than or equal to 0");
+        throw new Error(
+          "Total questions must be a number greater than or equal to 0"
+        );
       }
 
       next();
@@ -63,20 +70,32 @@ class TestDto {
     }
   };
 
-  updateTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { testId } = req.params;
-      const { courseId, name, description, length, order, lessonIds, totalQuestions } = req.body;
+      const { id } = req.params;
+      const { name, description, length, order, lessonIds, totalQuestions } =
+        req.body;
 
-      this.validateObjectId(testId);
-      if (courseId) this.validateObjectId(courseId);
+      this.validateObjectId(id);
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
       this.validateLength(length);
       this.validateOrder(order);
-      if (lessonIds) lessonIds.forEach((lessonId: string) => this.validateObjectId(lessonId));
-      if (totalQuestions !== undefined && (isNaN(totalQuestions) || totalQuestions < 0)) {
-        throw new Error("Total questions must be a number greater than or equal to 0");
+      if (lessonIds)
+        lessonIds.forEach((lessonId: string) =>
+          this.validateObjectId(lessonId)
+        );
+      if (
+        totalQuestions !== undefined &&
+        (isNaN(totalQuestions) || totalQuestions < 0)
+      ) {
+        throw new Error(
+          "Total questions must be a number greater than or equal to 0"
+        );
       }
 
       next();
@@ -87,10 +106,14 @@ class TestDto {
     }
   };
 
-  deleteTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { testId } = req.params;
-      this.validateObjectId(testId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -99,10 +122,14 @@ class TestDto {
     }
   };
 
-  getTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { testId } = req.params;
-      this.validateObjectId(testId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -111,14 +138,24 @@ class TestDto {
     }
   };
 
-  getTests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTests = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
@@ -136,17 +173,27 @@ class TestDto {
     }
   };
 
-  getTestsByLessonId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestsByLessonId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { lessonId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
 
-      this.validateObjectId(lessonId);
+      this.validateObjectId(id);
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
@@ -162,19 +209,29 @@ class TestDto {
         message: (error as Error).message,
       });
     }
-  }; 
+  };
 
-  getTestsByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestsByUserId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { userId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
 
-      this.validateObjectId(userId);
+      this.validateObjectId(id);
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
@@ -190,7 +247,7 @@ class TestDto {
         message: (error as Error).message,
       });
     }
-  }; 
+  };
 }
 
 export default TestDto;

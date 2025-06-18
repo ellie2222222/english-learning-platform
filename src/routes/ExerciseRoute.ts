@@ -6,6 +6,8 @@ import ExerciseDto from "../dtos/ExerciseDto";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import { uploadFile } from "../middlewares/storeFile";
+import { GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import { ResourceType } from "../enums/ResourceType";
 
 const exerciseRoutes = Router();
 const exerciseController = Container.get(ExerciseController);
@@ -39,6 +41,11 @@ exerciseRoutes.delete(
 exerciseRoutes.get(
   "/:id/lesson",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  (req, res, next) => {
+    GenericResourceAccessMiddleware(ResourceType.LESSON)(req, res, next).catch(
+      next
+    );
+  },
   exerciseDto.getExercises,
   exerciseController.getExercises
 );
@@ -46,6 +53,13 @@ exerciseRoutes.get(
 exerciseRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  (req, res, next) => {
+    GenericResourceAccessMiddleware(ResourceType.EXERCISE)(
+      req,
+      res,
+      next
+    ).catch(next);
+  },
   exerciseDto.getExercise,
   exerciseController.getExercise
 );

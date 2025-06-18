@@ -9,6 +9,10 @@ const TestModelSchema = new Schema<ITest>(
 
       required: true,
     },
+    courseId: {
+      type: Schema.Types.ObjectId,
+      ref: "Course",
+    },
     name: { type: String, required: true },
     description: { type: String, require: false },
     totalQuestions: {

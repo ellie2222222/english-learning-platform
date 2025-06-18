@@ -115,10 +115,11 @@ class TestRepository implements ITestRepository {
     }
   }
 
-  async getTests(query: IQuery): Promise<IPagination> {
+  async getTests(query: IQuery, courseId: string): Promise<IPagination> {
     try {
       const matchQuery = {
         isDeleted: false,
+        courseId: new mongoose.Types.ObjectId(courseId),
       };
       let sortField = "createdAt";
       switch (query.sortBy) {
@@ -170,61 +171,61 @@ class TestRepository implements ITestRepository {
     }
   }
 
-  async getTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
-    try {
-      const matchQuery = {
-        userId: new mongoose.Types.ObjectId(userId),
-        isDeleted: false,
-      };
-      let sortField = "createdAt";
-      switch (query.sortBy) {
-        case SortByType.DATE:
-          sortField = "createdAt";
-          break;
-        case SortByType.NAME:
-          sortField = "name";
-          break;
-        default:
-          break;
-      }
-      const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
-      const skip = (query.page - 1) * query.size;
+  // async getTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
+  //   try {
+  //     const matchQuery = {
+  //       userId: new mongoose.Types.ObjectId(userId),
+  //       isDeleted: false,
+  //     };
+  //     let sortField = "createdAt";
+  //     switch (query.sortBy) {
+  //       case SortByType.DATE:
+  //         sortField = "createdAt";
+  //         break;
+  //       case SortByType.NAME:
+  //         sortField = "name";
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //     const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
+  //     const skip = (query.page - 1) * query.size;
 
-      const tests = await TestModel.aggregate([
-        { $match: matchQuery },
-        {
-          $lookup: {
-            from: "lessons",
-            localField: "lessonIds",
-            foreignField: "_id",
-            as: "lessons",
-          },
-        },
-        {
-          $sort: { [sortField]: sortOrder },
-        },
-        { $skip: skip },
-        { $limit: query.size },
-      ]);
+  //     const tests = await TestModel.aggregate([
+  //       { $match: matchQuery },
+  //       {
+  //         $lookup: {
+  //           from: "lessons",
+  //           localField: "lessonIds",
+  //           foreignField: "_id",
+  //           as: "lessons",
+  //         },
+  //       },
+  //       {
+  //         $sort: { [sortField]: sortOrder },
+  //       },
+  //       { $skip: skip },
+  //       { $limit: query.size },
+  //     ]);
 
-      const total = await TestModel.countDocuments(matchQuery);
+  //     const total = await TestModel.countDocuments(matchQuery);
 
-      return {
-        data: tests,
-        page: query.page,
-        total: total,
-        totalPages: Math.ceil(total / query.size),
-      };
-    } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
-      throw new CustomException(
-        StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
-      );
-    }
-  }
+  //     return {
+  //       data: tests,
+  //       page: query.page,
+  //       total: total,
+  //       totalPages: Math.ceil(total / query.size),
+  //     };
+  //   } catch (error) {
+  //     if (error instanceof CustomException) {
+  //       throw error;
+  //     }
+  //     throw new CustomException(
+  //       StatusCodeEnum.InternalServerError_500,
+  //       error instanceof Error ? error.message : "Internal Server Error"
+  //     );
+  //   }
+  // }
 
   async getTestsByLessonId(
     lessonId: string,

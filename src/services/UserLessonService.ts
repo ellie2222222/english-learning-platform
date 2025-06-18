@@ -39,7 +39,11 @@ class UserLessonService implements IUserLessonService {
     private exerciseRepository: IExerciseRepository
   ) {}
 
-  checkUserLessonCompletion = async (lessonId: string, userId: string) => {
+  checkUserLessonCompletion = async (
+    lessonId: string,
+    userId: string,
+    xp: number
+  ) => {
     try {
       const exercises = await this.exerciseRepository.getAllLessonExercise(
         lessonId
@@ -59,7 +63,7 @@ class UserLessonService implements IUserLessonService {
         return !userExercise || !userExercise.completed;
       });
 
-      console.log(incompleteExercises);
+      // console.log(incompleteExercises);
 
       if (incompleteExercises.length > 0) {
         throw new CustomException(
@@ -67,6 +71,10 @@ class UserLessonService implements IUserLessonService {
           "To complete the lesson, you need to complete all of it's exercises"
         );
       }
+
+      await this.userRepository.updateUserById(userId, {
+        xp: xp + 100,
+      });
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -142,6 +150,7 @@ class UserLessonService implements IUserLessonService {
 
   async updateUserLesson(
     userLessonId: string,
+    userId: string,
     status: string
   ): Promise<IUserLesson | null> {
     const session = await this.database.startTransaction();
@@ -155,13 +164,21 @@ class UserLessonService implements IUserLessonService {
           "User lesson not found"
         );
       }
+      const checkUser = await this.userRepository.getUserById(userId);
+      if (!checkUser) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
 
       const updateData: Partial<IUserLesson> = {};
       if (status !== undefined) {
         if (status === UserLessonStatus.COMPLETED) {
           await this.checkUserLessonCompletion(
             lesson.lessonId.toString(),
-            lesson.userId.toString()
+            userId,
+            checkUser.xp || 0
           );
         }
         updateData.status = status as UserLessonStatusType;

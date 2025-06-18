@@ -8,12 +8,17 @@ import { IQuery } from "../interfaces/others/IQuery";
 import { IPagination } from "../interfaces/others/IPagination";
 import LessonRepository from "../repositories/LessonRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
+import UserLessonRepository from "../repositories/UserLessonRepository";
+import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
+import mongoose from "mongoose";
 
 @Service()
 class LessonService implements ILessonService {
   constructor(
     @Inject(() => LessonRepository)
     private lessonRepository: ILessonRepository,
+    @Inject(() => UserLessonRepository)
+    private userLessonRepository: IUserLessonRepository,
     @Inject() private database: Database
   ) {}
 
@@ -134,9 +139,19 @@ class LessonService implements ILessonService {
     }
   }
 
-  async getLessonById(id: string): Promise<ILesson | null> {
+  async getLessonById(id: string, userId: string): Promise<ILesson | null> {
     try {
       const lesson = await this.lessonRepository.getLessonById(id);
+      const checkUserLesson =
+        await this.userLessonRepository.getExistingUserLesson(userId, id);
+
+      if (!checkUserLesson) {
+        await this.userLessonRepository.createUserLesson({
+          lessonId: new mongoose.Types.ObjectId(id),
+          userId: new mongoose.Types.ObjectId(id),
+        });
+      }
+
       return lesson;
     } catch (error) {
       if (error instanceof CustomException) {

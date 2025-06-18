@@ -12,6 +12,7 @@ export interface IUserLessonService {
 
   updateUserLesson(
     userLessonId: string,
+    userId: string,
     status?: string
   ): Promise<IUserLesson | null>;
 

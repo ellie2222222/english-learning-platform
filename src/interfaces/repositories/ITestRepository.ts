@@ -4,11 +4,8 @@ import { IPagination } from "../others/IPagination";
 import { ITest } from "../models/ITest";
 
 export interface ITestRepository {
-  createTest(
-    data: object,
-    session?: mongoose.ClientSession
-  ): Promise<ITest>;
-  
+  createTest(data: object, session?: mongoose.ClientSession): Promise<ITest>;
+
   updateTest(
     testId: string,
     data: object,
@@ -22,9 +19,9 @@ export interface ITestRepository {
 
   getTestById(testId: string): Promise<ITest | null>;
 
-  getTests(query: IQuery): Promise<IPagination>;
+  getTests(query: IQuery, courseId: string): Promise<IPagination>;
 
-  getTestsByUserId(userId: string, query: IQuery): Promise<IPagination>;
+  // getTestsByUserId(userId: string, query: IQuery): Promise<IPagination>;
 
   getTestsByLessonId(lessonId: string, query: IQuery): Promise<IPagination>;
 }

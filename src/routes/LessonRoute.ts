@@ -5,7 +5,10 @@ import LessonDto from "../dtos/LessonDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import { CourseResourceAccessMiddleware, LessonResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import {
+  CourseResourceAccessMiddleware,
+  LessonResourceAccessMiddleware,
+} from "../middlewares/ResourceAccessMiddleware";
 import GrammarDto from "../dtos/GrammarDto";
 import GrammarController from "../controllers/GrammarController";
 import VocabularyDto from "../dtos/VocabularyDto";

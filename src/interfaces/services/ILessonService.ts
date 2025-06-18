@@ -22,7 +22,7 @@ export interface ILessonService {
 
   getLessons(query: IQuery): Promise<IPagination>;
 
-  getLessonById(id: string): Promise<ILesson | null>;
+  getLessonById(id: string, userId: string): Promise<ILesson | null>;
 
   getLessonsByCourseId(courseId: string, query: IQuery): Promise<IPagination>;
 }

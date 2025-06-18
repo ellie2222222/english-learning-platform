@@ -5,7 +5,11 @@ import TestDto from "../dtos/TestDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import { LessonResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import {
+  GenericResourceAccessMiddleware,
+  LessonResourceAccessMiddleware,
+} from "../middlewares/ResourceAccessMiddleware";
+import { ResourceType } from "../enums/ResourceType";
 
 const testController = Container.get(TestController);
 const testDto = new TestDto();
@@ -31,7 +35,11 @@ testRoutes.get(
 testRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  LessonResourceAccessMiddleware,
+  (req, res, next) => {
+    GenericResourceAccessMiddleware(ResourceType.TEST)(req, res, next).catch(
+      next
+    );
+  },
   testDto.getTestById,
   testController.getTestById
 );
@@ -52,6 +60,11 @@ testRoutes.delete(
 
 testRoutes.get(
   "/lesson/:id",
+  (req, res, next) => {
+    GenericResourceAccessMiddleware(ResourceType.LESSON)(req, res, next).catch(
+      next
+    );
+  },
   testDto.getTestsByLessonId,
   testController.getTestsByLessonId
 );

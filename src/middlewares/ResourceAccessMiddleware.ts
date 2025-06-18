@@ -7,6 +7,11 @@ import UserLessonModel from "../models/UserLessonModel";
 import LessonModel from "../models/LessonModel";
 import TestModel from "../models/TestModel";
 import UserEnum from "../enums/UserEnum";
+import VocabularyModel from "../models/VocabularyModel";
+import ExerciseModel from "../models/ExerciseModel";
+import GrammarModel from "../models/GrammarModel";
+import { UserLessonStatus } from "../enums/UserLessonStatus";
+import { ResourceType } from "../enums/ResourceType";
 
 const CourseResourceAccessMiddleware = async (
   req: Request,
@@ -143,60 +148,134 @@ const LessonResourceAccessMiddleware = async (
   }
 };
 
-const GenericResourceAccessMiddleware = (
-  resourceType: "Lesson" | "Grammar" | "Vocabulary" | "Exercise" | "Test"
-) => {
+const GenericResourceAccessMiddleware = (resourceType: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.userInfo || !req.userInfo.userId) {
-      throw new CustomException(
-        StatusCodeEnum.Unauthorized_401,
-        "User not authenticated"
-      );
-    }
+    try {
+      if (!req.userInfo || !req.userInfo.userId) {
+        throw new CustomException(
+          StatusCodeEnum.Unauthorized_401,
+          "User not authenticated"
+        );
+      }
 
-    if (req.userInfo.role === UserEnum.ADMIN) {
-      return next();
-    }
+      if (req.userInfo.role === UserEnum.ADMIN) {
+        return next();
+      }
 
-    let resource;
-    const userId = req.userInfo.userId;
-    const resourceId = req.params.id;
-    switch (resourceType) {
-      case "Lesson":
-        resource = await LessonModel.findOne({
-          _id: new mongoose.Types.ObjectId(resourceId),
-        });
+      const userId = req.userInfo.userId;
+      const resourceId = req.params.id;
 
-        const verifyUserCourse = await UserCourseModel.findOne({
-          userId: new mongoose.Types.ObjectId(userId),
-          courseId: resource?.courseId,
-        });
+      let hasAccess = false;
 
-        if (!verifyUserCourse) {
-          res
-            .status(StatusCodeEnum.Forbidden_403)
-            .json({ message: "You do not have access to this lesson" });
+      switch (resourceType) {
+        case ResourceType.LESSON: {
+          const lesson = await LessonModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          });
+          if (!lesson) break;
+          const userCourse = await UserCourseModel.findOne({
+            userId: new mongoose.Types.ObjectId(userId),
+            courseId: lesson.courseId,
+            isDeleted: false,
+          });
+          hasAccess = !!userCourse;
+
+          break;
         }
-        break;
 
-      case "Exercise":
-        //similarly get exercise, get userLesson, if not userLessonFound => error
-        break;
+        case ResourceType.GRAMMAR: {
+          const grammar = await GrammarModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          });
+          if (!grammar) break;
+          const userLesson = await UserLessonModel.findOne({
+            userId: new mongoose.Types.ObjectId(userId),
+            lessonId: grammar.lessonId,
+            isDeleted: false,
+          });
+          hasAccess = !!userLesson;
+          break;
+        }
 
-      case "Grammar":
-        //similarly get grammar, get userLesson, if not userLessonFound => error
-        break;
+        case ResourceType.EXERCISE: {
+          const exercise = await ExerciseModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          });
+          if (!exercise) break;
+          const userLesson = await UserLessonModel.findOne({
+            userId: new mongoose.Types.ObjectId(userId),
+            lessonId: exercise.lessonId,
+            isDeleted: false,
+          });
+          hasAccess = !!userLesson;
+          break;
+        }
 
-      case "Test":
-        break;
+        case ResourceType.VOCABULARY: {
+          const vocab = await VocabularyModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          });
+          if (!vocab) break;
+          const userLesson = await UserLessonModel.findOne({
+            userId: new mongoose.Types.ObjectId(userId),
+            lessonId: vocab.lessonId,
+            isDeleted: false,
+          });
+          hasAccess = !!userLesson;
+          break;
+        }
 
-      case "Vocabulary":
-        break;
-      default:
-        break;
+        case ResourceType.TEST: {
+          const test = await TestModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          });
+          if (!test) break;
+          // For test, require that the user has completed all userLessons for lessonIds in the test
+          const userLessons = await UserLessonModel.find({
+            userId: new mongoose.Types.ObjectId(userId),
+            lessonId: { $in: test.lessonIds },
+            isDeleted: false,
+            status: UserLessonStatus.COMPLETED,
+          });
+          hasAccess = userLessons.length === test.lessonIds.length;
+          break;
+        }
+
+        default:
+          break;
+      }
+
+      if (!hasAccess) {
+        return res
+          .status(StatusCodeEnum.Forbidden_403)
+          .json({ message: "You do not have access to this resource" });
+      }
+
+      next();
+    } catch (error) {
+      if (error instanceof CustomException) {
+        res.status(error.code).json({
+          code: error.code,
+          message: error.message,
+        });
+      } else {
+        res.status(StatusCodeEnum.InternalServerError_500).json({
+          code: StatusCodeEnum.InternalServerError_500,
+          message:
+            error instanceof Error ? error.message : "Internal Server Error",
+        });
+      }
     }
-    next();
   };
 };
 
-export { CourseResourceAccessMiddleware, LessonResourceAccessMiddleware };
+export {
+  CourseResourceAccessMiddleware,
+  LessonResourceAccessMiddleware,
+  GenericResourceAccessMiddleware,
+};

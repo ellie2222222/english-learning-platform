@@ -96,6 +96,7 @@ class LessonRepository implements ILessonRepository {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
       };
+
       const lesson = await LessonModel.aggregate([
         { $match: matchQuery },
         {

@@ -42,8 +42,10 @@ class UserLessonController {
     try {
       const { id } = req.params;
       const { status } = req.body;
+      const userId = req.userInfo.userId;
       const userLesson = await this.userLessonService.updateUserLesson(
         id,
+        userId,
         status
       );
       res.status(StatusCodeEnum.OK_200).json({

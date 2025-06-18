@@ -22,7 +22,7 @@ export interface ITestService {
 
   getTestById(testId: string): Promise<ITest | null>;
 
-  getTests(query: IQuery): Promise<IPagination>;
+  getTests(query: IQuery, courseId: string): Promise<IPagination>;
 
   getTestsByLessonId(lessonId: string, query: IQuery): Promise<IPagination>;
 }

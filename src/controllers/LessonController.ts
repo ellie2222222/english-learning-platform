@@ -1,4 +1,4 @@
-import { Inject, Service } from "typedi"; 
+import { Inject, Service } from "typedi";
 import { NextFunction, Request, Response } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
@@ -12,10 +12,19 @@ class LessonController {
     private lessonService: ILessonService
   ) {}
 
-  createLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createLesson = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { courseId, name, description, length } = req.body;
-      const lesson = await this.lessonService.createLesson(courseId, name, description, length);
+      const lesson = await this.lessonService.createLesson(
+        courseId,
+        name,
+        description,
+        length
+      );
       res.status(StatusCodeEnum.Created_201).json({
         lesson,
         message: "Lesson created successfully",
@@ -25,11 +34,21 @@ class LessonController {
     }
   };
 
-  updateLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateLesson = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { courseId, name, description, length } = req.body;
-      const lesson = await this.lessonService.updateLesson(id, courseId, name, description, length);
+      const lesson = await this.lessonService.updateLesson(
+        id,
+        courseId,
+        name,
+        description,
+        length
+      );
       res.status(StatusCodeEnum.OK_200).json({
         lesson,
         message: "Lesson updated successfully",
@@ -39,7 +58,11 @@ class LessonController {
     }
   };
 
-  deleteLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteLesson = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const lesson = await this.lessonService.deleteLesson(id);
@@ -52,10 +75,15 @@ class LessonController {
     }
   };
 
-  getLessonById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getLessonById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
-      const lesson = await this.lessonService.getLessonById(id);
+      const userId = req.userInfo.userId;
+      const lesson = await this.lessonService.getLessonById(id, userId);
       res.status(StatusCodeEnum.OK_200).json({
         lesson,
         message: "Lesson retrieved successfully",
@@ -65,7 +93,11 @@ class LessonController {
     }
   };
 
-  getLessons = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getLessons = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
       const lessons = await this.lessonService.getLessons({
@@ -83,7 +115,11 @@ class LessonController {
     }
   };
 
-  getLessonsByCourseId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getLessonsByCourseId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { page, size, order, sortBy } = req.query;

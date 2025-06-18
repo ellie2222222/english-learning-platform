@@ -12,10 +12,19 @@ class TestController {
     private testService: ITestService
   ) {}
 
-  createTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { lessonIds, name, description, totalQuestions } = req.body;
-      const test = await this.testService.createTest(lessonIds, name, description, totalQuestions);
+      const test = await this.testService.createTest(
+        name,
+        lessonIds,
+        description,
+        totalQuestions
+      );
       res.status(StatusCodeEnum.Created_201).json({
         test,
         message: "Test created successfully",
@@ -25,11 +34,21 @@ class TestController {
     }
   };
 
-  updateTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { lessonIds, name, description, totalQuestions } = req.body;
-      const test = await this.testService.updateTest(id, lessonIds, name, description, totalQuestions);
+      const test = await this.testService.updateTest(
+        id,
+        lessonIds,
+        name,
+        description,
+        totalQuestions
+      );
       res.status(StatusCodeEnum.OK_200).json({
         test,
         message: "Test updated successfully",
@@ -39,7 +58,11 @@ class TestController {
     }
   };
 
-  deleteTest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const test = await this.testService.deleteTest(id);
@@ -52,7 +75,11 @@ class TestController {
     }
   };
 
-  getTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const test = await this.testService.getTestById(id);
@@ -65,8 +92,13 @@ class TestController {
     }
   };
 
-  getTests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTests = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
       const tests = await this.testService.getTests(
         {
@@ -74,7 +106,8 @@ class TestController {
           size: size ? parseInt(size as string) : 10,
           order: order as OrderType,
           sortBy: sortBy as SortByType,
-        }
+        },
+        id
       );
       res.status(StatusCodeEnum.OK_200).json({
         ...tests,
@@ -85,19 +118,20 @@ class TestController {
     }
   };
 
-  getTestsByLessonId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getTestsByLessonId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
-      const tests = await this.testService.getTestsByLessonId(
-        id,
-        {
-          page: page ? parseInt(page as string) : 1,
-          size: size ? parseInt(size as string) : 10,
-          order: order as OrderType,
-          sortBy: sortBy as SortByType,
-        }
-      );
+      const tests = await this.testService.getTestsByLessonId(id, {
+        page: page ? parseInt(page as string) : 1,
+        size: size ? parseInt(size as string) : 10,
+        order: order as OrderType,
+        sortBy: sortBy as SortByType,
+      });
       res.status(StatusCodeEnum.OK_200).json({
         ...tests,
         message: "Tests retrieved successfully",
@@ -105,7 +139,7 @@ class TestController {
     } catch (error) {
       next(error);
     }
-  }; 
+  };
 }
 
 export default TestController;
