@@ -100,7 +100,7 @@ class UserDto {
       return;
     }
 
-    const validOrder = ["ascending", "descending"];
+    const validOrder = ["asc", "desc"];
     if (order && !validOrder.includes(order as string)) {
       res.status(StatusCodeEnum.BadRequest_400).json({
         message: `Order must be one of: ${validOrder.join(", ")}`,

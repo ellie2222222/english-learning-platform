@@ -29,4 +29,11 @@ userTestRoutes.get(
   userTestController.getUserTestById
 );
 
+userTestRoutes.get(
+  "/:id/user",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userTestDto.getUserTestsByUserId,
+  userTestController.getUserTestsByUserId
+);
+
 export default userTestRoutes;

@@ -1,16 +1,19 @@
 /**
  * @swagger
  * tags:
- *   - name: UserCourse
- *     description: User course management endpoints
+ *   name: UserCourses
+ *   description: User course management endpoints for tracking user progress in an e-learning platform
  */
 
 /**
  * @swagger
- * /api/users/courses:
+ * /api/user-courses:
  *   post:
- *     tags: [UserCourse]
  *     summary: Create a new user course
+ *     description: Creates a new user course to track a user's enrollment and progress in a course. Accessible by users with Admin (1) or User (0) roles.
+ *     tags: [UserCourses]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -29,7 +32,19 @@
  *                   $ref: '#/components/schemas/UserCourse'
  *                 message:
  *                   type: string
- *                   example: User lesson created successfully
+ *                   example: "User course created successfully"
+ *       400:
+ *         description: Bad request (e.g., invalid userId, courseId, or status)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Internal server error
  *         content:
@@ -40,16 +55,20 @@
 
 /**
  * @swagger
- * /api/users/courses/{userCourseId}:
+ * /api/user-courses/{id}:
  *   get:
- *     tags: [UserCourse]
  *     summary: Get user course by ID
+ *     description: Retrieves a user course by its ID. Accessible by users with Admin (1) or User (0) roles, with ownership validation to ensure the user is enrolled in the course.
+ *     tags: [UserCourses]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: userCourseId
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID of the user course (MongoDB ObjectId)
  *     responses:
  *       200:
  *         description: User course retrieved successfully
@@ -62,7 +81,19 @@
  *                   $ref: '#/components/schemas/UserCourse'
  *                 message:
  *                   type: string
- *                   example: User lesson retrieved successfully
+ *                   example: "User course retrieved successfully"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden (user is not enrolled in the course)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User course not found
  *         content:
@@ -79,38 +110,48 @@
 
 /**
  * @swagger
- * /api/users/{userId}/courses:
+ * /api/user-courses/{id}/user:
  *   get:
- *     tags: [UserCourse]
  *     summary: Get user courses by user ID
+ *     description: Retrieves a list of user courses for a specific user with pagination and sorting. Accessible by users with Admin (1) or User (0) roles.
+ *     tags: [UserCourses]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: userId
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *       - name: page
- *         in: query
+ *         description: ID of the user (MongoDB ObjectId)
+ *       - in: query
+ *         name: page
  *         schema:
  *           type: integer
  *           default: 1
- *       - name: size
- *         in: query
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: size
  *         schema:
  *           type: integer
  *           default: 10
- *       - name: order
- *         in: query
+ *           minimum: 1
+ *         description: Number of user courses per page
+ *       - in: query
+ *         name: order
  *         schema:
  *           type: string
- *           enum: [ASC, DESC]
- *           default: ASC
- *       - name: sortBy
- *         in: query
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Sorting order
+ *       - in: query
+ *         name: sortBy
  *         schema:
  *           type: string
- *           enum: [DATE, NAME]
- *           default: DATE
+ *           enum: [date]
+ *           default: date
+ *         description: Field to sort by
  *     responses:
  *       200:
  *         description: User courses retrieved successfully
@@ -119,19 +160,34 @@
  *             schema:
  *               type: object
  *               properties:
- *                 data:
+ *                 userCourses:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/UserCourse'
- *                 page:
- *                   type: integer
  *                 total:
  *                   type: integer
- *                 totalPages:
+ *                   example: 100
+ *                 page:
  *                   type: integer
+ *                   example: 1
+ *                 size:
+ *                   type: integer
+ *                   example: 10
  *                 message:
  *                   type: string
- *                   example: User lessons retrieved successfully
+ *                   example: "User courses retrieved successfully"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: Bad request (e.g., invalid user ID or query parameters)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Internal server error
  *         content:
@@ -147,86 +203,75 @@
  *     UserCourse:
  *       type: object
  *       properties:
- *         _id:
+ *         id:
  *           type: string
+ *           example: "12345"
+ *           description: The ID of the user course (MongoDB ObjectId)
  *         userId:
  *           type: string
+ *           example: "67890"
+ *           description: The ID of the user (MongoDB ObjectId)
  *         courseId:
  *           type: string
- *         lessonFinished:
+ *           example: "54321"
+ *           description: The ID of the course (MongoDB ObjectId)
+ *         currentOrder:
  *           type: number
- *         averageScore:
- *           type: number
- *           nullable: true
+ *           example: 1
+ *           description: The current order of the course for the user
  *         status:
  *           type: string
  *           enum: [ongoing, completed]
+ *           example: "ongoing"
+ *           description: The status of the user course
  *         createdAt:
  *           type: string
  *           format: date-time
+ *           example: "2025-06-18T09:03:00Z"
+ *           description: Creation timestamp
  *         updatedAt:
  *           type: string
  *           format: date-time
- *         user:
- *           type: object
- *           properties:
- *             _id:
- *               type: string
- *             username:
- *               type: string
- *             role:
- *               type: number
- *             avatar:
- *               type: string
- *             googleId:
- *               type: string
- *             email:
- *               type: string
- *             lastOnline:
- *               type: string
- *               format: date-time
- *             onlineStreak:
- *               type: number
- *             activeUntil:
- *               type: string
- *               format: date-time
- *               nullable: true
- *             createdAt:
- *               type: string
- *               format: date-time
- *             updatedAt:
- *               type: string
- *               format: date-time
- *         course:
- *           $ref: '#/components/schemas/Course'
+ *           example: "2025-06-18T09:03:00Z"
+ *           description: Last update timestamp
  *     UserCourseCreate:
  *       type: object
  *       required:
  *         - userId
- *         - lessonId
+ *         - courseId
  *         - currentOrder
  *         - status
  *       properties:
  *         userId:
  *           type: string
- *         lessonId:
+ *           description: The ID of the user (must be a valid MongoDB ObjectId)
+ *           example: "67890"
+ *         courseId:
  *           type: string
+ *           description: The ID of the course (must be a valid MongoDB ObjectId)
+ *           example: "54321"
  *         currentOrder:
  *           type: number
+ *           minimum: 0
+ *           description: The current order of the course for the user
+ *           example: 1
  *         status:
  *           type: string
  *           enum: [ongoing, completed]
- *     UserCourseUpdate:
- *       type: object
- *       properties:
- *         status:
- *           type: string
- *           enum: [ongoing, completed]
+ *           description: The status of the user course
+ *           example: "ongoing"
  *     Error:
  *       type: object
  *       properties:
  *         statusCode:
  *           type: integer
+ *           example: 400
  *         message:
  *           type: string
- */
+ *           example: "Invalid request data"
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ * */

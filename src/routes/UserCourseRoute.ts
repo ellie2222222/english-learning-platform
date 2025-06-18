@@ -5,7 +5,10 @@ import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import UserCourseController from "../controllers/UserCourseController";
 import UserCourseDto from "../dtos/UserCourseDto";
-import { OwnershipMiddleware, ResourceModel } from "../middlewares/OwnershipMiddleware";
+import {
+  OwnershipMiddleware,
+  ResourceModel,
+} from "../middlewares/OwnershipMiddleware";
 
 const userCourseController = Container.get(UserCourseController);
 const userCourseDto = new UserCourseDto();
@@ -18,7 +21,7 @@ userCourseRoutes.post(
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userCourseDto.createUserCourse,
   userCourseController.createUserCourse
-); 
+);
 
 userCourseRoutes.get(
   "/:id",
@@ -26,6 +29,13 @@ userCourseRoutes.get(
   OwnershipMiddleware(ResourceModel.USER_COURSE),
   userCourseDto.getUserCourseById,
   userCourseController.getUserCourseById
+);
+
+userCourseRoutes.get(
+  "/:id/user",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userCourseDto.getUserCoursesByUserId,
+  userCourseController.getUserCoursesByUserId
 );
 
 export default userCourseRoutes;

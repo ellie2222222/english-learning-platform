@@ -72,7 +72,7 @@ class UserService implements IUserService {
   }
 
   async createUser(
-    name: string,
+    username: string,
     password: string,
     email: string,
     role: number,
@@ -102,7 +102,7 @@ class UserService implements IUserService {
       const hashedPassword = await bcrypt.hash(password, salt);
 
       const data = {
-        name,
+        username,
         password: hashedPassword,
         email,
         role,

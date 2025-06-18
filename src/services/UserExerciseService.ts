@@ -113,6 +113,42 @@ class UserExerciseService implements IUserExerciseService {
     };
   };
 
+  private handlingUserLessonCurrentOrder = async (
+    userId: string,
+    lessonId: string,
+    order: number,
+    session: mongoose.ClientSession
+  ) => {
+    const userLesson = await this.userLessonRepository.getExistingUserLesson(
+      userId,
+      lessonId
+    );
+    if (!userLesson) {
+      await this.userLessonRepository.createUserLesson(
+        {
+          userId: new mongoose.Types.ObjectId(userId),
+          lessonId: new mongoose.Types.ObjectId(lessonId),
+          currentOrder: order,
+        },
+        session
+      );
+
+      return;
+    }
+
+    if (userLesson.currentOrder < order) {
+      await this.userLessonRepository.updateUserLesson(
+        lessonId,
+        {
+          currentOrder: order,
+        },
+        session
+      );
+    }
+
+    return;
+  };
+
   getUserExercise = async (
     id: string,
     requesterId: string
@@ -195,12 +231,14 @@ class UserExerciseService implements IUserExerciseService {
     try {
       // Validate exercise existence
       const exercise = await this.exerciseRepository.getExercise(exerciseId);
+
       if (!exercise) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "Exercise not found"
         );
       }
+
       const userExercise = await this.handlingUserExerciseCompletion(
         exercise,
         userId,
@@ -208,7 +246,13 @@ class UserExerciseService implements IUserExerciseService {
         session
       );
 
-      //update userLesson current order based on exercise order
+      //track userLessonProgress
+      await this.handlingUserLessonCurrentOrder(
+        userId,
+        exercise.lessonId.toString(),
+        Number(exercise.order),
+        session
+      );
 
       await this.database.commitTransaction(session);
       return userExercise;

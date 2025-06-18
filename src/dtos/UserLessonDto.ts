@@ -90,8 +90,8 @@ class UserLessonDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userLessonId } = req.params;
-      this.validateObjectId(userLessonId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -106,8 +106,8 @@ class UserLessonDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userLessonId } = req.params;
-      this.validateObjectId(userLessonId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -122,10 +122,10 @@ class UserLessonDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
 
-      this.validateObjectId(userId);
+      this.validateObjectId(id);
 
       if (
         page &&

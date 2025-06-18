@@ -143,4 +143,60 @@ const LessonResourceAccessMiddleware = async (
   }
 };
 
+const GenericResourceAccessMiddleware = (
+  resourceType: "Lesson" | "Grammar" | "Vocabulary" | "Exercise" | "Test"
+) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.userInfo || !req.userInfo.userId) {
+      throw new CustomException(
+        StatusCodeEnum.Unauthorized_401,
+        "User not authenticated"
+      );
+    }
+
+    if (req.userInfo.role === UserEnum.ADMIN) {
+      return next();
+    }
+
+    let resource;
+    const userId = req.userInfo.userId;
+    const resourceId = req.params.id;
+    switch (resourceType) {
+      case "Lesson":
+        resource = await LessonModel.findOne({
+          _id: new mongoose.Types.ObjectId(resourceId),
+        });
+
+        const verifyUserCourse = await UserCourseModel.findOne({
+          userId: new mongoose.Types.ObjectId(userId),
+          courseId: resource?.courseId,
+        });
+
+        if (!verifyUserCourse) {
+          res
+            .status(StatusCodeEnum.Forbidden_403)
+            .json({ message: "You do not have access to this lesson" });
+        }
+        break;
+
+      case "Exercise":
+        //similarly get exercise, get userLesson, if not userLessonFound => error
+        break;
+
+      case "Grammar":
+        //similarly get grammar, get userLesson, if not userLessonFound => error
+        break;
+
+      case "Test":
+        break;
+
+      case "Vocabulary":
+        break;
+      default:
+        break;
+    }
+    next();
+  };
+};
+
 export { CourseResourceAccessMiddleware, LessonResourceAccessMiddleware };

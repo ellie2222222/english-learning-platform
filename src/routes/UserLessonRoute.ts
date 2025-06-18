@@ -34,9 +34,15 @@ userLessonRoutes.patch(
 userLessonRoutes.get(
   "/:id/lesson",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  OwnershipMiddleware(ResourceModel.USER_COURSE),
   userLessonDto.getUserLessonByLessonId,
   userLessonController.getUserLessonByLessonId
+);
+
+userLessonRoutes.get(
+  "/:id/user",
+  RoleMiddleware([UserEnum.ADMIN]),
+  userLessonDto.getUserLessonsByUserId,
+  userLessonController.getUserLessonsByUserId
 );
 
 userLessonRoutes.get(

@@ -23,7 +23,6 @@ lessonRoutes.post(
 lessonRoutes.get(
   "/",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  CourseResourceAccessMiddleware,
   lessonDto.getLessons,
   lessonController.getLessons
 );
