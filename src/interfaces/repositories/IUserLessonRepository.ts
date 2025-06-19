@@ -30,4 +30,6 @@ export interface IUserLessonRepository {
     userId: string,
     lessonId: string
   ): Promise<IUserLesson | null>;
+
+  getUserLessonForLessonAchievement(userId: string): Promise<IUserLesson[]>;
 }

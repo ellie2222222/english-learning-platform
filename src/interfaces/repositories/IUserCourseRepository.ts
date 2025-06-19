@@ -8,7 +8,7 @@ export interface IUserCourseRepository {
     data: object,
     session?: mongoose.ClientSession
   ): Promise<IUserCourse>;
-  
+
   updateUserCourse(
     userCourseId: string,
     data: object,
@@ -23,4 +23,8 @@ export interface IUserCourseRepository {
   getUserCourseById(userCourseId: string): Promise<IUserCourse | null>;
 
   getUserCoursesByUserId(userId: string, query: IQuery): Promise<IPagination>;
+
+  getUserProgressHierarchy(userId: string): Promise<object[]>;
+
+  getUserCourseForAchievement(userId: string): Promise<IUserCourse[]>;
 }

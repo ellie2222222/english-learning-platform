@@ -30,4 +30,6 @@ export interface IUserRepository {
   getExpiredUsers(): Promise<IUser[] | []>;
 
   getAllUserForLoginAchievement(goal: number): Promise<IUser[]>;
+
+  getTopLeaderBoardUser(top: number, field: string): Promise<IUser[]>;
 }

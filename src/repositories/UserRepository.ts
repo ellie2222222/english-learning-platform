@@ -269,6 +269,27 @@ class UserRepository implements IUserRepository {
       );
     }
   }
+
+  async getTopLeaderBoardUser(top: number, field: string): Promise<IUser[]> {
+    try {
+      const users = await UserModel.aggregate([
+        { $match: { isDeleted: false } },
+        { $sort: { [field]: -1 } },
+        { $limit: top },
+      ]);
+
+      return users;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserRepository;

@@ -24,4 +24,6 @@ export interface IUserService {
   ) => Promise<IUser | null>;
 
   deleteUser: (id: string, requesterId: string) => Promise<boolean>;
+
+  getTopLeaderBoardUser: (top: number, field: string) => Promise<IUser[]>;
 }
