@@ -170,6 +170,26 @@ class UserDto {
 
     next();
   }
+
+  async getTopLeaderBoardUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { limit, field } = req.query;
+
+      if (limit && parseInt(limit as string) < 0) {
+        throw new Error("Invalid limit");
+      }
+      if (field && !["points"].includes(field as string)) {
+        throw new Error("Invalid leaderboard field");
+      }
+
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message: (error as Error).message,
+      });
+      return;
+    }
+  }
 }
 
 export default UserDto;

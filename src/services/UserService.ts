@@ -262,6 +262,15 @@ class UserService implements IUserService {
       this.handleError(error, session);
     }
   }
+
+  async getTopLeaderBoardUser(top: number, field: string): Promise<IUser[]> {
+    try {
+      const users = await this.userRepository.getTopLeaderBoardUser(top, field);
+      return users;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
 }
 
 export default UserService;

@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IUser } from "../interfaces/models/IUser";
-import sendMail from "../utils/mailer";
+import { sendMail } from "../utils/mailer";
 import Mail from "nodemailer/lib/mailer";
 import IJwtPayload, {
   IVerificationTokenPayload,
@@ -23,6 +23,7 @@ import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchi
 import { AchievementTypeEnum } from "../enums/AchievementTypeEnum";
 import { ObjectId } from "mongoose";
 import getLogger from "../utils/logger";
+import { notifyAchievement } from "../utils/mailer";
 
 dotenv.config();
 
@@ -979,18 +980,7 @@ class AuthService implements IAuthService {
       await this.database.commitTransaction(session);
 
       //notify user
-      const emailHtml = await ejs.renderFile(achievementEmailTemplatePath, {
-        achievementName: closestAchievement.name,
-        serverUrl: `${process.env.SERVER_URL}` || "http://localhost:3000",
-      });
-
-      const mailOptions: Mail.Options = {
-        from: process.env.EMAIL_USER,
-        to: user.email,
-        subject: `English Learning System Achievement`,
-        html: emailHtml,
-      };
-      await sendMail(mailOptions);
+      notifyAchievement(closestAchievement, user.email);
     } catch (error) {
       await this.database.abortTransaction(session);
       if (error instanceof CustomException) {

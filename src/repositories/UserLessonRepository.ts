@@ -7,6 +7,7 @@ import { Service } from "typedi";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
 import UserLessonModel from "../models/UserLessonModel";
+import { UserLessonStatus } from "../enums/UserLessonStatus";
 
 @Service()
 class UserLessonRepository implements IUserLessonRepository {
@@ -260,6 +261,30 @@ class UserLessonRepository implements IUserLessonRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getUserLessonForLessonAchievement(
+    userId: string
+  ): Promise<IUserLesson[]> {
+    try {
+      const userLessons = await UserLessonModel.find({
+        userId: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+        status: UserLessonStatus.COMPLETED,
+      });
+
+      return userLessons;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve user lessons"
       );
     }
   }

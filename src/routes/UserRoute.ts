@@ -47,6 +47,12 @@ userRoutes.get(
 );
 
 userRoutes.get(
+  "/leaderboard",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userDto.getTopLeaderBoardUser,
+  userController.getTopLeaderBoardUser
+);
+userRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userDto.getUserById,
