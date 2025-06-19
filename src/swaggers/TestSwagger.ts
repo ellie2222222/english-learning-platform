@@ -1,503 +1,402 @@
 /**
  * @swagger
  * tags:
- *   - name: Test
- *     description: Test management endpoints
+ *   name: Tests
+ *   description: API endpoints for managing tests
+ */
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     Test:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The unique identifier of the test
+ *         name:
+ *           type: string
+ *           description: The name of the test
+ *         description:
+ *           type: string
+ *           description: The description of the test
+ *         lessonIds:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of lesson IDs associated with the test
+ *         totalQuestions:
+ *           type: integer
+ *           description: The total number of questions in the test
+ *     TestResponse:
+ *       type: object
+ *       properties:
+ *         test:
+ *           $ref: '#/components/schemas/Test'
+ *         message:
+ *           type: string
+ *           description: Response message
+ *     TestsResponse:
+ *       type: object
+ *       properties:
+ *         tests:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Test'
+ *         total:
+ *           type: integer
+ *           description: Total number of tests
+ *         page:
+ *           type: integer
+ *           description: Current page number
+ *         size:
+ *           type: integer
+ *           description: Number of tests per page
+ *         message:
+ *           type: string
+ *           description: Response message
+ *     CreateTestDto:
+ *       type: object
+ *       required:
+ *         - name
+ *         - lessonIds
+ *         - totalQuestions
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: The name of the test
+ *         lessonIds:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of lesson IDs
+ *         description:
+ *           type: string
+ *           description: The description of the test
+ *         totalQuestions:
+ *           type: integer
+ *           description: The total number of questions
+ *     UpdateTestDto:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: The name of the test
+ *         lessonIds:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of lesson IDs
+ *         description:
+ *           type: string
+ *           description: The description of the test
+ *         totalQuestions:
+ *           type: integer
+ *           description: The total number of questions
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Error message
+ *         error:
+ *           type: string
+ *           description: Error details
  */
 
 /**
  * @swagger
  * /api/tests:
  *   post:
- *     tags: [Test]
  *     summary: Create a new test
+ *     tags: [Tests]
  *     security:
- *       - bearerAuth: []
- *     description: Requires ADMIN role
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/TestCreate'
+ *             $ref: '#/components/schemas/CreateTestDto'
  *     responses:
  *       201:
  *         description: Test created successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 test:
- *                   $ref: '#/components/schemas/Test'
- *                 message:
- *                   type: string
- *                   example: Test created successfully
- *       400:
- *         description: Bad request (e.g., invalid ID, missing fields, invalid data)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/TestResponse'
  *       401:
- *         description: Unauthorized (missing or invalid token)
+ *         description: Unauthorized - Invalid or missing token
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
- *         description: Forbidden (requires ADMIN role)
+ *         description: Forbidden - User does not have admin role
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       400:
+ *         description: Bad Request - Invalid input data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
 /**
  * @swagger
- * /api/tests/{testId}:
- *   patch:
- *     tags: [Test]
- *     summary: Update a test
- *     security:
- *       - bearerAuth: []
- *     description: Requires ADMIN role
- *     parameters:
- *       - name: testId
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/TestUpdate'
- *     responses:
- *       200:
- *         description: Test updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 test:
- *                   $ref: '#/components/schemas/Test'
- *                 message:
- *                   type: string
- *                   example: Test updated successfully
- *       400:
- *         description: Bad request (e.g., invalid ID, invalid data)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized (missing or invalid token)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden (requires ADMIN role)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Test not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * /api/tests/{testId}:
- *   delete:
- *     tags: [Test]
- *     summary: Delete a test
- *     security:
- *       - bearerAuth: []
- *     description: Requires ADMIN role
- *     parameters:
- *       - name: testId
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Test deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 test:
- *                   $ref: '#/components/schemas/Test'
- *                 message:
- *                   type: string
- *                   example: Test deleted successfully
- *       400:
- *         description: Bad request (e.g., invalid ID)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized (missing or invalid token)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden (requires ADMIN role)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Test not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * /api/tests/{testId}:
+ * /api/tests/{id}/course:
  *   get:
- *     tags: [Test]
- *     summary: Get test by ID
+ *     summary: Get tests by course ID
+ *     tags: [Tests]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
- *       - name: testId
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: Course ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of tests per page
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Order of results (ascending or descending)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field to sort by
+ *     responses:
+ *       200:
+ *         description: Tests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TestsResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - User lacks access to the course
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+/**
+ * @swagger
+ * /api/tests/{id}:
+ *   get:
+ *     summary: Get a test by ID
+ *     tags: [Tests]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Test ID
  *     responses:
  *       200:
  *         description: Test retrieved successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 test:
- *                   $ref: '#/components/schemas/Test'
- *                 message:
- *                   type: string
- *                   example: Test retrieved successfully
- *       400:
- *         description: Bad request (e.g., invalid ID)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/TestResponse'
  *       401:
- *         description: Unauthorized (missing or invalid token)
+ *         description: Unauthorized - Invalid or missing token
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - User lacks access to the test
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Test not found
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
 /**
  * @swagger
- * /api/tests:
- *   get:
- *     tags: [Test]
- *     summary: Get all tests
+ * /api/tests/{id}:
+ *   patch:
+ *     summary: Update a test by ID
+ *     tags: [Tests]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
- *       - name: page
- *         in: query
- *         schema:
- *           type: integer
- *           default: 1
- *           minimum: 1
- *       - name: size
- *         in: query
- *         schema:
- *           type: integer
- *           default: 10
- *           minimum: 1
- *       - name: order
- *         in: query
- *         schema:
- *           type: string
- *           enum: [ASC, DESC]
- *           default: ASC
- *       - name: sortBy
- *         in: query
- *         schema:
- *           type: string
- *           enum: [DATE, NAME]
- *           default: DATE
- *     responses:
- *       200:
- *         description: Tests retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Test'
- *                 page:
- *                   type: integer
- *                 total:
- *                   type: integer
- *                 totalPages:
- *                   type: integer
- *                 message:
- *                   type: string
- *                   example: Tests retrieved successfully
- *       400:
- *         description: Bad request (e.g., invalid query parameters)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized (missing or invalid token)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * /api/tests/lesson/{lessonId}:
- *   get:
- *     tags: [Test]
- *     summary: Get tests by lesson ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: lessonId
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *       - name: page
- *         in: query
+ *         description: Test ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateTestDto'
+ *     responses:
+ *       200:
+ *         description: Test updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TestResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - User does not have admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Test not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+/**
+ * @swagger
+ * /api/tests/{id}:
+ *   delete:
+ *     summary: Delete a test by ID
+ *     tags: [Tests]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Test ID
+ *     responses:
+ *       200:
+ *         description: Test deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TestResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - User does not have admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Test not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+/**
+ * @swagger
+ * /api/tests/lesson/{id}:
+ *   get:
+ *     summary: Get tests by lesson ID
+ *     tags: [Tests]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Lesson ID
+ *       - in: query
+ *         name: page
  *         schema:
  *           type: integer
  *           default: 1
- *           minimum: 1
- *       - name: size
- *         in: query
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: size
  *         schema:
  *           type: integer
  *           default: 10
- *           minimum: 1
- *       - name: order
- *         in: query
+ *         description: Number of tests per page
+ *       - in: query
+ *         name: order
  *         schema:
  *           type: string
- *           enum: [ASC, DESC]
- *           default: ASC
- *       - name: sortBy
- *         in: query
+ *           enum: [asc, desc]
+ *         description: Order of results (ascending or descending)
+ *       - in: query
+ *         name: sortBy
  *         schema:
  *           type: string
- *           enum: [DATE, NAME]
- *           default: DATE
+ *         description: Field to sort by
  *     responses:
  *       200:
  *         description: Tests retrieved successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Test'
- *                 page:
- *                   type: integer
- *                 total:
- *                   type: integer
- *                 totalPages:
- *                   type: integer
- *                 message:
- *                   type: string
- *                   example: Tests retrieved successfully
- *       400:
- *         description: Bad request (e.g., invalid lesson ID, invalid query parameters)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/TestsResponse'
  *       401:
- *         description: Unauthorized (missing or invalid token)
+ *         description: Unauthorized - Invalid or missing token
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - User lacks access to the lesson
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Test:
- *       type: object
- *       properties:
- *         _id:
- *           type: string
- *         lessonIds:
- *           type: array
- *           items:
- *             type: string
- *         name:
- *           type: string
- *         description:
- *           type: string
- *         totalQuestions:
- *           type: number
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- *         lessons:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Lesson'
- *     TestCreate:
- *       type: object
- *       required:
- *         - courseId
- *         - name
- *         - length
- *         - lessonIds
- *         - totalQuestions
- *       properties:
- *         courseId:
- *           type: string
- *           description: The ID of the course (must be a valid MongoDB ObjectId)
- *         name:
- *           type: string
- *           maxLength: 100
- *           description: The name of the test (max 100 characters)
- *         description:
- *           type: string
- *           maxLength: 2000
- *           description: The description of the test (max 2000 characters)
- *         length:
- *           type: number
- *           minimum: 1
- *           description: The duration of the test in minutes
- *         order:
- *           type: number
- *           minimum: 0
- *           description: The order of the test
- *         lessonIds:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of lesson IDs (must be valid MongoDB ObjectIds)
- *         totalQuestions:
- *           type: number
- *           minimum: 0
- *           description: The total number of questions in the test
- *     TestUpdate:
- *       type: object
- *       properties:
- *         courseId:
- *           type: string
- *           description: The ID of the course (must be a valid MongoDB ObjectId)
- *         name:
- *           type: string
- *           maxLength: 100
- *           description: The name of the test (max 100 characters)
- *         description:
- *           type: string
- *           maxLength: 2000
- *           description: The description of the test (max 2000 characters)
- *         length:
- *           type: number
- *           minimum: 1
- *           description: The duration of the test in minutes
- *         order:
- *           type: number
- *           minimum: 0
- *           description: The order of the test
- *         lessonIds:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of lesson IDs (must be valid MongoDB ObjectIds)
- *         totalQuestions:
- *           type: number
- *           minimum: 0
- *           description: The total number of questions in the test
- *     Error:
- *       type: object
- *       properties:
- *         statusCode:
- *           type: integer
- *         message:
- *           type: string
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
