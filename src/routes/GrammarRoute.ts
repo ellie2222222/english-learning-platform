@@ -5,7 +5,8 @@ import GrammarDto from "../dtos/GrammarDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import { CourseResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import { GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import { ResourceType } from "../enums/ResourceType";
 
 const lessonController = Container.get(GrammarController);
 const lessonDto = new GrammarDto();
@@ -22,8 +23,7 @@ grammarRoutes.post(
 
 grammarRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  CourseResourceAccessMiddleware,
+  RoleMiddleware([UserEnum.ADMIN]),
   lessonDto.getGrammars,
   lessonController.getGrammars
 );
@@ -31,7 +31,7 @@ grammarRoutes.get(
 grammarRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  CourseResourceAccessMiddleware,
+  GenericResourceAccessMiddleware(ResourceType.GRAMMAR),
   lessonDto.getGrammarById,
   lessonController.getGrammarById
 );

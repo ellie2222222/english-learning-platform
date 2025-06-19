@@ -12,6 +12,7 @@ import ExerciseModel from "../models/ExerciseModel";
 import GrammarModel from "../models/GrammarModel";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
 import { ResourceType } from "../enums/ResourceType";
+import CourseModel from "../models/CourseModel";
 
 const CourseResourceAccessMiddleware = async (
   req: Request,
@@ -149,7 +150,7 @@ const LessonResourceAccessMiddleware = async (
 };
 
 const GenericResourceAccessMiddleware = (resourceType: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.userInfo || !req.userInfo.userId) {
         throw new CustomException(
@@ -168,6 +169,22 @@ const GenericResourceAccessMiddleware = (resourceType: string) => {
       let hasAccess = false;
 
       switch (resourceType) {
+        case ResourceType.COURSE: {
+          const course = await CourseModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          });
+          if (!course) break;
+          const userCourse = await UserCourseModel.findOne({
+            userId: new mongoose.Types.ObjectId(userId),
+            courseId: resourceId,
+            isDeleted: false,
+          });
+          hasAccess = !!userCourse;
+
+          break;
+        }
+
         case ResourceType.LESSON: {
           const lesson = await LessonModel.findOne({
             _id: new mongoose.Types.ObjectId(resourceId),
@@ -251,9 +268,10 @@ const GenericResourceAccessMiddleware = (resourceType: string) => {
       }
 
       if (!hasAccess) {
-        return res
+        res
           .status(StatusCodeEnum.Forbidden_403)
           .json({ message: "You do not have access to this resource" });
+        return;
       }
 
       next();

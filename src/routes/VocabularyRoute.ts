@@ -5,8 +5,9 @@ import VocabularyDto from "../dtos/VocabularyDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import { CourseResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import { CourseResourceAccessMiddleware, GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
 import { uploadFile } from "../middlewares/storeFile";
+import { ResourceType } from "../enums/ResourceType";
 
 const vocabularyController = Container.get(VocabularyController);
 const vocabularyDto = new VocabularyDto();
@@ -24,8 +25,7 @@ vocabularyRoutes.post(
 
 vocabularyRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  CourseResourceAccessMiddleware,
+  RoleMiddleware([UserEnum.ADMIN]),
   vocabularyDto.getVocabularies,
   vocabularyController.getVocabularies
 );
@@ -33,7 +33,7 @@ vocabularyRoutes.get(
 vocabularyRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  CourseResourceAccessMiddleware,
+  GenericResourceAccessMiddleware(ResourceType.VOCABULARY),
   vocabularyDto.getVocabularyById,
   vocabularyController.getVocabularyById
 );

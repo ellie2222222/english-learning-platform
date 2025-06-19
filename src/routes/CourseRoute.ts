@@ -8,6 +8,8 @@ import UserEnum from "../enums/UserEnum";
 import LessonDto from "../dtos/LessonDto";
 import LessonController from "../controllers/LessonController";
 import { uploadFile } from "../middlewares/storeFile";
+import { GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import { ResourceType } from "../enums/ResourceType";
 
 const courseController = Container.get(CourseController);
 const lessonController = Container.get(LessonController);
@@ -39,6 +41,8 @@ courseRoutes.get(
 
 courseRoutes.get(
   "/:id/lessons",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  GenericResourceAccessMiddleware(ResourceType.COURSE),
   lessonDto.getLessonsByCourseId,
   lessonController.getLessonsByCourseId
 );

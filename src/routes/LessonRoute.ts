@@ -7,6 +7,7 @@ import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import {
   CourseResourceAccessMiddleware,
+  GenericResourceAccessMiddleware,
   LessonResourceAccessMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import GrammarDto from "../dtos/GrammarDto";
@@ -14,6 +15,7 @@ import GrammarController from "../controllers/GrammarController";
 import VocabularyDto from "../dtos/VocabularyDto";
 import VocabularyController from "../controllers/VocabularyController";
 import { uploadFile } from "../middlewares/storeFile";
+import { ResourceType } from "../enums/ResourceType";
 
 const lessonController = Container.get(LessonController);
 const lessonDto = new LessonDto();
@@ -34,7 +36,7 @@ lessonRoutes.post(
 
 lessonRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN]),
   lessonDto.getLessons,
   lessonController.getLessons
 );
@@ -42,7 +44,7 @@ lessonRoutes.get(
 lessonRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  CourseResourceAccessMiddleware,
+  GenericResourceAccessMiddleware(ResourceType.LESSON),
   lessonDto.getLessonById,
   lessonController.getLessonById
 );
@@ -64,14 +66,14 @@ lessonRoutes.delete(
 lessonRoutes.get(
   "/:id/grammars",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  LessonResourceAccessMiddleware,
+  GenericResourceAccessMiddleware(ResourceType.GRAMMAR),
   grammarDto.getGrammarsByLessonId,
   grammarController.getGrammarsByLessonId
 );
 
 lessonRoutes.get(
   "/:id/vocabularies",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  GenericResourceAccessMiddleware(ResourceType.VOCABULARY),
   LessonResourceAccessMiddleware,
   vocabularyDto.getVocabulariesByLessonId,
   vocabularyController.getVocabulariesByLessonId
