@@ -54,7 +54,7 @@ const notifyAchievement = async (
 ) => {
   const emailHtml = await ejs.renderFile(achievementEmailTemplatePath, {
     achievementName: achievement.name,
-    serverUrl: `${process.env.SERVER_URL}` || "http://localhost:3000",
+    serverUrl: `${process.env.FRONTEND_URL}` || "http://localhost:3000",
   });
 
   const mailOptions: Mail.Options = {
