@@ -37,6 +37,7 @@ import userTestRoutes from "./routes/UserTestRoute";
 import grammarRoutes from "./routes/GrammarRoute";
 import vocabularyRoutes from "./routes/VocabularyRoute";
 import aiRoutes from "./routes/AIRoutes";
+import StatusCodeEnum from "./enums/StatusCodeEnum";
 
 dotenv.config();
 
@@ -103,6 +104,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(ErrorLogMiddleware);
 
+app.get("/", (req: Request, res: Response) => {
+  res.status(StatusCodeEnum.OK_200).send("Keep api alive");
+});
 cronJob.start();
 const server = http.createServer(app);
 
