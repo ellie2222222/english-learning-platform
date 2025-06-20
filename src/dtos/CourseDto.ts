@@ -62,7 +62,8 @@ class CourseDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { name, description, type, level, totalLessons, coverImage } = req.body;
+      const { name, description, type, level, totalLessons, coverImage } =
+        req.body;
 
       if (!name || !type || !level) {
         throw new Error(
@@ -98,7 +99,8 @@ class CourseDto {
   ): Promise<void> => {
     try {
       const { courseId } = req.params;
-      const { name, description, type, level, totalLessons, coverImage } = req.body;
+      const { name, description, type, level, totalLessons, coverImage } =
+        req.body;
 
       this.validateObjectId(courseId);
       if (name) this.validateName(name);

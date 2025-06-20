@@ -15,7 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node", "express"],
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts","src/**/*.ejs" ],
   "exclude": ["node_modules"],
   "files": ["src/types/express.d.ts"]
 }
