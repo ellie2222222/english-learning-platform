@@ -5,7 +5,10 @@ import VocabularyDto from "../dtos/VocabularyDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import { CourseResourceAccessMiddleware, GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import {
+  CourseResourceAccessMiddleware,
+  GenericResourceAccessMiddleware,
+} from "../middlewares/ResourceAccessMiddleware";
 import { uploadFile } from "../middlewares/storeFile";
 import { ResourceType } from "../enums/ResourceType";
 
@@ -30,6 +33,7 @@ vocabularyRoutes.get(
   vocabularyController.getVocabularies
 );
 
+//get vocabulary by vocabularyId => id: vocabularyId => ResourceType.VOCABULARY
 vocabularyRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),

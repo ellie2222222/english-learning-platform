@@ -57,7 +57,7 @@ class GrammarService implements IGrammarService {
 
       const grammar = await this.grammarRepository.createGrammar(
         {
-          lessonId: new mongoose.Schema.Types.ObjectId(lessonId),
+          lessonId: new mongoose.Types.ObjectId(lessonId),
           title,
           structure,
           example,
@@ -120,7 +120,10 @@ class GrammarService implements IGrammarService {
           page: 1,
           size: 1,
         } as IQuery);
-        if (existingGrammar.data.length > 0 && existingGrammar.data[0]._id.toString() !== grammarId) {
+        if (
+          existingGrammar.data.length > 0 &&
+          existingGrammar.data[0]._id.toString() !== grammarId
+        ) {
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             `Another grammar with title "${title}" already exists for this lesson`
@@ -129,7 +132,9 @@ class GrammarService implements IGrammarService {
       }
 
       const updateData: Partial<IGrammar> = {
-        ...(lessonId && { lessonId: new mongoose.Schema.Types.ObjectId(lessonId) }),
+        ...(lessonId && {
+          lessonId: new mongoose.Schema.Types.ObjectId(lessonId),
+        }),
         ...(title && { title }),
         ...(structure && { structure }),
         ...(example !== undefined && { example }),
@@ -228,7 +233,10 @@ class GrammarService implements IGrammarService {
     }
   }
 
-  async getGrammarsByLessonId(lessonId: string, query: IQuery): Promise<IPagination> {
+  async getGrammarsByLessonId(
+    lessonId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const lesson = await this.lessonRepository.getLessonById(lessonId);
       if (!lesson) {
@@ -238,7 +246,10 @@ class GrammarService implements IGrammarService {
         );
       }
 
-      const grammars = await this.grammarRepository.getGrammarsByLessonId(lessonId, query);
+      const grammars = await this.grammarRepository.getGrammarsByLessonId(
+        lessonId,
+        query
+      );
       return grammars;
     } catch (error) {
       if (error instanceof CustomException) {

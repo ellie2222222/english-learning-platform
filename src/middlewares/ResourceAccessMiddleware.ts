@@ -13,7 +13,19 @@ import GrammarModel from "../models/GrammarModel";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
 import { ResourceType } from "../enums/ResourceType";
 import CourseModel from "../models/CourseModel";
+import UserModel from "../models/UserModel";
+import { CourseTypeEnum } from "../enums/CourseTypeEnum";
+import { ILesson } from "../interfaces/models/ILesson";
+import { IGrammar } from "../interfaces/models/IGrammar";
+import { ICourse } from "../interfaces/models/ICourse";
+import { IExercise } from "../interfaces/models/IExercise";
+import { IVocabulary } from "../interfaces/models/IVocabulary";
+import { ITest } from "../interfaces/models/ITest";
 
+interface CourseTypeOnly {
+  _id: mongoose.Types.ObjectId;
+  type: string;
+}
 const CourseResourceAccessMiddleware = async (
   req: Request,
   res: Response,
@@ -149,8 +161,178 @@ const LessonResourceAccessMiddleware = async (
   }
 };
 
+const MembershipAccessLimitMiddleware = (resourceType: string) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.userInfo || !req.userInfo.userId) {
+        throw new CustomException(
+          StatusCodeEnum.Unauthorized_401,
+          "User not authenticated"
+        );
+      }
+
+      if (req.userInfo.role === UserEnum.ADMIN) {
+        return next();
+      }
+
+      const userId = req.userInfo.userId;
+      const resourceId = req.params.id;
+
+      let courseType;
+      const user = await UserModel.findOne({
+        _id: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      });
+
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+
+      switch (resourceType) {
+        case ResourceType.COURSE: {
+          courseType = await CourseModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          })
+            .lean()
+            .select("type");
+          if (!courseType) break;
+
+          break;
+        }
+
+        case ResourceType.LESSON: {
+          const lesson: ILesson | null = await LessonModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          })
+            .populate({
+              path: "courseId",
+              select: "type",
+            })
+            .lean();
+          if (!lesson) break;
+          courseType = lesson.courseId;
+          if (!courseType) break;
+
+          break;
+        }
+
+        case ResourceType.GRAMMAR: {
+          const grammar: IGrammar | null = await GrammarModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          })
+            .populate({
+              path: "lessonId",
+              populate: { path: "courseId", select: "type" },
+            })
+            .lean();
+          if (!grammar) break;
+
+          courseType = (grammar.lessonId as ILesson).courseId;
+          break;
+        }
+
+        case ResourceType.EXERCISE: {
+          const exercise: IExercise | null = await ExerciseModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          })
+            .populate({
+              path: "lessonId",
+              populate: { path: "courseId", select: "type" },
+            })
+            .lean();
+          if (!exercise) break;
+
+          courseType = (exercise.lessonId as ILesson).courseId;
+          break;
+        }
+
+        case ResourceType.VOCABULARY: {
+          const vocab: IVocabulary | null = await VocabularyModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          })
+            .populate({
+              path: "lessonId",
+              populate: { path: "courseId", select: "type" },
+            })
+            .lean();
+          if (!vocab) break;
+
+          courseType = (vocab.lessonId as ILesson).courseId;
+          break;
+        }
+
+        case ResourceType.TEST: {
+          const test: ITest | null = await TestModel.findOne({
+            _id: new mongoose.Types.ObjectId(resourceId),
+            isDeleted: false,
+          })
+            .populate({ path: "courseId", select: "type" })
+            .lean();
+          if (!test) break;
+
+          courseType = test.courseId;
+          break;
+        }
+
+        default:
+          break;
+      }
+
+      if (!courseType || courseType === undefined || courseType == null) {
+        res
+          .status(StatusCodeEnum.NotFound_404)
+          .json({ message: "Course not found" });
+        return;
+      }
+
+      if (
+        courseType &&
+        (courseType as CourseTypeOnly).type === CourseTypeEnum.MEMBERSHIP &&
+        (user.activeUntil === null ||
+          new Date(user.activeUntil as Date) < new Date())
+      ) {
+        res.status(StatusCodeEnum.Forbidden_403).json({
+          message: "Membership is required for this resource",
+        });
+        return;
+      }
+
+      next();
+    } catch (error) {
+      if (error instanceof CustomException) {
+        res.status(error.code).json({
+          code: error.code,
+          message: error.message,
+        });
+      } else {
+        res.status(StatusCodeEnum.InternalServerError_500).json({
+          code: StatusCodeEnum.InternalServerError_500,
+          message:
+            error instanceof Error ? error.message : "Internal Server Error",
+        });
+      }
+    }
+  };
+};
+
 const GenericResourceAccessMiddleware = (resourceType: string) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       if (!req.userInfo || !req.userInfo.userId) {
         throw new CustomException(
@@ -296,4 +478,5 @@ export {
   CourseResourceAccessMiddleware,
   LessonResourceAccessMiddleware,
   GenericResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware,
 };

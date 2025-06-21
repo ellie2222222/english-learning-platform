@@ -16,7 +16,7 @@ class GrammarRepository implements IGrammarRepository {
     this.grammarModel = GrammarModel;
   }
 
-  async createGrammar(grammar: Partial<IGrammar>, session?: any): Promise<IGrammar> {
+  async createGrammar(grammar: object, session?: any): Promise<IGrammar> {
     try {
       const newGrammar = await this.grammarModel.create([grammar], { session });
       return newGrammar[0];
@@ -28,7 +28,11 @@ class GrammarRepository implements IGrammarRepository {
     }
   }
 
-  async updateGrammar(grammarId: string, updateData: Partial<IGrammar>, session?: any): Promise<IGrammar | null> {
+  async updateGrammar(
+    grammarId: string,
+    updateData: Partial<IGrammar>,
+    session?: any
+  ): Promise<IGrammar | null> {
     try {
       const updatedGrammar = await this.grammarModel
         .findByIdAndUpdate(grammarId, updateData, { new: true, session })
@@ -42,10 +46,17 @@ class GrammarRepository implements IGrammarRepository {
     }
   }
 
-  async deleteGrammar(grammarId: string, session?: any): Promise<IGrammar | null> {
+  async deleteGrammar(
+    grammarId: string,
+    session?: any
+  ): Promise<IGrammar | null> {
     try {
       const deletedGrammar = await this.grammarModel
-        .findByIdAndUpdate(grammarId, { isDeleted: true }, { new: true, session })
+        .findByIdAndUpdate(
+          grammarId,
+          { isDeleted: true },
+          { new: true, session }
+        )
         .exec();
       return deletedGrammar;
     } catch (error) {
@@ -74,16 +85,16 @@ class GrammarRepository implements IGrammarRepository {
     try {
       const matchQuery = { isDeleted: false };
       let sortField = "createdAt";
-            switch (query.sortBy) {
-              case SortByType.DATE:
-                sortField = "createdAt";
-                break;
-              case SortByType.NAME:
-                sortField = "name";
-                break;
-              default:
-                break;
-            }
+      switch (query.sortBy) {
+        case SortByType.DATE:
+          sortField = "createdAt";
+          break;
+        case SortByType.NAME:
+          sortField = "name";
+          break;
+        default:
+          break;
+      }
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
@@ -112,7 +123,10 @@ class GrammarRepository implements IGrammarRepository {
     }
   }
 
-  async getGrammarsByLessonId(lessonId: string, query: IQuery): Promise<IPagination> {
+  async getGrammarsByLessonId(
+    lessonId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const matchQuery = {
         lessonId: new mongoose.Types.ObjectId(lessonId),

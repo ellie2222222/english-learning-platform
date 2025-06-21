@@ -17,7 +17,7 @@ class VocabularyRepository implements IVocabularyRepository {
   }
 
   async createVocabulary(
-    vocabulary: Partial<IVocabulary>,
+    vocabulary: object,
     session?: any
   ): Promise<IVocabulary> {
     try {

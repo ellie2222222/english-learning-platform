@@ -5,7 +5,10 @@ import GrammarDto from "../dtos/GrammarDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import { GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import {
+  GenericResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware,
+} from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
 
 const lessonController = Container.get(GrammarController);
@@ -28,9 +31,11 @@ grammarRoutes.get(
   lessonController.getGrammars
 );
 
+//get grammar by grammarId => id: grammarId => ResourceType.grammarId
 grammarRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  MembershipAccessLimitMiddleware(ResourceType.GRAMMAR),
   GenericResourceAccessMiddleware(ResourceType.GRAMMAR),
   lessonDto.getGrammarById,
   lessonController.getGrammarById

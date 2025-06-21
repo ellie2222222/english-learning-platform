@@ -8,7 +8,10 @@ import UserEnum from "../enums/UserEnum";
 import LessonDto from "../dtos/LessonDto";
 import LessonController from "../controllers/LessonController";
 import { uploadFile } from "../middlewares/storeFile";
-import { GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import {
+  GenericResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware,
+} from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
 
 const courseController = Container.get(CourseController);
@@ -27,11 +30,7 @@ courseRoutes.post(
   courseController.createCourse
 );
 
-courseRoutes.get(
-  "/",
-  courseDto.getCourses,
-  courseController.getCourses
-);
+courseRoutes.get("/", courseDto.getCourses, courseController.getCourses);
 
 courseRoutes.get(
   "/:id",
@@ -39,9 +38,11 @@ courseRoutes.get(
   courseController.getCourseById
 );
 
+//get lesson by courseId => id: courseId => ResourceType.COURSE
 courseRoutes.get(
   "/:id/lessons",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  MembershipAccessLimitMiddleware(ResourceType.COURSE),
   GenericResourceAccessMiddleware(ResourceType.COURSE),
   lessonDto.getLessonsByCourseId,
   lessonController.getLessonsByCourseId

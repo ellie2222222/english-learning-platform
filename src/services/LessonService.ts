@@ -148,7 +148,7 @@ class LessonService implements ILessonService {
       if (!checkUserLesson) {
         await this.userLessonRepository.createUserLesson({
           lessonId: new mongoose.Types.ObjectId(id),
-          userId: new mongoose.Types.ObjectId(id),
+          userId: new mongoose.Types.ObjectId(userId),
         });
       }
 
