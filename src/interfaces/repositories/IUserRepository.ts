@@ -20,7 +20,7 @@ export interface IUserRepository {
 
   updateUserById(
     userId: string,
-    data: Partial<IUser>,
+    data: object,
     session?: mongoose.ClientSession
   ): Promise<IUser | null>;
 

@@ -8,7 +8,7 @@ export interface IGrammarRepository {
 
   updateGrammar(
     grammarId: string,
-    updateData: Partial<IGrammar>,
+    updateData: object,
     session?: any
   ): Promise<IGrammar | null>;
 

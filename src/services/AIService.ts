@@ -24,8 +24,8 @@ class AIService implements IAIService {
         " Always encourage users to use English." +
         " Only respond to questions that are related to learning English (vocabulary, grammar, pronunciation, etc.)." +
         " If the user writes in Vietnamese, respond only if the question is clearly about English." +
-        "If the message is irrelevant or in another language, kindly remind the user to stay focused on English learning." +
-        "";
+        "If the message is irrelevant or in another language, kindly remind the user to stay focused on English learning.";
+
       const response = await sendPromptToAIWithRule(rule, prompt);
 
       const finalResponse = response.content?.split("</think>").pop()?.trim();

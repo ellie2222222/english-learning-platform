@@ -39,6 +39,7 @@ import vocabularyRoutes from "./routes/VocabularyRoute";
 import aiRoutes from "./routes/AIRoutes";
 import StatusCodeEnum from "./enums/StatusCodeEnum";
 import statisticRoutes from "./routes/StatisticRoute";
+import configRoutes from "./routes/ConfigRoute";
 
 dotenv.config();
 
@@ -85,7 +86,8 @@ app.use("/api/user-tests", userTestRoutes);
 app.use("/api/grammars", grammarRoutes);
 app.use("/api/vocabularies", vocabularyRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/api/statistic", statisticRoutes);
+app.use("/api/statistics", statisticRoutes);
+app.use("/api/configs", configRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");
