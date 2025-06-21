@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { IReceipt } from "../models/IReceipt";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { IRevenue } from "../others/IStatisticData";
 
 export interface IReceiptRepository {
   createReceipt(
@@ -23,4 +24,17 @@ export interface IReceiptRepository {
   getReceipt(id: string): Promise<IReceipt | null>;
 
   getReceipts(query: IQuery, userId: string): Promise<IPagination>;
+
+  getAllReceipts(query: IQuery): Promise<IPagination>;
+
+  getAllReceiptsTimeInterval(
+    startDate: Date,
+    endDate: Date
+  ): Promise<IReceipt[]>;
+
+  getRevenueByTimeInterval(
+    startDate: Date,
+    endDate: Date,
+    groupBy: string
+  ): Promise<IRevenue[]>;
 }

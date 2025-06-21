@@ -46,18 +46,29 @@ class VocabularyDto {
     }
   };
 
-  createVocabulary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createVocabulary = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { lessonId, englishContent, vietnameseContent, order } = req.body;
 
-      if (!lessonId || !englishContent || !vietnameseContent || order === undefined) {
-        throw new Error("Missing required fields: lessonId, englishContent, vietnameseContent, and order are required");
+      if (
+        !lessonId ||
+        !englishContent ||
+        !vietnameseContent ||
+        order === undefined
+      ) {
+        throw new Error(
+          "Missing required fields: lessonId, englishContent, vietnameseContent, and order are required"
+        );
       }
 
       this.validateObjectId(lessonId);
       this.validateEnglishContent(englishContent);
       this.validateVietnameseContent(vietnameseContent);
-      this.validateImage(req, true);  
+      this.validateImage(req, true);
       this.validateOrder(order);
 
       next();
@@ -68,16 +79,20 @@ class VocabularyDto {
     }
   };
 
-  updateVocabulary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateVocabulary = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { vocabularyId } = req.params;
+      const { id } = req.params;
       const { lessonId, englishContent, vietnameseContent, order } = req.body;
 
-      this.validateObjectId(vocabularyId);
+      this.validateObjectId(id);
       if (lessonId) this.validateObjectId(lessonId);
       if (englishContent) this.validateEnglishContent(englishContent);
       if (vietnameseContent) this.validateVietnameseContent(vietnameseContent);
-      this.validateImage(req, true); 
+      this.validateImage(req, true);
       this.validateOrder(order);
 
       next();
@@ -88,10 +103,14 @@ class VocabularyDto {
     }
   };
 
-  deleteVocabulary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteVocabulary = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { vocabularyId } = req.params;
-      this.validateObjectId(vocabularyId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -100,10 +119,14 @@ class VocabularyDto {
     }
   };
 
-  getVocabularyById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getVocabularyById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { vocabularyId } = req.params;
-      this.validateObjectId(vocabularyId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -112,14 +135,24 @@ class VocabularyDto {
     }
   };
 
-  getVocabularies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getVocabularies = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
@@ -137,17 +170,27 @@ class VocabularyDto {
     }
   };
 
-  getVocabulariesByLessonId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getVocabulariesByLessonId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { lessonId } = req.params;
+      const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
 
-      this.validateObjectId(lessonId);
+      this.validateObjectId(id);
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {

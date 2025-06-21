@@ -8,6 +8,7 @@ import UserEnum from "../enums/UserEnum";
 import {
   GenericResourceAccessMiddleware,
   LessonResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
 
@@ -24,22 +25,22 @@ testRoutes.post(
   testController.createTest
 );
 
+//get test by courseId => id:courseId => ResourceType.COURSE
 testRoutes.get(
   "/:id/course",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  // GenericResourceAccessMiddleware(ResourceType.COURSE)
+  MembershipAccessLimitMiddleware(ResourceType.COURSE),
+  GenericResourceAccessMiddleware(ResourceType.COURSE),
   testDto.getTests,
   testController.getTests
 );
 
+//get test by testId => id:testId => ResourceType.TEST
 testRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  (req, res, next) => {
-    GenericResourceAccessMiddleware(ResourceType.TEST)(req, res, next).catch(
-      next
-    );
-  },
+  MembershipAccessLimitMiddleware(ResourceType.TEST),
+  GenericResourceAccessMiddleware(ResourceType.TEST),
   testDto.getTestById,
   testController.getTestById
 );
@@ -58,13 +59,11 @@ testRoutes.delete(
   testController.deleteTest
 );
 
+//get test by lessonId => id:lessonId => ResourceType.LESSON
 testRoutes.get(
   "/lesson/:id",
-  (req, res, next) => {
-    GenericResourceAccessMiddleware(ResourceType.LESSON)(req, res, next).catch(
-      next
-    );
-  },
+  MembershipAccessLimitMiddleware(ResourceType.LESSON),
+  GenericResourceAccessMiddleware(ResourceType.LESSON),
   testDto.getTestsByLessonId,
   testController.getTestsByLessonId
 );

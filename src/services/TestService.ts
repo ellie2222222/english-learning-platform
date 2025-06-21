@@ -53,13 +53,13 @@ class TestService implements ITestService {
         if (courseId === null) {
           courseId = lesson.courseId.toString();
         } else if (courseId !== lesson.courseId.toString()) {
-          console.log(
-            courseId === lesson.courseId.toString(),
-            courseId,
-            lesson.courseId,
-            typeof courseId,
-            typeof lesson.courseId.toString()
-          );
+          // console.log(
+          //   courseId === lesson.courseId.toString(),
+          //   courseId,
+          //   lesson.courseId,
+          //   typeof courseId,
+          //   typeof lesson.courseId.toString()
+          // );
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             "A test's lessonIds must be inside the same course"

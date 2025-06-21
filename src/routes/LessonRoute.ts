@@ -9,6 +9,7 @@ import {
   CourseResourceAccessMiddleware,
   GenericResourceAccessMiddleware,
   LessonResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import GrammarDto from "../dtos/GrammarDto";
 import GrammarController from "../controllers/GrammarController";
@@ -41,8 +42,10 @@ lessonRoutes.get(
   lessonController.getLessons
 );
 
+//get lesson by lessonId => id:lessonId => ResourceType.LESSON
 lessonRoutes.get(
   "/:id",
+  MembershipAccessLimitMiddleware(ResourceType.LESSON),
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   GenericResourceAccessMiddleware(ResourceType.LESSON),
   lessonDto.getLessonById,
@@ -63,18 +66,21 @@ lessonRoutes.delete(
   lessonController.deleteLesson
 );
 
+//get grammar by lessonId => id: lessonId => ResourceType.LESSON
 lessonRoutes.get(
   "/:id/grammars",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  GenericResourceAccessMiddleware(ResourceType.GRAMMAR),
+  MembershipAccessLimitMiddleware(ResourceType.LESSON),
+  GenericResourceAccessMiddleware(ResourceType.LESSON),
   grammarDto.getGrammarsByLessonId,
   grammarController.getGrammarsByLessonId
 );
 
+//get vocabularies by lessonId => id: lessonId => ResourceType.LESSON
 lessonRoutes.get(
   "/:id/vocabularies",
-  GenericResourceAccessMiddleware(ResourceType.VOCABULARY),
-  LessonResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware(ResourceType.LESSON),
+  GenericResourceAccessMiddleware(ResourceType.LESSON),
   vocabularyDto.getVocabulariesByLessonId,
   vocabularyController.getVocabulariesByLessonId
 );

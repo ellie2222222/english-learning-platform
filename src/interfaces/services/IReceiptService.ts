@@ -19,4 +19,6 @@ export interface IReceiptService {
     userId: string,
     requesterId: string
   ) => Promise<IPagination>;
+
+  getAllReceipts: (query: IQuery) => Promise<IPagination>;
 }

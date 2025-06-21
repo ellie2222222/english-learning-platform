@@ -28,7 +28,7 @@ class VocabularyService implements IVocabularyService {
     englishContent: string,
     vietnameseContent: string,
     imageUrl: string,
-    order: number,
+    order: number
   ): Promise<IVocabulary> {
     const session = await this.database.startTransaction();
     try {
@@ -42,12 +42,13 @@ class VocabularyService implements IVocabularyService {
       }
 
       // Check for duplicate englishContent within the same lesson
-      const existingVocabulary = await this.vocabularyRepository.getVocabularies({
-        lessonId,
-        englishContent,
-        page: 1,
-        size: 1,
-      } as IQuery);
+      const existingVocabulary =
+        await this.vocabularyRepository.getVocabularies({
+          lessonId,
+          englishContent,
+          page: 1,
+          size: 1,
+        } as IQuery);
       if (existingVocabulary.data.length > 0) {
         throw new CustomException(
           StatusCodeEnum.Conflict_409,
@@ -57,7 +58,7 @@ class VocabularyService implements IVocabularyService {
 
       const vocabulary = await this.vocabularyRepository.createVocabulary(
         {
-          lessonId: new mongoose.Schema.Types.ObjectId(lessonId),
+          lessonId: new mongoose.Types.ObjectId(lessonId),
           englishContent,
           vietnameseContent,
           imageUrl,
@@ -93,12 +94,14 @@ class VocabularyService implements IVocabularyService {
     englishContent: string | undefined,
     vietnameseContent: string | undefined,
     imageUrl: string | undefined,
-    order: number | undefined, 
+    order: number | undefined
   ): Promise<IVocabulary | null> {
     const session = await this.database.startTransaction();
     try {
       // Validate vocabulary exists
-      const vocabulary = await this.vocabularyRepository.getVocabularyById(vocabularyId);
+      const vocabulary = await this.vocabularyRepository.getVocabularyById(
+        vocabularyId
+      );
       if (!vocabulary) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -120,13 +123,17 @@ class VocabularyService implements IVocabularyService {
       // Check for duplicate englishContent within the same lesson if updated
       if (englishContent && (lessonId || vocabulary.lessonId)) {
         const targetLessonId = lessonId || vocabulary.lessonId.toString();
-        const existingVocabulary = await this.vocabularyRepository.getVocabularies({
-          lessonId: targetLessonId,
-          englishContent,
-          page: 1,
-          size: 1,
-        } as IQuery);
-        if (existingVocabulary.data.length > 0 && existingVocabulary.data[0]._id.toString() !== vocabularyId) {
+        const existingVocabulary =
+          await this.vocabularyRepository.getVocabularies({
+            lessonId: targetLessonId,
+            englishContent,
+            page: 1,
+            size: 1,
+          } as IQuery);
+        if (
+          existingVocabulary.data.length > 0 &&
+          existingVocabulary.data[0]._id.toString() !== vocabularyId
+        ) {
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             `Another vocabulary with English content "${englishContent}" already exists for this lesson`
@@ -135,18 +142,21 @@ class VocabularyService implements IVocabularyService {
       }
 
       const updateData: Partial<IVocabulary> = {
-        ...(lessonId && { lessonId: new mongoose.Schema.Types.ObjectId(lessonId) }),
+        ...(lessonId && {
+          lessonId: new mongoose.Schema.Types.ObjectId(lessonId),
+        }),
         ...(englishContent && { englishContent }),
         ...(vietnameseContent && { vietnameseContent }),
         ...(imageUrl !== undefined && { imageUrl }),
         ...(order !== undefined && { order }),
       };
 
-      const updatedVocabulary = await this.vocabularyRepository.updateVocabulary(
-        vocabularyId,
-        updateData,
-        session
-      );
+      const updatedVocabulary =
+        await this.vocabularyRepository.updateVocabulary(
+          vocabularyId,
+          updateData,
+          session
+        );
       if (!updatedVocabulary) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -185,7 +195,9 @@ class VocabularyService implements IVocabularyService {
   async deleteVocabulary(vocabularyId: string): Promise<IVocabulary | null> {
     const session = await this.database.startTransaction();
     try {
-      const vocabulary = await this.vocabularyRepository.getVocabularyById(vocabularyId);
+      const vocabulary = await this.vocabularyRepository.getVocabularyById(
+        vocabularyId
+      );
       if (!vocabulary) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -193,10 +205,8 @@ class VocabularyService implements IVocabularyService {
         );
       }
 
-      const deletedVocabulary = await this.vocabularyRepository.deleteVocabulary(
-        vocabularyId,
-        session
-      );
+      const deletedVocabulary =
+        await this.vocabularyRepository.deleteVocabulary(vocabularyId, session);
 
       // Clean up image file on deletion
       if (vocabulary.imageUrl) {
@@ -219,7 +229,9 @@ class VocabularyService implements IVocabularyService {
 
   async getVocabularyById(vocabularyId: string): Promise<IVocabulary | null> {
     try {
-      const vocabulary = await this.vocabularyRepository.getVocabularyById(vocabularyId);
+      const vocabulary = await this.vocabularyRepository.getVocabularyById(
+        vocabularyId
+      );
       if (!vocabulary) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -240,7 +252,9 @@ class VocabularyService implements IVocabularyService {
 
   async getVocabularies(query: IQuery): Promise<IPagination> {
     try {
-      const vocabularies = await this.vocabularyRepository.getVocabularies(query);
+      const vocabularies = await this.vocabularyRepository.getVocabularies(
+        query
+      );
       return vocabularies;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -248,12 +262,17 @@ class VocabularyService implements IVocabularyService {
       }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Failed to retrieve vocabularies"
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve vocabularies"
       );
     }
   }
 
-  async getVocabulariesByLessonId(lessonId: string, query: IQuery): Promise<IPagination> {
+  async getVocabulariesByLessonId(
+    lessonId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const lesson = await this.lessonRepository.getLessonById(lessonId);
       if (!lesson) {
@@ -263,7 +282,11 @@ class VocabularyService implements IVocabularyService {
         );
       }
 
-      const vocabularies = await this.vocabularyRepository.getVocabulariesByLessonId(lessonId, query);
+      const vocabularies =
+        await this.vocabularyRepository.getVocabulariesByLessonId(
+          lessonId,
+          query
+        );
       return vocabularies;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -271,7 +294,9 @@ class VocabularyService implements IVocabularyService {
       }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Failed to retrieve vocabularies"
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve vocabularies"
       );
     }
   }

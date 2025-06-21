@@ -1,9 +1,11 @@
 import mongoose, { Document } from "mongoose";
 import { IExercise } from "./IExercise";
+import { ICourse } from "./ICourse";
+import { ILesson } from "./ILesson";
 
 export interface ITest extends Document {
-  lessonIds: mongoose.Schema.Types.ObjectId[] | string[];
-  courseId: mongoose.Schema.Types.ObjectId;
+  lessonIds: mongoose.Schema.Types.ObjectId[] | string[] | ILesson[];
+  courseId: mongoose.Schema.Types.ObjectId | ICourse;
   name: string;
   description: string;
   totalQuestions: number;

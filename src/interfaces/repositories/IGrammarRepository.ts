@@ -3,13 +3,19 @@ import { IGrammar } from "../models/IGrammar";
 import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
 
-
 export interface IGrammarRepository {
-  createGrammar(grammar: Partial<IGrammar>, session?: mongoose.ClientSession): Promise<IGrammar>;
-  
-  updateGrammar(grammarId: string, updateData: Partial<IGrammar>, session?: mongoose.ClientSession): Promise<IGrammar | null>;
+  createGrammar(grammar: object, session?: any): Promise<IGrammar>;
 
-  deleteGrammar(grammarId: string, session?: mongoose.ClientSession): Promise<IGrammar | null>;
+  updateGrammar(
+    grammarId: string,
+    updateData: Partial<IGrammar>,
+    session?: any
+  ): Promise<IGrammar | null>;
+
+  deleteGrammar(
+    grammarId: string,
+    session?: mongoose.ClientSession
+  ): Promise<IGrammar | null>;
 
   getGrammarById(grammarId: string): Promise<IGrammar | null>;
 
@@ -17,7 +23,10 @@ export interface IGrammarRepository {
 
   getGrammarsByLessonId(lessonId: string, query: IQuery): Promise<IPagination>;
 
-  deleteGrammarByLessonId(lessonId: string, session?: mongoose.ClientSession): Promise<boolean>;
+  deleteGrammarByLessonId(
+    lessonId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
 
   deleteGrammarByLessonIds(
     lessonIds: mongoose.Types.ObjectId[],

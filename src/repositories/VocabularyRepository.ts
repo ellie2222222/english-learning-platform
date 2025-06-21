@@ -17,8 +17,8 @@ class VocabularyRepository implements IVocabularyRepository {
   }
 
   async createVocabulary(
-    vocabulary: Partial<IVocabulary>,
-    session?: mongoose.ClientSession
+    vocabulary: object,
+    session?: any
   ): Promise<IVocabulary> {
     try {
       const newVocabulary = await this.vocabularyModel.create([vocabulary], {
@@ -35,7 +35,7 @@ class VocabularyRepository implements IVocabularyRepository {
 
   async updateVocabulary(
     vocabularyId: string,
-    updateData: Partial<IVocabulary>,
+    updateData: object,
     session?: mongoose.ClientSession
   ): Promise<IVocabulary | null> {
     try {
@@ -180,7 +180,10 @@ class VocabularyRepository implements IVocabularyRepository {
     }
   }
 
-  async deleteVocabularyByLessonId(lessonId: string, session?: mongoose.ClientSession): Promise<boolean> {
+  async deleteVocabularyByLessonId(
+    lessonId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
     try {
       const result = await this.vocabularyModel.updateMany(
         { lessonId: new mongoose.Types.ObjectId(lessonId) },
@@ -213,7 +216,11 @@ class VocabularyRepository implements IVocabularyRepository {
   ): Promise<boolean> {
     try {
       const result = await this.vocabularyModel.updateMany(
-        { lessonId: { $in: lessonIds.map(id => new mongoose.Types.ObjectId(id)) } },
+        {
+          lessonId: {
+            $in: lessonIds.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+        },
         { isDeleted: true },
         { session }
       );

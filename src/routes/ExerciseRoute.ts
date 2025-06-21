@@ -6,7 +6,10 @@ import ExerciseDto from "../dtos/ExerciseDto";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import { uploadFile } from "../middlewares/storeFile";
-import { GenericResourceAccessMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import {
+  GenericResourceAccessMiddleware,
+  MembershipAccessLimitMiddleware,
+} from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
 
 const exerciseRoutes = Router();
@@ -38,28 +41,22 @@ exerciseRoutes.delete(
   exerciseController.deleteExercise
 );
 
+//get exercise by lessonId => id: lessonId => ResourceType.LESSON
 exerciseRoutes.get(
   "/:id/lesson",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  (req, res, next) => {
-    GenericResourceAccessMiddleware(ResourceType.LESSON)(req, res, next).catch(
-      next
-    );
-  },
+  MembershipAccessLimitMiddleware(ResourceType.LESSON),
+  GenericResourceAccessMiddleware(ResourceType.LESSON),
   exerciseDto.getExercises,
   exerciseController.getExercises
 );
 
+//get exercise by exerciseId => id: exerciseId => ResourceType.EXERCISE
 exerciseRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  (req, res, next) => {
-    GenericResourceAccessMiddleware(ResourceType.EXERCISE)(
-      req,
-      res,
-      next
-    ).catch(next);
-  },
+  MembershipAccessLimitMiddleware(ResourceType.EXERCISE),
+  GenericResourceAccessMiddleware(ResourceType.EXERCISE),
   exerciseDto.getExercise,
   exerciseController.getExercise
 );

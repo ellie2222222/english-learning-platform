@@ -45,6 +45,7 @@ class AuthController {
       res.status(StatusCodeEnum.OK_200).json({
         message: "Success",
         accessToken,
+        refreshToken,
       });
     } catch (error) {
       next(error);

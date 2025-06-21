@@ -37,6 +37,8 @@ import userTestRoutes from "./routes/UserTestRoute";
 import grammarRoutes from "./routes/GrammarRoute";
 import vocabularyRoutes from "./routes/VocabularyRoute";
 import aiRoutes from "./routes/AIRoutes";
+import StatusCodeEnum from "./enums/StatusCodeEnum";
+import statisticRoutes from "./routes/StatisticRoute";
 
 dotenv.config();
 
@@ -83,6 +85,7 @@ app.use("/api/user-tests", userTestRoutes);
 app.use("/api/grammars", grammarRoutes);
 app.use("/api/vocabularies", vocabularyRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/statistic", statisticRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");
@@ -103,6 +106,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(ErrorLogMiddleware);
 
+app.get("/", (req: Request, res: Response) => {
+  res.status(StatusCodeEnum.OK_200).send("Keep api alive");
+});
 cronJob.start();
 const server = http.createServer(app);
 
