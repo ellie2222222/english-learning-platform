@@ -2,6 +2,7 @@ import mongoose, { Types } from "mongoose";
 import { IUser } from "../models/IUser";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { INewUsers } from "../others/IStatisticData";
 
 export interface IUserRepository {
   createUser(data: object, session?: mongoose.ClientSession): Promise<IUser>;
@@ -25,7 +26,11 @@ export interface IUserRepository {
 
   getUsers(query: IQuery): Promise<IPagination>;
 
-  getAllUsersTimeInterval(startDate: Date, endDate: Date): Promise<IUser[]>;
+  getAllUsersTimeInterval(
+    startDate: Date,
+    endDate: Date,
+    groupBy: string
+  ): Promise<INewUsers[]>;
 
   getExpiredUsers(): Promise<IUser[] | []>;
 

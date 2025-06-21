@@ -7,6 +7,7 @@ import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IQuery } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
+import { INewUsers } from "../interfaces/others/IStatisticData";
 
 @Service()
 class UserRepository implements IUserRepository {
@@ -210,23 +211,40 @@ class UserRepository implements IUserRepository {
       );
     }
   }
-
   async getAllUsersTimeInterval(
     startDate: Date,
-    endDate: Date
-  ): Promise<IUser[]> {
+    endDate: Date,
+    groupBy: string
+  ): Promise<INewUsers[]> {
     try {
-      const users = await UserModel.find({
-        createdAt: { $gte: startDate, $lte: endDate },
-      }).lean();
-      return users || [];
+      const users = await UserModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            isDeleted: { $eq: false },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: groupBy, date: "$createdAt" } },
+            newUsers: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            Date: "$_id",
+            newUsers: 1,
+            _id: 0,
+          },
+        },
+        { $sort: { Date: 1 } },
+      ]);
+
+      return users;
     } catch (error) {
-      if ((error as Error) || (error as CustomException)) {
-        throw error;
-      }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        "Internal Server Error"
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   }

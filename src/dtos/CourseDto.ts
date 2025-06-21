@@ -6,11 +6,11 @@ import { CourseTypeEnum } from "../enums/CourseTypeEnum";
 import { CourseLevelEnum } from "../enums/CourseLevelEnum";
 
 class CourseDto {
-  private validateObjectId = (courseId: string): void => {
-    if (!courseId) {
+  private validateObjectId = (id: string): void => {
+    if (!id) {
       throw new Error("Course ID is required");
     }
-    if (!mongoose.isValidObjectId(courseId)) {
+    if (!mongoose.isValidObjectId(id)) {
       throw new Error("Invalid course ID");
     }
   };
@@ -98,11 +98,11 @@ class CourseDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { courseId } = req.params;
+      const { id } = req.params;
       const { name, description, type, level, totalLessons, coverImage } =
         req.body;
 
-      this.validateObjectId(courseId);
+      this.validateObjectId(id);
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
       this.validateCourseType(type);
@@ -130,8 +130,8 @@ class CourseDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { courseId } = req.params;
-      this.validateObjectId(courseId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({
@@ -146,8 +146,8 @@ class CourseDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { courseId } = req.params;
-      this.validateObjectId(courseId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({

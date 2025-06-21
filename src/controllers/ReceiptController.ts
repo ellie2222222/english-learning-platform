@@ -79,6 +79,27 @@ class ReceiptController {
       next(error);
     }
   };
+
+  getAllReceipt = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { page, size, order, sortBy, search } = req.query;
+
+      const receipts = this.receiptService.getAllReceipts({
+        page: parseInt(page as string) || 1,
+        size: parseInt(size as string) || 5,
+        order: (order as OrderType) || "asc",
+        sortBy: (sortBy as SortByType) || "date",
+        search: (search as string) || "",
+      });
+
+      res.status(StatusCodeEnum.OK_200).json({
+        receipt: receipts,
+        message: "Receipt retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default ReceiptController;

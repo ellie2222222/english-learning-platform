@@ -168,6 +168,22 @@ class ReceiptService implements IReceiptService {
       );
     }
   };
+
+  getAllReceipts = async (query: IQuery): Promise<IPagination> => {
+    try {
+      const receipts = await this.receiptRepository.getAllReceipts(query);
+      return receipts;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
 }
 
 export default ReceiptService;

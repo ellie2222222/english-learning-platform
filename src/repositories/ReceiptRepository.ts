@@ -7,6 +7,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import ReceiptModel from "../models/ReceiptModel";
 import { IPagination } from "../interfaces/others/IPagination";
+import { IRevenue } from "../interfaces/others/IStatisticData";
 
 @Service()
 class ReceiptRepository implements IReceiptRepository {
@@ -57,10 +58,6 @@ class ReceiptRepository implements IReceiptRepository {
         throw error;
       }
 
-      if (error instanceof CustomException) {
-        throw error;
-      }
-
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
@@ -91,10 +88,6 @@ class ReceiptRepository implements IReceiptRepository {
 
       return receipt;
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
-
       if (error instanceof CustomException) {
         throw error;
       }
@@ -145,10 +138,6 @@ class ReceiptRepository implements IReceiptRepository {
 
       return receipt[0];
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
-
       if (error instanceof CustomException) {
         throw error;
       }
@@ -224,6 +213,135 @@ class ReceiptRepository implements IReceiptRepository {
         throw error;
       }
 
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getAllReceipts(query: IQuery): Promise<IPagination> {
+    try {
+      const matchQuery = { isDeleted: false };
+      let sortField = "createdAt";
+      switch (query.sortBy) {
+        case SortByType.DATE:
+          sortField = "createdAt";
+          break;
+
+        case SortByType.NAME:
+          sortField = "membership.name";
+          break;
+
+        default:
+          break;
+      }
+      const order = query.order === OrderType.ASC ? 1 : -1;
+      const skip = query.size * (query.page - 1);
+
+      const receipts = await ReceiptModel.aggregate([
+        {
+          $match: matchQuery,
+        },
+        {
+          $lookup: {
+            from: "memberships",
+            localField: "membershipId",
+            foreignField: "_id",
+            as: "membership",
+          },
+        },
+        { $unwind: "$membership" },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $sort: {
+            [sortField]: order,
+          },
+        },
+        { $skip: skip },
+        { $limit: query.size },
+      ]);
+
+      const total = await ReceiptModel.countDocuments(matchQuery);
+      return {
+        data: receipts,
+        total: total,
+        totalPages: Math.ceil(total / query.size),
+        page: query.page,
+      };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getRevenueByTimeInterval(
+    startDate: Date,
+    endDate: Date,
+    groupBy: string
+  ): Promise<IRevenue[]> {
+    try {
+      const receipts = await ReceiptModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            isDeleted: { $ne: true },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: groupBy, date: "$createdAt" } },
+            Revenue: { $sum: "$amount" },
+          },
+        },
+        {
+          $project: {
+            Date: "$_id",
+            Revenue: 1,
+            _id: 0,
+          },
+        },
+        { $sort: { Date: 1 } },
+      ]);
+
+      return receipts;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getAllReceiptsTimeInterval(
+    startDate: Date,
+    endDate: Date
+  ): Promise<IReceipt[]> {
+    try {
+      const receipts = await ReceiptModel.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+        isDeleted: { $ne: true },
+      }).lean();
+      return receipts;
+    } catch (error) {
       if (error instanceof CustomException) {
         throw error;
       }
