@@ -2,7 +2,11 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { IUser } from "../interfaces/models/IUser";
 import { IUserService } from "../interfaces/services/IUserService";
 import { Request, Response, NextFunction } from "express";
-import { cleanUpFile } from "../utils/fileUtils";
+import {
+  cleanUpFile,
+  formatPathSingle,
+  uploadToCloudinary,
+} from "../utils/fileUtils";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import UserService from "../services/UserService";
 import { Inject, Service } from "typedi";
@@ -82,13 +86,21 @@ class UserController {
       const { name, role, phoneNumber } = req.body;
       const requesterId = req.userInfo.userId;
       let user: IUser | null;
+
       if (req.file) {
+        let avatar;
+        if (process.env.STORAGE_TYPE === "cloudinary") {
+          avatar = await uploadToCloudinary(req.file);
+        } else {
+          avatar = formatPathSingle(req.file);
+        }
+
         user = await this.userService.updateUser(
           id,
           requesterId,
           name,
           role,
-          `${process.env.SERVER_URL}/${req.file.path}`
+          avatar
         );
       } else {
         user = await this.userService.updateUser(id, requesterId, name, role);
@@ -115,6 +127,28 @@ class UserController {
       res
         .status(StatusCodeEnum.OK_200)
         .json({ userIsDeleted: user, message: "User deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getTopLeaderBoardUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { limit, sortBy } = req.query;
+
+      const users = await this.userService.getTopLeaderBoardUser(
+        limit ? parseInt(limit as string) : 10,
+        sortBy ? (sortBy as string) : "points"
+      );
+
+      res.status(StatusCodeEnum.OK_200).json({
+        users: users,
+        message: "Get leaderboard user successfully",
+      });
     } catch (error) {
       next(error);
     }

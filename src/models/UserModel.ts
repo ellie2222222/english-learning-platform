@@ -52,7 +52,7 @@ const userModelSchema = new Schema<IUser>(
         default: false,
       },
     },
-    xp: {
+    points: {
       type: Number,
       default: 0,
     },
