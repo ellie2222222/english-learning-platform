@@ -162,7 +162,7 @@ class UserRepository implements IUserRepository {
    */
   async updateUserById(
     userId: string,
-    data: Partial<IUser>,
+    data: object,
     session?: mongoose.ClientSession
   ): Promise<IUser | null> {
     try {

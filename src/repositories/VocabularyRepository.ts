@@ -1,5 +1,5 @@
 import { Service } from "typedi";
-import mongoose, { Model } from "mongoose";
+import mongoose, { ClientSession, Model, Types } from "mongoose";
 import { IVocabulary } from "../interfaces/models/IVocabulary";
 import { IVocabularyRepository } from "../interfaces/repositories/IVocabularyRepository";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
@@ -35,8 +35,8 @@ class VocabularyRepository implements IVocabularyRepository {
 
   async updateVocabulary(
     vocabularyId: string,
-    updateData: Partial<IVocabulary>,
-    session?: any
+    updateData: object,
+    session?: mongoose.ClientSession
   ): Promise<IVocabulary | null> {
     try {
       const updatedVocabulary = await this.vocabularyModel
@@ -53,7 +53,7 @@ class VocabularyRepository implements IVocabularyRepository {
 
   async deleteVocabulary(
     vocabularyId: string,
-    session?: any
+    session?: mongoose.ClientSession
   ): Promise<IVocabulary | null> {
     try {
       const deletedVocabulary = await this.vocabularyModel
@@ -176,6 +176,70 @@ class VocabularyRepository implements IVocabularyRepository {
         error instanceof Error
           ? error.message
           : "Failed to retrieve vocabularies"
+      );
+    }
+  }
+
+  async deleteVocabularyByLessonId(
+    lessonId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
+    try {
+      const result = await this.vocabularyModel.updateMany(
+        { lessonId: new mongoose.Types.ObjectId(lessonId) },
+        { isDeleted: true },
+        { session }
+      );
+
+      if (result.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No vocabulary found for the provided lesson ID"
+        );
+      }
+
+      return result.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteVocabularyByLessonIds(
+    lessonIds: Types.ObjectId[],
+    session?: ClientSession
+  ): Promise<boolean> {
+    try {
+      const result = await this.vocabularyModel.updateMany(
+        {
+          lessonId: {
+            $in: lessonIds.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+        },
+        { isDeleted: true },
+        { session }
+      );
+
+      if (result.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No vocabulary found for the provided lesson IDs"
+        );
+      }
+
+      return result.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   }

@@ -183,6 +183,26 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
+  async getLessonsByCourseIdV2(
+    courseId: string
+  ): Promise<ILesson[]> {
+    try {
+      const lessons = await LessonModel.find({
+        courseId: new mongoose.Types.ObjectId(courseId),
+      });
+
+      return lessons;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
   async getLessonsByCourseId(
     courseId: string,
     query: IQuery
@@ -232,6 +252,36 @@ class LessonRepository implements ILessonRepository {
         total: total,
         totalPages: Math.ceil(total / query.size),
       };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteLessonsByCourseId(
+    courseId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
+    try {
+      const deletedLessons = await LessonModel.updateMany(
+        { courseId: new mongoose.Types.ObjectId(courseId) },
+        { $set: { isDeleted: true } },
+        { session }
+      );
+
+      if (deletedLessons.matchedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No lessons found for this course"
+        );
+      }
+
+      return deletedLessons.acknowledged;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

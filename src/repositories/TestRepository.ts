@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { ClientSession, Types } from "mongoose";
 import { ITest } from "../interfaces/models/ITest";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
@@ -7,6 +7,7 @@ import { Service } from "typedi";
 import { IPagination } from "../interfaces/others/IPagination";
 import TestModel from "../models/TestModel";
 import { ITestRepository } from "../interfaces/repositories/ITestRepository";
+import test from "node:test";
 
 @Service()
 class TestRepository implements ITestRepository {
@@ -248,6 +249,27 @@ class TestRepository implements ITestRepository {
   //   }
   // }
 
+  async getTestsByLessonIdV2( 
+    lessonId: string,
+  ): Promise<ITest[]> {
+    try {
+      const tests = await TestModel.find({
+        lessonIds: { $in: [new mongoose.Types.ObjectId(lessonId)] },
+        isDeleted: false,
+      });
+
+      return tests;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
   async getTestsByLessonId(
     lessonId: string,
     query: IQuery
@@ -296,6 +318,42 @@ class TestRepository implements ITestRepository {
         total: total,
         totalPages: Math.ceil(total / query.size),
       };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteTestsByCourseOrLessons(
+    courseId: string,
+    lessonIds: Types.ObjectId[],
+    session?: ClientSession
+  ): Promise<boolean> {
+    try {
+      const result = await TestModel.updateMany(
+        {
+          $or: [
+            { courseId: new mongoose.Types.ObjectId(courseId) },
+            { lessonIds: { $in: lessonIds } },
+          ],
+        },
+        { isDeleted: true },
+        { session }
+      );
+      
+      if (result.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No tests found for the provided course ID or lesson IDs"
+        );
+      }
+
+      return result.acknowledged;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

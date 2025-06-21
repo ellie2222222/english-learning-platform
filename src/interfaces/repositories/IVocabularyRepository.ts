@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { IVocabulary } from "../models/IVocabulary";
 import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
@@ -7,7 +8,7 @@ export interface IVocabularyRepository {
 
   updateVocabulary(
     vocabularyId: string,
-    updateData: Partial<IVocabulary>,
+    updateData: object,
     session?: any
   ): Promise<IVocabulary | null>;
 
@@ -24,4 +25,9 @@ export interface IVocabularyRepository {
     lessonId: string,
     query: IQuery
   ): Promise<IPagination>;
+
+  deleteVocabularyByLessonId(
+    lessonId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
 }
