@@ -26,4 +26,6 @@ export interface ITestRepository {
   getTestsByLessonId(lessonId: string, query: IQuery): Promise<IPagination>;
 
   getTestOrder(courseId: string): Promise<number>;
+
+  getTestsByLessonIdV2(lessonId: string): Promise<ITest[]>;
 }

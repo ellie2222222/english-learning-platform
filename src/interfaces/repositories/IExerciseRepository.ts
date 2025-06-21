@@ -30,4 +30,24 @@ export interface IExerciseRepository {
   ): Promise<IExercise[]>;
 
   getAllLessonExercise(lessonId: string): Promise<IExercise[]>;
+
+  deleteExercisesByLessonId(
+    id: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
+
+  deleteExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[],
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
+
+  getExerciseOrder(lessonId: string): Promise<number>;
+
+  countExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[] | string[],
+  ): Promise<number>;
+
+  countDeletedExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[] | string[],
+  ): Promise<number>;
 }

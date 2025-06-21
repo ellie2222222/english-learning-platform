@@ -1,5 +1,5 @@
 import { Service } from "typedi";
-import mongoose, { Model } from "mongoose";
+import mongoose, { ClientSession, Model } from "mongoose";
 import { IGrammar } from "../interfaces/models/IGrammar";
 import { IGrammarRepository } from "../interfaces/repositories/IGrammarRepository";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
@@ -16,7 +16,7 @@ class GrammarRepository implements IGrammarRepository {
     this.grammarModel = GrammarModel;
   }
 
-  async createGrammar(grammar: Partial<IGrammar>, session?: any): Promise<IGrammar> {
+  async createGrammar(grammar: Partial<IGrammar>, session?: mongoose.ClientSession): Promise<IGrammar> {
     try {
       const newGrammar = await this.grammarModel.create([grammar], { session });
       return newGrammar[0];
@@ -28,7 +28,7 @@ class GrammarRepository implements IGrammarRepository {
     }
   }
 
-  async updateGrammar(grammarId: string, updateData: Partial<IGrammar>, session?: any): Promise<IGrammar | null> {
+  async updateGrammar(grammarId: string, updateData: Partial<IGrammar>, session?: mongoose.ClientSession): Promise<IGrammar | null> {
     try {
       const updatedGrammar = await this.grammarModel
         .findByIdAndUpdate(grammarId, updateData, { new: true, session })
@@ -42,7 +42,7 @@ class GrammarRepository implements IGrammarRepository {
     }
   }
 
-  async deleteGrammar(grammarId: string, session?: any): Promise<IGrammar | null> {
+  async deleteGrammar(grammarId: string, session?: mongoose.ClientSession): Promise<IGrammar | null> {
     try {
       const deletedGrammar = await this.grammarModel
         .findByIdAndUpdate(grammarId, { isDeleted: true }, { new: true, session })
@@ -153,6 +153,66 @@ class GrammarRepository implements IGrammarRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to retrieve grammars"
+      );
+    }
+  }
+
+  async deleteGrammarByLessonId(
+    lessonId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
+    try {
+      const result = await this.grammarModel.updateMany(
+        { lessonId: new mongoose.Types.ObjectId(lessonId) },
+        { $set: { isDeleted: true } },
+        { session }
+      );
+
+      if (result.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No grammar found for the provided lesson ID"
+        );
+      }
+
+      return result.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteGrammarByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[],
+    session?: ClientSession
+  ): Promise<boolean> {
+    try {
+      const result = await this.grammarModel.updateMany(
+        { lessonId: { $in: lessonIds } },
+        { $set: { isDeleted: true } },
+        { session }
+      );
+
+      if (result.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No grammar found for the provided lesson IDs"
+        );
+      }
+
+      return result.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   }

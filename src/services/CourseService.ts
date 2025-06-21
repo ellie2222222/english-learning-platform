@@ -9,12 +9,28 @@ import { ICourseRepository } from "../interfaces/repositories/ICourseRepository"
 import CourseRepository from "../repositories/CourseRepository";
 import { IPagination } from "../interfaces/others/IPagination";
 import { cleanUpFile } from "../utils/fileUtils";
+import LessonRepository from "../repositories/LessonRepository";
+import GrammarRepository from "../repositories/GrammarRepository";
+import VocabularyRepository from "../repositories/VocabularyRepository";
+import TestRepository from "../repositories/TestRepository";
+import ExerciseRepository from "../repositories/ExcerciseRepository";
+import { Types } from "mongoose";
 
 @Service()
 class CourseService implements ICourseService {
   constructor(
     @Inject(() => CourseRepository)
     private courseRepository: ICourseRepository,
+    @Inject(() => LessonRepository)
+    private lessonRepository: LessonRepository,
+    @Inject(() => GrammarRepository)
+    private grammarRepository: GrammarRepository,
+    @Inject(() => VocabularyRepository)
+    private vocabularyRepository: VocabularyRepository,
+    @Inject(() => TestRepository)
+    private testRepository: TestRepository,
+    @Inject(() => ExerciseRepository)
+    private exerciseRepository: ExerciseRepository,
     @Inject() private database: Database
   ) {}
 
@@ -139,6 +155,27 @@ class CourseService implements ICourseService {
           "Course not found"
         );
       }
+
+      // Find all lessons associated with the course
+    const lessons = await this.lessonRepository.getLessonsByCourseIdV2(id);
+
+    // Extract lesson IDs
+    const lessonIds: Types.ObjectId[] = lessons.map(lesson => lesson._id as Types.ObjectId);
+
+    // Delete related data in parallel where possible
+    await Promise.all([
+      // Delete exercises associated with the lessons
+      this.exerciseRepository.deleteExercisesByLessonIds(lessonIds, session),
+      // Delete grammar documents associated with the lessons
+      this.grammarRepository.deleteGrammarByLessonIds(lessonIds, session),
+      // Delete vocabulary documents associated with the lessons
+      this.vocabularyRepository.deleteVocabularyByLessonIds(lessonIds, session),
+      // Delete tests associated with the course or lessons
+      this.testRepository.deleteTestsByCourseOrLessons(id, lessonIds, session),
+      // Delete lessons associated with the course
+      this.lessonRepository.deleteLessonsByCourseId(id, session),
+    ]);
+
 
       const deletedCourse = await this.courseRepository.deleteCourse(
         id,

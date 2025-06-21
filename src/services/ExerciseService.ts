@@ -12,13 +12,19 @@ import LessonRepository from "../repositories/LessonRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
 import { ExerciseTypeEnum } from "../enums/ExerciseTypeEnum";
 import { cleanUpFile } from "../utils/fileUtils";
+import TestRepository from "../repositories/TestRepository";
+import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
+import { ITestRepository } from "../interfaces/repositories/ITestRepository";
 
 @Service()
 class ExerciseService implements IExerciseService {
   constructor(
-    @Inject(() => LessonRepository) private lessonRepository: ILessonRepository,
+    @Inject(() => LessonRepository)
+    private lessonRepository: ILessonRepository,
     @Inject(() => ExerciseRepository)
-    private exerciseRepository: ExerciseRepository,
+    private exerciseRepository: IExerciseRepository,
+    @Inject(() => TestRepository)
+    private testRepository: ITestRepository,
     @Inject() private database: Database
   ) {}
 
@@ -248,19 +254,90 @@ class ExerciseService implements IExerciseService {
     }
   };
 
-  deleteExercise = async (id: string): Promise<IExercise | null> => {
+  async deleteExercise(id: string): Promise<IExercise | null> {
     const session = await this.database.startTransaction();
     try {
-      const exercise = await this.exerciseRepository.deleteExercise(
+      const exercise = await this.exerciseRepository.getExercise(id);
+      if (!exercise) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Exercise not found"
+        );
+      }
+
+      // Get the lesson ID and count of exercises in the lesson
+      const lessonId = exercise.lessonId.toString();
+
+      // Find tests that include the exercise's lesson
+      const tests = await this.testRepository.getTestsByLessonIdV2(
+        lessonId,
+      );
+
+      let canDelete = true;
+      for (const test of tests) {
+        const remainingLessonIds = test.lessonIds.filter(
+          (lid) => lid?.toString() !== exercise.lessonId?.toString()
+        );
+        const totalExercisesAcrossLessons =
+          await this.exerciseRepository.countExercisesByLessonIds(
+            test.lessonIds.map((lid) => lid.toString())
+          );
+        const deletedExercisesAcrossLessons =
+          await this.exerciseRepository.countDeletedExercisesByLessonIds(
+            test.lessonIds.map((lid) => lid.toString())
+          );
+        const remainingExercisesAcrossLessons =
+          totalExercisesAcrossLessons - deletedExercisesAcrossLessons;
+
+        if (
+          remainingExercisesAcrossLessons === test.totalQuestions &&
+          remainingLessonIds.length > 0
+        ) {
+          // Do not delete if remaining exercises match totalQuestions and other lessons exist
+          canDelete = true; // Still allowed, just update test
+        } else if (
+          remainingExercisesAcrossLessons < test.totalQuestions ||
+          remainingLessonIds.length === 0
+        ) {
+          // Cannot delete if it would reduce exercises below totalQuestions or leave no lessons
+          canDelete = false;
+          break;
+        }
+      }
+
+      if (!canDelete) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Cannot delete exercise as it would invalidate test constraints"
+        );
+      }
+
+      // Delete the exercise
+      const deletedExercise = await this.exerciseRepository.deleteExercise(
         id,
         session
       );
 
-      await this.database.commitTransaction(session);
+      // Update or delete tests after successful deletion
+      for (const test of tests) {
+        const remainingLessonIds = test.lessonIds.filter(
+          (lid) => lid?.toString() !== exercise.lessonId?.toString()
+        );
+        if (remainingLessonIds.length === 0) {
+          await this.testRepository.deleteTest((test._id as string).toString(), session);
+        } else {
+          await this.testRepository.updateTest(
+            (test._id as string).toString(),
+            { lessonIds: remainingLessonIds },
+            session
+          );
+        }
+      }
 
-      return exercise;
+      await this.database.commitTransaction(session);
+      return deletedExercise;
     } catch (error) {
-      await session.abortTransaction(session);
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }
@@ -269,10 +346,8 @@ class ExerciseService implements IExerciseService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
-    } finally {
-      await session.endSession();
     }
-  };
+  }
 
   getExercises = async (
     query: IQuery,

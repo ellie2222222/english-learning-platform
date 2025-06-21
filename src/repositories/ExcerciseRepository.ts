@@ -146,14 +146,14 @@ class ExerciseRepository implements IExerciseRepository {
   }
 
   async getExercises(query: IQuery, lessonId?: string): Promise<IPagination> {
-    type seachQuery = {
+    type searchQuery = {
       isDeleted: boolean;
       question?: { $regex: string; $options: string };
       lessonId?: mongoose.Types.ObjectId;
     };
 
     try {
-      const matchQuery: seachQuery = {
+      const matchQuery: searchQuery = {
         isDeleted: false,
       };
 
@@ -247,7 +247,7 @@ class ExerciseRepository implements IExerciseRepository {
       if (exercises.length < length) {
         throw new CustomException(
           StatusCodeEnum.InternalServerError_500,
-          "This test does not have enough exercise for you to paticipate, please report this issue to admin"
+          "This test does not have enough exercise for you to participate, please report this issue to admin"
         );
       }
 
@@ -307,6 +307,114 @@ class ExerciseRepository implements IExerciseRepository {
       );
     }
   }
+
+  async deleteExercisesByLessonId(
+    lessonId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
+    try {
+      const exercises = await ExerciseModel.updateMany(
+        {
+          lessonId: new mongoose.Types.ObjectId(lessonId),
+          isDeleted: false,
+        },
+        { $set: { isDeleted: true } },
+        { session, new: true }
+      );
+
+      if (exercises.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No exercises found for the provided lesson ID"
+        );
+      }
+
+      return exercises.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async deleteExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[],
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
+    try {
+      const exercises = await ExerciseModel.updateMany(
+        {
+          lessonId: { $in: lessonIds },
+          isDeleted: false,
+        },
+        { $set: { isDeleted: true } },
+        { session, new: true }
+      );
+
+      if (exercises.modifiedCount === 0) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "No exercises found for the provided lesson IDs"
+        );
+      }
+
+      return exercises.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async countExercisesByLessonIds(lessonIds: mongoose.Types.ObjectId[]): Promise<number> {
+    try {
+      const count = await ExerciseModel.countDocuments({
+        lessonId: { $in: lessonIds },
+        isDeleted: false,
+      });
+
+      return count;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async countDeletedExercisesByLessonIds(lessonIds: mongoose.Types.ObjectId[]): Promise<number> {
+    try {
+      const count = await ExerciseModel.countDocuments({
+        lessonId: { $in: lessonIds },
+        isDeleted: true,
+      });
+
+      return count;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  } 
 }
 
 export default ExerciseRepository;

@@ -11,6 +11,15 @@ import { ILessonRepository } from "../interfaces/repositories/ILessonRepository"
 import UserLessonRepository from "../repositories/UserLessonRepository";
 import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
 import mongoose from "mongoose";
+import GrammarRepository from "../repositories/GrammarRepository";
+import { IGrammarRepository } from "../interfaces/repositories/IGrammarRepository";
+import VocabularyRepository from "../repositories/VocabularyRepository";
+import { IVocabularyRepository } from "../interfaces/repositories/IVocabularyRepository";
+import ExerciseRepository from "../repositories/ExcerciseRepository";
+import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
+import TestRepository from "../repositories/TestRepository";
+import { ITestRepository } from "../interfaces/repositories/ITestRepository";
+import { ITest } from "../interfaces/models/ITest";
 
 @Service()
 class LessonService implements ILessonService {
@@ -19,6 +28,14 @@ class LessonService implements ILessonService {
     private lessonRepository: ILessonRepository,
     @Inject(() => UserLessonRepository)
     private userLessonRepository: IUserLessonRepository,
+    @Inject(() => GrammarRepository)
+    private grammarRepository: IGrammarRepository,
+    @Inject(() => VocabularyRepository)
+    private vocabularyRepository: IVocabularyRepository,
+    @Inject(() => ExerciseRepository)
+    private exerciseRepository: IExerciseRepository,
+    @Inject(() => TestRepository)
+    private testRepository: ITestRepository,
     @Inject() private database: Database
   ) {}
 
@@ -110,6 +127,7 @@ class LessonService implements ILessonService {
   async deleteLesson(id: string): Promise<ILesson | null> {
     const session = await this.database.startTransaction();
     try {
+      // Verify lesson exists
       const lesson = await this.lessonRepository.getLessonById(id);
       if (!lesson) {
         throw new CustomException(
@@ -118,11 +136,41 @@ class LessonService implements ILessonService {
         );
       }
 
+      // Soft delete the lesson
       const deletedLesson = await this.lessonRepository.updateLesson(
         id,
         { isDeleted: true },
         session
       );
+
+      // Delete exercises that are only associated with this lesson
+      await this.exerciseRepository.deleteExercisesByLessonId(id, session);
+
+      // Delete grammar documents that are only associated with this lesson
+      await this.grammarRepository.deleteGrammarByLessonId(id, session);
+
+      // Delete vocabulary documents that are only associated with this lesson
+      await this.vocabularyRepository.deleteVocabularyByLessonId(id, session);
+
+      // Update tests: remove this lesson from lessonIds and delete tests with empty lessonIds
+      const tests: ITest[] = await this.testRepository.getTestsByLessonIdV2(id);
+      for (const test of tests) {
+        const updatedLessonIds = test.lessonIds.filter(
+          (lessonId) => lessonId.toString() !== id
+        );
+        if (updatedLessonIds.length === 0) {
+          // Delete test if no lessons remain
+          await this.testRepository.deleteTest((test._id as string).toString(), session);
+        } else {
+          // Update test with remaining lessonIds
+          await this.testRepository.updateTest(
+            (test._id as string).toString(),
+            { lessonIds: updatedLessonIds },
+            session
+          );
+        }
+      }
+
       await this.database.commitTransaction(session);
       return deletedLesson;
     } catch (error) {
@@ -132,10 +180,10 @@ class LessonService implements ILessonService {
       }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Failed to delete lesson"
+        error instanceof Error
+          ? error.message
+          : "Failed to delete lesson and related data"
       );
-    } finally {
-      await session.endSession();
     }
   }
 
