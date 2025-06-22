@@ -30,6 +30,7 @@ import getLogger from "../utils/logger";
 import { notifyAchievement } from "../utils/mailer";
 import UserCourseRepository from "../repositories/UserCourseRepository";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
+import increaseUserPoint from "../utils/userPoint";
 
 @Service()
 class UserLessonService implements IUserLessonService {
@@ -230,9 +231,7 @@ class UserLessonService implements IUserLessonService {
         );
       }
 
-      await this.userRepository.updateUserById(userId, {
-        points: points + 100,
-      });
+      await increaseUserPoint(userId, "lesson");
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
