@@ -227,6 +227,25 @@ class UserTestRepository implements IUserTestRepository {
       );
     }
   }
+
+  async getLatestAttempt(userId: string, testId: string): Promise<IUserTest | null> {
+    try {
+      const userTests = await UserTestModel.find({
+        userId: new mongoose.Types.ObjectId(userId),
+        testId: new mongoose.Types.ObjectId(testId),
+        isDeleted: false,
+      })
+        .sort({ attemptNo: -1 })
+        .limit(1)
+        .exec();
+      return userTests.length > 0 ? userTests[0] : null;
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Failed to retrieve latest attempt"
+      );
+    }
+  }   
 }
 
 export default UserTestRepository;

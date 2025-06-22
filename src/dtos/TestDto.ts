@@ -248,6 +248,57 @@ class TestDto {
       });
     }
   };
+
+  submitTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { userId, answers } = req.body;
+ 
+      this.validateObjectId(id);
+ 
+      if (!userId || !answers) {
+        throw new Error(
+          "Missing required fields: userId, answers, and description are required"
+        );
+      }
+ 
+      this.validateObjectId(userId);  
+ 
+      if (!Array.isArray(answers) || answers.length === 0) {
+        throw new Error("Please provide at least one answer.");
+      }
+
+      answers.forEach((answer: any, index: number) => {
+        if (!answer.exerciseId || !answer.selectedAnswers) {
+          throw new Error(`Answer #${index + 1} is missing required information.`);
+        }
+
+        this.validateObjectId(answer.exerciseId);
+
+        if (!Array.isArray(answer.selectedAnswers) || answer.selectedAnswers.length === 0) {
+          throw new Error(`Please select at least one answer for question #${index + 1}.`);
+        }
+
+        answer.selectedAnswers = answer.selectedAnswers
+          .map((ans: any) => {
+            if (typeof ans !== "string") return "";
+
+            return ans.replace(/\s[^\w\s]$/, "").trim();
+          })
+          .filter((ans: string) => ans.length > 0);
+      });
+
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message: (error as Error).message,
+      });
+    }
+  };
 }
 
 export default TestDto;

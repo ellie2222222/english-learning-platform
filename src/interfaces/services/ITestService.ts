@@ -1,6 +1,7 @@
 import { ITest } from "../models/ITest";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { ISubmitTest, IUserTestResponse } from "../others/ISubmission";
 
 export interface ITestService {
   createTest(
@@ -25,4 +26,8 @@ export interface ITestService {
   getTests(query: IQuery, courseId: string): Promise<IPagination>;
 
   getTestsByLessonId(lessonId: string, query: IQuery): Promise<IPagination>;
+
+  submitTest(
+    data: ISubmitTest
+  ): Promise<IUserTestResponse>;
 }

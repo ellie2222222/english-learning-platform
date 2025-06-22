@@ -364,6 +364,25 @@ class TestRepository implements ITestRepository {
       );
     }
   }
+
+  async getTestsByCourseId(courseId: string): Promise<ITest[]> {
+    try {
+      const tests = await TestModel.find({
+        courseId: new mongoose.Types.ObjectId(courseId),
+        isDeleted: false,
+      });
+
+      return tests;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default TestRepository;

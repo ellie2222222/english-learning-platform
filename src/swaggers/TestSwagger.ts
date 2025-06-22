@@ -99,6 +99,90 @@
  *         totalQuestions:
  *           type: integer
  *           description: The total number of questions
+ *     SubmitTestDto:
+ *       type: object
+ *       required:
+ *         - userId
+ *         - answers
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: The ID of the user submitting the test
+ *         answers:
+ *           type: array
+ *           items:
+ *             type: object
+ *             required:
+ *               - exerciseId
+ *               - selectedAnswers
+ *             properties:
+ *               exerciseId:
+ *                 type: string
+ *                 description: The ID of the exercise being answered
+ *               selectedAnswers:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: The selected answers for the exercise
+ *     TestResultItem:
+ *       type: object
+ *       properties:
+ *         exerciseId:
+ *           type: string
+ *           description: The ID of the exercise
+ *         selectedAnswers:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: The answers selected by the user
+ *         correctAnswers:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: The correct answers for the exercise
+ *         isCorrect:
+ *           type: boolean
+ *           description: Whether the user's answer was correct
+ *     TestSubmissionResponse:
+ *       type: object
+ *       properties:
+ *         submission:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: The ID of the submission
+ *             userId:
+ *               type: string
+ *               description: The ID of the user
+ *             testId:
+ *               type: string
+ *               description: The ID of the test
+ *             attemptNo:
+ *               type: integer
+ *               description: The attempt number
+ *             score:
+ *               type: integer
+ *               description: The score achieved (0-100)
+ *             status:
+ *               type: string
+ *               enum: [passed, failed]
+ *               description: The status of the test submission
+ *             description:
+ *               type: string
+ *               description: Description of the submission result
+ *             submittedAt:
+ *               type: string
+ *               format: date-time
+ *               description: When the test was submitted
+ *             results:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/TestResultItem'
+ *               description: Detailed results for each exercise
+ *         message:
+ *           type: string
+ *           description: Response message
  *     ErrorResponse:
  *       type: object
  *       properties:
@@ -395,6 +479,60 @@
  *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Forbidden - User lacks access to the lesson
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+/**
+ * @swagger
+ * /api/tests/{id}/submission:
+ *   post:
+ *     summary: Submit answers for a test
+ *     tags: [Tests]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Test ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SubmitTestDto'
+ *     responses:
+ *       201:
+ *         description: Test submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TestSubmissionResponse'
+ *       400:
+ *         description: Bad Request - Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - User lacks access to the test
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Test not found
  *         content:
  *           application/json:
  *             schema:

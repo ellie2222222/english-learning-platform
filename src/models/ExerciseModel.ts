@@ -20,7 +20,6 @@ const ExerciseModelSchema = new Schema<IExercise>(
       type: String,
       required: true,
     },
-
     options: {
       type: [{ type: String }],
       required: false,

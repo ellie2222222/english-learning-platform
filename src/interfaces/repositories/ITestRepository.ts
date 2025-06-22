@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
 import { ITest } from "../models/ITest";
+import { Types } from "mongoose";
 
 export interface ITestRepository {
   createTest(data: object, session?: mongoose.ClientSession): Promise<ITest>;
@@ -28,4 +29,12 @@ export interface ITestRepository {
   getTestOrder(courseId: string): Promise<number>;
 
   getTestsByLessonIdV2(lessonId: string): Promise<ITest[]>;
+
+  getTestsByCourseId(courseId: string): Promise<ITest[]>;
+
+  deleteTestsByCourseOrLessons(
+    courseId: string,
+    lessonIds: Types.ObjectId[],
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
 }

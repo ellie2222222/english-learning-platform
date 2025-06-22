@@ -27,4 +27,11 @@ export interface IUserTestRepository {
   getUserTestsByTestId(testId: string, query: IQuery): Promise<IPagination>;
 
   getUserTestByTestUserAndAttempt(testId: string, userId: string, attemptNo: number): Promise<IUserTest | null>;
+
+  
+
+  getLatestAttempt(
+    userId: string,
+    lessonId: string
+  ): Promise<IUserTest | null>;
 }

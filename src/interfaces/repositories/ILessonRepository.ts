@@ -25,4 +25,6 @@ export interface ILessonRepository {
   getLessonById(id: string): Promise<ILesson | null>;
 
   getLessonsByCourseId(courseId: string, query: IQuery): Promise<IPagination>;
+  
+  getLessonsByCourseIdV2(courseId: string): Promise<ILesson[]>;
 }

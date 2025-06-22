@@ -219,6 +219,30 @@ class ExerciseRepository implements IExerciseRepository {
     }
   }
 
+  async getExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[] | string[]
+  ): Promise<IExercise[]> {
+    try {
+      const matchQuery = {
+        lessonId: { $in: lessonIds },
+        isDeleted: false,
+      };
+
+      const exercises = await ExerciseModel.find(matchQuery);
+
+      return exercises;    
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
   async getExercisesForTest(
     length: number,
     lessonIds: Types.ObjectId[]

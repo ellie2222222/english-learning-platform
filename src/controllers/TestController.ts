@@ -4,6 +4,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import { ITestService } from "../interfaces/services/ITestService";
 import TestService from "../services/TestService";
+import { IUserTestResponse } from "../interfaces/others/ISubmission";
 
 @Service()
 class TestController {
@@ -140,6 +141,25 @@ class TestController {
       next(error);
     }
   };
+
+  submitTest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { userId, answers } = req.body;
+      const submission: IUserTestResponse = await this.testService.submitTest({ testId: id, userId, answers});
+
+      res.status(StatusCodeEnum.Created_201).json({
+        submission,
+        message: "Test submitted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default TestController;

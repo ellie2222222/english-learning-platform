@@ -6,8 +6,7 @@ import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
 import {
-  GenericResourceAccessMiddleware,
-  LessonResourceAccessMiddleware,
+  GenericResourceAccessMiddleware, 
   MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
@@ -59,9 +58,16 @@ testRoutes.delete(
   testController.deleteTest
 );
 
+testRoutes.post("/:id/submission",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  testDto.submitTest,
+  testController.submitTest
+); 
+
 //get test by lessonId => id:lessonId => ResourceType.LESSON
 testRoutes.get(
   "/lesson/:id",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   MembershipAccessLimitMiddleware(ResourceType.LESSON),
   GenericResourceAccessMiddleware(ResourceType.LESSON),
   testDto.getTestsByLessonId,

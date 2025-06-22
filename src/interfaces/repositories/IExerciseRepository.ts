@@ -24,6 +24,10 @@ export interface IExerciseRepository {
 
   getExercises(query: IQuery, lessonId?: string): Promise<IPagination>;
 
+  getExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[] | string[],
+  ): Promise<IExercise[]>;
+
   getExercisesForTest(
     length: number,
     lessonIds: mongoose.Types.ObjectId[]
