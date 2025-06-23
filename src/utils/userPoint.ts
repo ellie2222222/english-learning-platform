@@ -42,6 +42,7 @@ const getKeyFromCourseLevel = (level?: string) => {
       key = ConfigKeyEnum.COURSE_COMPLETION_BONUS_A1;
       break;
   }
+  return key;
 };
 
 const increaseUserPoint = async (

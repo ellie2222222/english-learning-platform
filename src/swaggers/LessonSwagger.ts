@@ -142,6 +142,111 @@
 
 /**
  * @swagger
+ * /api/lessons/{id}/exercises/submission:
+ *   post:
+ *     summary: Submit answers for multiple exercises in a lesson
+ *     tags: [Lesson]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the lesson containing the exercises
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - answers
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: The ID of the user submitting the answers
+ *                 example: "507f1f77bcf86cd799439011"
+ *               answers:
+ *                 type: array
+ *                 description: Array of answers for exercises
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - exerciseId
+ *                     - selectedAnswers
+ *                   properties:
+ *                     exerciseId:
+ *                       type: string
+ *                       description: The ID of the exercise
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     selectedAnswers:
+ *                       type: array
+ *                       description: Array of selected answers
+ *                       items:
+ *                         type: string
+ *                       example: ["Paris"]
+ *     responses:
+ *       200:
+ *         description: Exercises submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 submission:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                       description: The ID of the user
+ *                     submittedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: The date and time of submission
+ *                     results:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           exerciseId:
+ *                             type: string
+ *                             description: The ID of the exercise
+ *                           selectedAnswers:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                             description: The answers selected by the user
+ *                           correctAnswers:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                             description: The correct answers for the exercise
+ *                           isCorrect:
+ *                             type: boolean
+ *                             description: Whether the user's answer is correct
+ *                 message:
+ *                   type: string
+ *                   example: Exercises submitted successfully
+ *       400:
+ *         description: Bad request due to invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid exercise ID
+ *       401:
+ *         description: Unauthorized, missing or invalid token
+ *       403:
+ *         description: Forbidden, user does not have access to this resource
+ */
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     Lesson:

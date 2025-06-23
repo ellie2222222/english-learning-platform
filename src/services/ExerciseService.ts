@@ -15,6 +15,15 @@ import { cleanUpFile } from "../utils/fileUtils";
 import TestRepository from "../repositories/TestRepository";
 import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
 import { ITestRepository } from "../interfaces/repositories/ITestRepository";
+import { ISubmitExercises, IUserExerciseResponse } from "../interfaces/others/ISubmission";
+import UserExerciseRepository from "../repositories/UserExerciseRepository";
+import { IUserExerciseRepository } from "../interfaces/repositories/IUserExerciseRepository";
+import UserLessonRepository from "../repositories/UserLessonRepository";
+import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
+import { UserLessonStatus } from "../enums/UserLessonStatus";
+import UserExerciseModel from "../models/UserExerciseModel";
+import UserLessonModel from "../models/UserLessonModel";
+import increaseUserPoint from "../utils/userPoint";
 
 @Service()
 class ExerciseService implements IExerciseService {
@@ -25,6 +34,10 @@ class ExerciseService implements IExerciseService {
     private exerciseRepository: IExerciseRepository,
     @Inject(() => TestRepository)
     private testRepository: ITestRepository,
+    @Inject(() => UserExerciseRepository)
+    private userExerciseRepository: IUserExerciseRepository,
+    @Inject(() => UserLessonRepository)
+    private userLessonRepository: IUserLessonRepository,
     @Inject() private database: Database
   ) {}
 
@@ -375,7 +388,6 @@ class ExerciseService implements IExerciseService {
   getExercise = async (id: string): Promise<IExercise | null> => {
     try {
       const exercise = await this.exerciseRepository.getExercise(id);
-
       return exercise;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -386,6 +398,139 @@ class ExerciseService implements IExerciseService {
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
       );
+    }
+  };
+
+  submitExercises = async (data: ISubmitExercises): Promise<IUserExerciseResponse> => {
+    const session = await this.database.startTransaction();
+    try {
+      // Validate lesson exists
+      const lesson = await this.lessonRepository.getLessonById(data.lessonId);
+      if (!lesson) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      // Validate all exercise IDs exist and belong to the specified lesson
+      const exerciseIds = data.answers.map(answer => answer.exerciseId);
+      const exercises = await Promise.all(
+        exerciseIds.map(id => this.exerciseRepository.getExercise(id))
+      );
+      
+      // Check if any exercises were not found
+      const missingExercises = exercises.findIndex(ex => !ex);
+      if (missingExercises !== -1) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          `Exercise with ID ${exerciseIds[missingExercises]} not found`
+        );
+      }
+
+      // Validate all exercises belong to the specified lesson
+      const invalidExercises = exercises.filter(
+        exercise => exercise?.lessonId.toString() !== data.lessonId
+      );
+      
+      if (invalidExercises.length > 0) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          `Some exercises do not belong to the specified lesson`
+        );
+      }
+
+      // Process each exercise submission - evaluate correctness but will mark all as completed
+      const results = data.answers.map((answer, index) => {
+        const exercise = exercises[index] as IExercise;
+        let isCorrect = false;
+
+        // Grade based on exercise type
+        switch (exercise.type) {
+          case ExerciseTypeEnum.MULTIPLE_CHOICE:
+            // Exact match for multiple-choice answers
+            isCorrect = 
+              answer.selectedAnswers.length === 1 &&
+              exercise.answer.length === 1 &&
+              answer.selectedAnswers[0] === exercise.answer[0];
+            break;
+          case ExerciseTypeEnum.TRANSLATE:
+          case ExerciseTypeEnum.IMAGE_TRANSLATE:
+            // Case-insensitive match for translation answers
+            isCorrect =
+              answer.selectedAnswers.length === 1 &&
+              exercise.answer.length >= 1 &&
+              (Array.isArray(exercise.answer) && exercise.answer.some((correctAns: string) => 
+                correctAns.toLowerCase().trim() === answer.selectedAnswers[0].toLowerCase().trim()
+              ));
+            break;
+          case ExerciseTypeEnum.FILL_IN_THE_BLANK:
+            // Exact match for fill-in-the-blank answers
+            isCorrect =
+              answer.selectedAnswers.length === exercise.answer.length &&
+              answer.selectedAnswers.every(
+                (ans, idx) => ans.trim() === (exercise.answer as string[])[idx].trim()
+              );
+            break;
+          default:
+            isCorrect = false;
+        }
+
+        return {
+          exerciseId: answer.exerciseId,
+          selectedAnswers: answer.selectedAnswers,
+          correctAnswers: Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer as string],
+          isCorrect, // Return actual correctness
+        };
+      });
+
+      // Get total exercises for this lesson
+      const totalExercises = await this.exerciseRepository.getAllLessonExercise(data.lessonId);
+      const totalExerciseCount = totalExercises.length;
+      
+      // Mark all exercises in the lesson as completed regardless of correctness
+      await this.userExerciseRepository.markAllExercisesInLessonAsCompleted(
+        data.userId,
+        data.lessonId,
+        totalExercises.map(ex => ex._id as mongoose.Types.ObjectId),
+        session
+      );
+      
+      // Mark lesson as completed
+      await this.userLessonRepository.markLessonAsCompleted(
+        data.userId,
+        data.lessonId,
+        totalExerciseCount,
+        session
+      );
+      
+      // Increase user points for completing the lesson
+      try {
+        await increaseUserPoint(data.userId, "lesson");
+      } catch (error) {
+        console.error("Failed to increase user points:", error);
+        // Continue execution even if points couldn't be increased
+      }
+      
+      await this.database.commitTransaction(session);
+      
+      // Return the submission response with actual correctness
+      return {
+        userId: data.userId,
+        submittedAt: new Date(),
+        results
+      };
+    } catch (error) {
+      await this.database.abortTransaction(session);
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Failed to submit exercises"
+      );
+    } finally {
+      await session.endSession();
     }
   };
 }

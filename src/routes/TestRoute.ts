@@ -60,6 +60,8 @@ testRoutes.delete(
 
 testRoutes.post("/:id/submission",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  MembershipAccessLimitMiddleware(ResourceType.TEST),
+  GenericResourceAccessMiddleware(ResourceType.TEST),
   testDto.submitTest,
   testController.submitTest
 ); 

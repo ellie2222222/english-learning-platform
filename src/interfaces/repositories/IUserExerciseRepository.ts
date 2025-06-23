@@ -33,4 +33,11 @@ export interface IUserExerciseRepository {
     userId: string,
     lessonId: string
   ): Promise<IUserExercise[]>;
+
+  markAllExercisesInLessonAsCompleted(
+    userId: string,
+    lessonId: string,
+    exerciseIds: mongoose.Types.ObjectId[],
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
 }

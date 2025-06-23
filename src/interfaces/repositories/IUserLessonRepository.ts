@@ -32,4 +32,11 @@ export interface IUserLessonRepository {
   ): Promise<IUserLesson | null>;
 
   getUserLessonForLessonAchievement(userId: string): Promise<IUserLesson[]>;
+
+  markLessonAsCompleted(
+    userId: string,
+    lessonId: string,
+    currentOrder: number,
+    session?: mongoose.ClientSession
+  ): Promise<IUserLesson | null>;
 }

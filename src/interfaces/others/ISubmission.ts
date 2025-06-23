@@ -9,6 +9,15 @@ export interface ISubmitTest {
   }[];
 }
 
+export interface ISubmitExercises {
+  lessonId: string;
+  userId: string;
+  answers: {
+    exerciseId: string;
+    selectedAnswers: string[];
+  }[];
+}
+
 export interface IUserTestResponse {
   id: string;
   testId: string;
@@ -17,6 +26,17 @@ export interface IUserTestResponse {
   score: number;
   status: UserTestStatusEnumType;
   description: string;
+  submittedAt: Date;
+  results: {
+    exerciseId: string;
+    selectedAnswers: string[];
+    correctAnswers: string[];
+    isCorrect: boolean;
+  }[];
+}
+
+export interface IUserExerciseResponse {
+  userId: string;
   submittedAt: Date;
   results: {
     exerciseId: string;

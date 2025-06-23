@@ -317,6 +317,70 @@ class UserExerciseRepository implements IUserExerciseRepository {
       );
     }
   }
+
+  async markAllExercisesInLessonAsCompleted(
+    userId: string,
+    lessonId: string,
+    exerciseIds: mongoose.Types.ObjectId[],
+    session?: mongoose.ClientSession
+  ): Promise<boolean> {
+    try {
+      // Update existing records
+      const updateResult = await UserExerciseModel.updateMany(
+        {
+          userId: new mongoose.Types.ObjectId(userId),
+          exerciseId: { $in: exerciseIds },
+          isDeleted: false
+        },
+        { $set: { completed: true } },
+        { session }
+      );
+      
+      // Find which exercises don't have records yet
+      const existingRecords = await UserExerciseModel.find(
+        {
+          userId: new mongoose.Types.ObjectId(userId),
+          exerciseId: { $in: exerciseIds },
+          isDeleted: false
+        },
+        { exerciseId: 1 },
+        { session }
+      );
+      
+      const existingExerciseIds = existingRecords.map(record => 
+        record.exerciseId.toString()
+      );
+      
+      const newExerciseIds = exerciseIds.filter(id => 
+        !existingExerciseIds.includes(id.toString())
+      );
+      
+      // Create records for exercises that don't have them yet
+      if (newExerciseIds.length > 0) {
+        const bulkOps = newExerciseIds.map(exerciseId => ({
+          insertOne: {
+            document: {
+              userId: new mongoose.Types.ObjectId(userId),
+              exerciseId: exerciseId,
+              completed: true
+            }
+          }
+        }));
+        
+        await UserExerciseModel.bulkWrite(bulkOps, { session });
+      }
+      
+      return true;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserExerciseRepository;

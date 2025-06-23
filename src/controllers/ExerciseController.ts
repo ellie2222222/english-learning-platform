@@ -5,6 +5,7 @@ import { NextFunction, Request, Response } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { formatPathSingle, uploadToCloudinary } from "../utils/fileUtils";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
+import { IUserExerciseResponse } from "../interfaces/others/ISubmission";
 
 @Service()
 class ExerciseController {
@@ -144,6 +145,26 @@ class ExerciseController {
       res.status(StatusCodeEnum.OK_200).json({
         exercise: exercise,
         message: "Exercise retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  submitExercises = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId, answers } = req.body;
+      const { id } = req.params;
+      
+      const submission = await this.exerciseService.submitExercises({
+        userId,
+        answers,
+        lessonId: id
+      });
+      
+      res.status(StatusCodeEnum.OK_200).json({
+        submission,
+        message: "Exercises submitted successfully"
       });
     } catch (error) {
       next(error);

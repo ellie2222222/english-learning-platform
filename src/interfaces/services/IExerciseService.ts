@@ -1,6 +1,7 @@
 import { IExercise } from "../models/IExercise";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { ISubmitExercises, IUserExerciseResponse } from "../others/ISubmission";
 
 export interface IExerciseService {
   createExercise: (
@@ -29,4 +30,6 @@ export interface IExerciseService {
   getExercises: (query: IQuery, lessonId: string) => Promise<IPagination>;
 
   getExercise: (id: string) => Promise<IExercise | null>;
+  
+  submitExercises: (data: ISubmitExercises) => Promise<IUserExerciseResponse>;
 }

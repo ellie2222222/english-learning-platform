@@ -33,6 +33,8 @@ import UserLessonModel from "../models/UserLessonModel";
 import UserCourseModel from "../models/UserCourseModel";
 import UserTestModel from "../models/UserTestModel";
 import { ILesson } from "../interfaces/models/ILesson";
+import increaseUserPoint from "../utils/userPoint";
+import { IncreasePointEnum } from "../enums/IncreasePointEnum";
 
 @Service()
 class TestService implements ITestService {
@@ -454,6 +456,7 @@ class TestService implements ITestService {
       // Update user course status if test is passed
       if (status === UserTestStatusEnum.PASSED) {
         await this.updateUserCourseStatus(data.userId, test.courseId.toString(), session);
+        await increaseUserPoint(data.userId, IncreasePointEnum.TEST);
       }
  
       await this.database.commitTransaction(session);

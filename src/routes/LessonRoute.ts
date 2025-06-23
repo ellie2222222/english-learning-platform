@@ -17,6 +17,8 @@ import VocabularyDto from "../dtos/VocabularyDto";
 import VocabularyController from "../controllers/VocabularyController";
 import { uploadFile } from "../middlewares/storeFile";
 import { ResourceType } from "../enums/ResourceType";
+import ExerciseController from "../controllers/ExerciseController";
+import ExerciseDto from "../dtos/ExerciseDto";
 
 const lessonController = Container.get(LessonController);
 const lessonDto = new LessonDto();
@@ -24,6 +26,8 @@ const grammarController = Container.get(GrammarController);
 const grammarDto = new GrammarDto();
 const vocabularyController = Container.get(VocabularyController);
 const vocabularyDto = new VocabularyDto();
+const exerciseController = Container.get(ExerciseController);
+const exerciseDto = new ExerciseDto();
 const lessonRoutes = Router();
 
 lessonRoutes.use(AuthMiddleware);
@@ -83,6 +87,16 @@ lessonRoutes.get(
   GenericResourceAccessMiddleware(ResourceType.LESSON),
   vocabularyDto.getVocabulariesByLessonId,
   vocabularyController.getVocabulariesByLessonId
+);
+
+//submit exercises for a lesson => id: lessonId => ResourceType.LESSON
+lessonRoutes.post(
+  "/:id/exercises/submission",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  MembershipAccessLimitMiddleware(ResourceType.LESSON),
+  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  exerciseDto.submitExercises,
+  exerciseController.submitExercises
 );
 
 export default lessonRoutes;

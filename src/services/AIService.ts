@@ -2,7 +2,7 @@ import { Inject, Service } from "typedi";
 import { IAIService } from "../interfaces/services/IAIService";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { sendPromptToAIWithRule } from "../utils/ai_api";
+import { sendPromptToAIWithRule } from "../utils/aiApi";
 import UserCourseRepository from "../repositories/UserCourseRepository";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
 import UserRepository from "../repositories/UserRepository";

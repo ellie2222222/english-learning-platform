@@ -288,6 +288,52 @@ class UserLessonRepository implements IUserLessonRepository {
       );
     }
   }
+
+  async markLessonAsCompleted(
+    userId: string,
+    lessonId: string,
+    currentOrder: number,
+    session?: mongoose.ClientSession
+  ): Promise<IUserLesson | null> {
+    try {
+      // Check if user lesson exists
+      const existingUserLesson = await this.getExistingUserLesson(userId, lessonId);
+      
+      if (existingUserLesson) {
+        // Update existing record
+        return await UserLessonModel.findByIdAndUpdate(
+          existingUserLesson._id,
+          { 
+            $set: { 
+              status: UserLessonStatus.COMPLETED,
+              currentOrder: currentOrder 
+            } 
+          },
+          { session, new: true }
+        );
+      } else {
+        // Create new record
+        const userLesson = await this.createUserLesson(
+          {
+            userId: new mongoose.Types.ObjectId(userId),
+            lessonId: new mongoose.Types.ObjectId(lessonId),
+            status: UserLessonStatus.COMPLETED,
+            currentOrder: currentOrder
+          },
+          session
+        );
+        return userLesson;
+      }
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserLessonRepository;
