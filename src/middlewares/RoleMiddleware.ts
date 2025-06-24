@@ -17,7 +17,11 @@ const RoleMiddleware = (roles: Array<number>) => {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId } = req.userInfo;
+      const userId = req.userInfo?.userId;
+
+      if (!userId && roles.includes(UserEnum.GUEST)) {
+        return next();
+      }
       const userRepository = Container.get(UserRepository);
 
       const user: IUser | null = await userRepository.getUserById(
