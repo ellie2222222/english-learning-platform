@@ -35,14 +35,14 @@ membershipRoutes.delete(
 
 membershipRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER, UserEnum.GUEST]),
   membershipDto.getMemberships,
   membershipController.getMemberships
 );
 
 membershipRoutes.get(
   "/:id",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER, UserEnum.GUEST]),
   membershipDto.getMembership,
   membershipController.getMembership
 );

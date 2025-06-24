@@ -21,14 +21,14 @@ achievementRoutes.post(
 
 achievementRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER, UserEnum.GUEST]),
   achievementDto.getAchievements,
   achievementController.getAchievements
 );
 
 achievementRoutes.get(
   "/:id",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER, UserEnum.GUEST]),
   achievementDto.getAchievement,
   achievementController.getAchievement
 );

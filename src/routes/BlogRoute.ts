@@ -40,14 +40,14 @@ blogRoutes.delete(
 
 blogRoutes.get(
   "/",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER, UserEnum.GUEST]),
   blogDto.getBlogs,
   blogController.getBlogs
 );
 
 blogRoutes.get(
   "/:id",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER, UserEnum.GUEST]),
   blogDto.getBlog,
   blogController.getBlog
 );
