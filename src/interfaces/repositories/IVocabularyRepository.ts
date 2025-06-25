@@ -30,4 +30,6 @@ export interface IVocabularyRepository {
     lessonId: string,
     session?: mongoose.ClientSession
   ): Promise<boolean>;
+
+  getLessonIdByVocabularyId(vocabularyId: string): Promise<string | null>;
 }

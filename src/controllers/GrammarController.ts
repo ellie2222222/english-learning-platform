@@ -45,8 +45,17 @@ class GrammarController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { lessonId, title, structure, example, explanation, order } = req.body;
-      const grammar = await this.grammarService.updateGrammar(id, lessonId, title, structure, example, explanation, order);
+      const { lessonId, title, structure, example, explanation, order } =
+        req.body;
+      const grammar = await this.grammarService.updateGrammar(
+        id,
+        lessonId,
+        title,
+        structure,
+        example,
+        explanation,
+        order
+      );
       res.status(StatusCodeEnum.OK_200).json({
         grammar,
         message: "Grammar updated successfully",
@@ -80,7 +89,8 @@ class GrammarController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const grammar = await this.grammarService.getGrammarById(id);
+      const userId = req.userInfo.userId;
+      const grammar = await this.grammarService.getGrammarById(id, userId);
       res.status(StatusCodeEnum.OK_200).json({
         grammar,
         message: "Grammar retrieved successfully",
@@ -97,12 +107,16 @@ class GrammarController {
   ): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
-      const grammars = await this.grammarService.getGrammars({
-        page: page ? parseInt(page as string) : 1,
-        size: size ? parseInt(size as string) : 10,
-        order: order as OrderType,
-        sortBy: sortBy as SortByType,
-      });
+      const userId = req.userInfo.userId;
+      const grammars = await this.grammarService.getGrammars(
+        {
+          page: page ? parseInt(page as string) : 1,
+          size: size ? parseInt(size as string) : 10,
+          order: order as OrderType,
+          sortBy: sortBy as SortByType,
+        },
+        userId
+      );
       res.status(StatusCodeEnum.OK_200).json({
         ...grammars,
         message: "Grammars retrieved successfully",
@@ -119,13 +133,18 @@ class GrammarController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
+      const userId = req.userInfo.userId;
       const { page, size, order, sortBy } = req.query;
-      const grammars = await this.grammarService.getGrammarsByLessonId(id, {
-        page: page ? parseInt(page as string) : 1,
-        size: size ? parseInt(size as string) : 10,
-        order: order as OrderType,
-        sortBy: sortBy as SortByType,
-      });
+      const grammars = await this.grammarService.getGrammarsByLessonId(
+        id,
+        {
+          page: page ? parseInt(page as string) : 1,
+          size: size ? parseInt(size as string) : 10,
+          order: order as OrderType,
+          sortBy: sortBy as SortByType,
+        },
+        userId
+      );
       res.status(StatusCodeEnum.OK_200).json({
         ...grammars,
         message: "Grammars retrieved successfully",

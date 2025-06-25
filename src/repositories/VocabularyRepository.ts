@@ -243,6 +243,27 @@ class VocabularyRepository implements IVocabularyRepository {
       );
     }
   }
+
+  async getLessonIdByVocabularyId(
+    vocabularyId: string
+  ): Promise<string | null> {
+    try {
+      const lessonId = await this.vocabularyModel
+        .findOne({ _id: vocabularyId, isDeleted: false })
+        .select("lessonId")
+        .exec();
+      return lessonId?.lessonId as string | null;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default VocabularyRepository;

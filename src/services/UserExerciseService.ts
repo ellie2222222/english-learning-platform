@@ -18,6 +18,7 @@ import mongoose, { ObjectId } from "mongoose";
 import { IExercise } from "../interfaces/models/IExercise";
 import UserLessonRepository from "../repositories/UserLessonRepository";
 import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 @Service()
 class UserExerciseService implements IUserExerciseService {
@@ -136,15 +137,24 @@ class UserExerciseService implements IUserExerciseService {
       return;
     }
 
-    if (userLesson.currentOrder < order) {
-      await this.userLessonRepository.updateUserLesson(
-        lessonId,
-        {
-          currentOrder: order,
-        },
-        session
-      );
+    //what if this did  not exist before update ?
+    //handling tracking for exercise in lesson
+    const currentOrderArr = [...(userLesson.currentOrder || [])];
+    const idx = currentOrderArr.findIndex(
+      (item) => item.for === LessonTrackingType.EXERCISE
+    );
+    if (idx !== -1) {
+      if (currentOrderArr[idx].order < order) {
+        currentOrderArr[idx].order = order;
+      }
+    } else {
+      currentOrderArr.push({ for: LessonTrackingType.EXERCISE, order });
     }
+    await this.userLessonRepository.updateUserLesson(
+      (userLesson._id as ObjectId).toString(),
+      { currentOrder: currentOrderArr },
+      session
+    );
 
     return;
   };

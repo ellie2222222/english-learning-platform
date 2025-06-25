@@ -10,7 +10,10 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import GrammarRepository from "../repositories/GrammarRepository";
 import LessonRepository from "../repositories/LessonRepository";
 import Database from "../db/database";
-import mongoose from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
+import UserLessonRepository from "../repositories/UserLessonRepository";
+import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 @Service()
 class GrammarService implements IGrammarService {
@@ -19,8 +22,55 @@ class GrammarService implements IGrammarService {
     private grammarRepository: IGrammarRepository,
     @Inject(() => LessonRepository)
     private lessonRepository: ILessonRepository,
+    @Inject(() => UserLessonRepository)
+    private userLessonRepository: IUserLessonRepository,
     @Inject() private database: Database
   ) {}
+
+  private updateUserLessonOrderIfNeeded = async (
+    grammarId: string,
+    userId: string,
+    session: mongoose.ClientSession,
+    order: number
+  ): Promise<void> => {
+    const lessonId = await this.grammarRepository.getLessonIdByGrammarId(
+      grammarId
+    );
+    if (!lessonId) {
+      throw new CustomException(
+        StatusCodeEnum.NotFound_404,
+        "Lesson not found"
+      );
+    }
+
+    const userLesson = await this.userLessonRepository.getExistingUserLesson(
+      userId,
+      lessonId
+    );
+    if (!userLesson) {
+      throw new CustomException(
+        StatusCodeEnum.NotFound_404,
+        "User lesson not found"
+      );
+    }
+
+    const currentOrderArr = [...(userLesson.currentOrder || [])];
+    const idx = currentOrderArr.findIndex(
+      (item) => item.for === LessonTrackingType.GRAMMAR
+    );
+    if (idx !== -1) {
+      if (currentOrderArr[idx].order < order) {
+        currentOrderArr[idx].order = order;
+      }
+    } else {
+      currentOrderArr.push({ for: LessonTrackingType.GRAMMAR, order });
+    }
+    await this.userLessonRepository.updateUserLesson(
+      (userLesson._id as ObjectId).toString(),
+      { currentOrder: currentOrderArr },
+      session
+    );
+  };
 
   async createGrammar(
     lessonId: string,
@@ -197,7 +247,11 @@ class GrammarService implements IGrammarService {
     }
   }
 
-  async getGrammarById(grammarId: string): Promise<IGrammar | null> {
+  async getGrammarById(
+    grammarId: string,
+    userId: string
+  ): Promise<IGrammar | null> {
+    const session = await this.database.startTransaction();
     try {
       const grammar = await this.grammarRepository.getGrammarById(grammarId);
       if (!grammar) {
@@ -206,8 +260,18 @@ class GrammarService implements IGrammarService {
           "Grammar not found"
         );
       }
+
+      await this.updateUserLessonOrderIfNeeded(
+        grammarId,
+        userId,
+        session,
+        grammar.order
+      );
+
+      await this.database.commitTransaction(session);
       return grammar;
     } catch (error) {
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }
@@ -218,11 +282,24 @@ class GrammarService implements IGrammarService {
     }
   }
 
-  async getGrammars(query: IQuery): Promise<IPagination> {
+  async getGrammars(query: IQuery, userId: string): Promise<IPagination> {
+    const session = await this.database.startTransaction();
     try {
       const grammars = await this.grammarRepository.getGrammars(query);
+
+      if (grammars.data.length > 0) {
+        await this.updateUserLessonOrderIfNeeded(
+          grammars.data[0]._id.toString(),
+          userId,
+          session,
+          grammars.data[0].order
+        );
+      }
+
+      await this.database.commitTransaction(session);
       return grammars;
     } catch (error) {
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }
@@ -235,8 +312,10 @@ class GrammarService implements IGrammarService {
 
   async getGrammarsByLessonId(
     lessonId: string,
-    query: IQuery
+    query: IQuery,
+    userId: string
   ): Promise<IPagination> {
+    const session = await this.database.startTransaction();
     try {
       const lesson = await this.lessonRepository.getLessonById(lessonId);
       if (!lesson) {
@@ -250,8 +329,19 @@ class GrammarService implements IGrammarService {
         lessonId,
         query
       );
+
+      if (grammars.data.length > 0) {
+        await this.updateUserLessonOrderIfNeeded(
+          grammars.data[0]._id.toString(),
+          userId,
+          session,
+          grammars.data[0].order
+        );
+      }
+      await this.database.commitTransaction(session);
       return grammars;
     } catch (error) {
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }

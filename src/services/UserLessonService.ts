@@ -31,6 +31,7 @@ import { notifyAchievement } from "../utils/mailer";
 import UserCourseRepository from "../repositories/UserCourseRepository";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
 import increaseUserPoint from "../utils/userPoint";
+import { ILessonTracking } from "../interfaces/others/ILessonTracking";
 
 @Service()
 class UserLessonService implements IUserLessonService {
@@ -159,7 +160,37 @@ class UserLessonService implements IUserLessonService {
         );
       }
 
-      await increaseUserPoint(userId, "lesson");
+      const courseId = await this.lessonRepository.getCourseIdByLessonId(
+        lessonId
+      );
+      if (!courseId) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
+      }
+
+      const userCourse =
+        await this.userCourseRepository.getUserCourseByCourseId(
+          courseId,
+          userId
+        );
+
+      if (!userCourse) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User course not found"
+        );
+      }
+
+      await this.userCourseRepository.updateUserCourse(
+        (userCourse._id as ObjectId).toString(),
+        {
+          $inc: {
+            totalLessons: 1,
+          },
+        }
+      );
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -176,7 +207,7 @@ class UserLessonService implements IUserLessonService {
   async createUserLesson(
     userId: string,
     lessonId: string,
-    currentOrder: number,
+    currentOrder: ILessonTracking[],
     status: string
   ): Promise<IUserLesson> {
     const session = await this.database.startTransaction();

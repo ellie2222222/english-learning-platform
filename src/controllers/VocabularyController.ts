@@ -20,8 +20,8 @@ class VocabularyController {
   ): Promise<void> => {
     try {
       const { lessonId, englishContent, vietnameseContent, order } = req.body;
-      const imageFile = req.file as Express.Multer.File | undefined; 
-      
+      const imageFile = req.file as Express.Multer.File | undefined;
+
       let imageUrl: string;
       if (process.env.STORAGE_TYPE === "cloudinary") {
         imageUrl = await uploadToCloudinary(imageFile!);
@@ -106,7 +106,11 @@ class VocabularyController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const vocabulary = await this.vocabularyService.getVocabularyById(id);
+      const userId = req.userInfo.userId;
+      const vocabulary = await this.vocabularyService.getVocabularyById(
+        id,
+        userId
+      );
       res.status(StatusCodeEnum.OK_200).json({
         vocabulary,
         message: "Vocabulary retrieved successfully",
@@ -123,12 +127,16 @@ class VocabularyController {
   ): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
-      const vocabularies = await this.vocabularyService.getVocabularies({
-        page: page ? parseInt(page as string) : 1,
-        size: size ? parseInt(size as string) : 10,
-        order: order as OrderType,
-        sortBy: sortBy as SortByType,
-      });
+      const userId = req.userInfo.userId;
+      const vocabularies = await this.vocabularyService.getVocabularies(
+        {
+          page: page ? parseInt(page as string) : 1,
+          size: size ? parseInt(size as string) : 10,
+          order: order as OrderType,
+          sortBy: sortBy as SortByType,
+        },
+        userId
+      );
       res.status(StatusCodeEnum.OK_200).json({
         ...vocabularies,
         message: "Vocabularies retrieved successfully",
@@ -146,12 +154,18 @@ class VocabularyController {
     try {
       const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
-      const vocabularies = await this.vocabularyService.getVocabulariesByLessonId(id, {
-        page: page ? parseInt(page as string) : 1,
-        size: size ? parseInt(size as string) : 10,
-        order: order as OrderType,
-        sortBy: sortBy as SortByType,
-      });
+      const userId = req.userInfo.userId;
+      const vocabularies =
+        await this.vocabularyService.getVocabulariesByLessonId(
+          id,
+          {
+            page: page ? parseInt(page as string) : 1,
+            size: size ? parseInt(size as string) : 10,
+            order: order as OrderType,
+            sortBy: sortBy as SortByType,
+          },
+          userId
+        );
       res.status(StatusCodeEnum.OK_200).json({
         ...vocabularies,
         message: "Vocabularies retrieved successfully",

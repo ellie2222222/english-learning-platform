@@ -5,6 +5,7 @@ import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import UserLessonService from "../services/UserLessonService";
 import { IUserLessonService } from "../interfaces/services/IUserLessonService";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 @Service()
 class UserLessonController {
@@ -23,7 +24,20 @@ class UserLessonController {
       const userLesson = await this.userLessonService.createUserLesson(
         userId,
         lessonId,
-        0, // Default currentOrder to 0
+        [
+          {
+            for: LessonTrackingType.EXERCISE,
+            order: 0,
+          },
+          {
+            for: LessonTrackingType.GRAMMAR,
+            order: 0,
+          },
+          {
+            for: LessonTrackingType.VOCABULARY,
+            order: 0,
+          },
+        ], // Default currentOrder to 0
         UserLessonStatus.ONGOING // Default status to ONGOING
       );
       res.status(StatusCodeEnum.Created_201).json({
