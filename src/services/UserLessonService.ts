@@ -31,6 +31,7 @@ import { notifyAchievement } from "../utils/mailer";
 import UserCourseRepository from "../repositories/UserCourseRepository";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
 import increaseUserPoint from "../utils/userPoint";
+import { ILessonTracking } from "../interfaces/others/ILessonTracking";
 
 @Service()
 class UserLessonService implements IUserLessonService {
@@ -53,78 +54,6 @@ class UserLessonService implements IUserLessonService {
     @Inject(() => UserCourseRepository)
     private userCourseRepository: IUserCourseRepository
   ) {}
-
-  courseAchievementTrigger = async (
-    userId: string,
-    session: mongoose.ClientSession
-  ): Promise<void> => {
-    const logger = getLogger("LESSON_COMPLETED");
-    const user = await this.userRepository.getUserById(userId);
-    if (!user) {
-      throw new CustomException(StatusCodeEnum.NotFound_404, "User not found");
-    }
-    const userCourses =
-      await this.userCourseRepository.getUserCourseForAchievement(userId);
-
-    const achievement = await this.achievementRepository.getClosestAchievement(
-      AchievementTypeEnum.CouseCompletion,
-      userCourses.length || 0
-    );
-
-    if (!achievement) {
-      logger.info(
-        `No lesson completed achievement found for this number of lesson(s): ${userCourses.length}`
-      );
-      await this.database.commitTransaction(session);
-      return;
-    }
-
-    if (userCourses.length < achievement?.goal) {
-      logger.info(
-        `Closest achievement goal (${achievement.goal}) not yet reached for completed course(s): ${userCourses.length}`
-      );
-      await this.database.commitTransaction(session);
-      return;
-    }
-
-    const achievedAchievement =
-      await this.userAchievementRepository.findExistingAchievement(
-        (achievement._id as ObjectId).toString(),
-        userId
-      );
-
-    if (achievedAchievement) {
-      logger.info(`User ${userId} already has achievement ${achievement._id}`);
-      await this.database.commitTransaction(session);
-      return;
-    }
-
-    // Create new user achievement
-    const userAchievement =
-      await this.userAchievementRepository.createUserAchievement(
-        {
-          userId,
-          achievementId: achievement._id,
-        },
-        session
-      );
-
-    if (!userAchievement) {
-      logger.error(
-        `Failed to create user achievement for user: ${userId}, achievement: ${achievement._id}`
-      );
-      await this.database.commitTransaction(session);
-      return;
-    }
-
-    logger.info(
-      `Awarded achievement ${achievement._id} to user ${userId} for ${userCourses.length} lesson completed`
-    );
-    await this.database.commitTransaction(session);
-
-    //notify user
-    notifyAchievement(achievement, user.email);
-  };
 
   lessonAchievementTrigger = async (
     userId: string,
@@ -231,7 +160,37 @@ class UserLessonService implements IUserLessonService {
         );
       }
 
-      await increaseUserPoint(userId, "lesson");
+      const courseId = await this.lessonRepository.getCourseIdByLessonId(
+        lessonId
+      );
+      if (!courseId) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
+      }
+
+      const userCourse =
+        await this.userCourseRepository.getUserCourseByCourseId(
+          courseId,
+          userId
+        );
+
+      if (!userCourse) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User course not found"
+        );
+      }
+
+      await this.userCourseRepository.updateUserCourse(
+        (userCourse._id as ObjectId).toString(),
+        {
+          $inc: {
+            totalLessons: 1,
+          },
+        }
+      );
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -248,7 +207,7 @@ class UserLessonService implements IUserLessonService {
   async createUserLesson(
     userId: string,
     lessonId: string,
-    currentOrder: number,
+    currentOrder: ILessonTracking[],
     status: string
   ): Promise<IUserLesson> {
     const session = await this.database.startTransaction();

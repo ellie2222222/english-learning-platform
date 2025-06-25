@@ -183,9 +183,7 @@ class LessonRepository implements ILessonRepository {
     }
   }
 
-  async getLessonsByCourseIdV2(
-    courseId: string
-  ): Promise<ILesson[]> {
+  async getLessonsByCourseIdV2(courseId: string): Promise<ILesson[]> {
     try {
       const lessons = await LessonModel.find({
         courseId: new mongoose.Types.ObjectId(courseId),
@@ -282,6 +280,24 @@ class LessonRepository implements ILessonRepository {
       }
 
       return deletedLessons.acknowledged;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async getCourseIdByLessonId(lessonId: string): Promise<string | null> {
+    try {
+      const lesson = await LessonModel.findOne({
+        _id: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      }).select("courseId");
+      return lesson?.courseId as string | null;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

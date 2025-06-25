@@ -297,17 +297,20 @@ class UserLessonRepository implements IUserLessonRepository {
   ): Promise<IUserLesson | null> {
     try {
       // Check if user lesson exists
-      const existingUserLesson = await this.getExistingUserLesson(userId, lessonId);
-      
+      const existingUserLesson = await this.getExistingUserLesson(
+        userId,
+        lessonId
+      );
+
       if (existingUserLesson) {
         // Update existing record
         return await UserLessonModel.findByIdAndUpdate(
           existingUserLesson._id,
-          { 
-            $set: { 
+          {
+            $set: {
               status: UserLessonStatus.COMPLETED,
-              currentOrder: currentOrder 
-            } 
+              currentOrder: currentOrder,
+            },
           },
           { session, new: true }
         );
@@ -318,7 +321,7 @@ class UserLessonRepository implements IUserLessonRepository {
             userId: new mongoose.Types.ObjectId(userId),
             lessonId: new mongoose.Types.ObjectId(lessonId),
             status: UserLessonStatus.COMPLETED,
-            currentOrder: currentOrder
+            currentOrder: currentOrder,
           },
           session
         );

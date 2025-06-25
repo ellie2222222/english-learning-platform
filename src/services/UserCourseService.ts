@@ -201,6 +201,37 @@ class UserCourseService implements IUserCourseService {
       );
     }
   }
+
+  getUserCourseByCourseId = async (
+    id: string,
+    requesterId: string
+  ): Promise<IUserCourse | null> => {
+    try {
+      const userCourse =
+        await this.userCourseRepository.getUserCourseByCourseId(
+          id,
+          requesterId
+        );
+
+      if (!userCourse) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User course not found"
+        );
+      }
+      return userCourse;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve user courses"
+      );
+    }
+  };
 }
 
 export default UserCourseService;

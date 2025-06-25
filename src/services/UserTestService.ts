@@ -10,7 +10,7 @@ import { IUserTestRepository } from "../interfaces/repositories/IUserTestReposit
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import UserTestRepository from "../repositories/UserTestRepository";
-import LessonRepository from "../repositories/LessonRepository"; 
+import LessonRepository from "../repositories/LessonRepository";
 import UserRepository from "../repositories/UserRepository";
 import { UserTestStatusEnumType } from "../enums/UserTestStatusEnum";
 import TestRepository from "../repositories/TestRepository";
@@ -36,7 +36,7 @@ class UserTestService implements IUserTestService {
     attemptNo: number,
     score: number,
     status: UserTestStatusEnumType,
-    description: string,
+    description: string
   ): Promise<IUserTest> {
     const session = await this.database.startTransaction();
     try {
@@ -59,7 +59,12 @@ class UserTestService implements IUserTestService {
       }
 
       // Check if userTest with same testId, userId, and attemptNo exists
-      const existingUserTest = await this.userTestRepository.getUserTestByTestUserAndAttempt(testId, userId, attemptNo);
+      const existingUserTest =
+        await this.userTestRepository.getUserTestByTestUserAndAttempt(
+          testId,
+          userId,
+          attemptNo
+        );
       if (existingUserTest) {
         throw new CustomException(
           StatusCodeEnum.Conflict_409,
@@ -96,7 +101,9 @@ class UserTestService implements IUserTestService {
   async deleteUserTest(userTestId: string): Promise<IUserTest | null> {
     const session = await this.database.startTransaction();
     try {
-      const userTest = await this.userTestRepository.getUserTestById(userTestId);
+      const userTest = await this.userTestRepository.getUserTestById(
+        userTestId
+      );
       if (!userTest) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -125,7 +132,9 @@ class UserTestService implements IUserTestService {
 
   async getUserTestById(userTestId: string): Promise<IUserTest | null> {
     try {
-      const userTest = await this.userTestRepository.getUserTestById(userTestId);
+      const userTest = await this.userTestRepository.getUserTestById(
+        userTestId
+      );
       if (!userTest) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -144,7 +153,10 @@ class UserTestService implements IUserTestService {
     }
   }
 
-  async getUserTestsByTestId(testId: string, query: IQuery): Promise<IPagination> {
+  async getUserTestsByTestId(
+    testId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const test = await this.testRepository.getTestById(testId);
       if (!test) {
@@ -154,7 +166,10 @@ class UserTestService implements IUserTestService {
         );
       }
 
-      const userTests = await this.userTestRepository.getUserTestsByTestId(testId, query);
+      const userTests = await this.userTestRepository.getUserTestsByTestId(
+        testId,
+        query
+      );
       return userTests;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -167,7 +182,10 @@ class UserTestService implements IUserTestService {
     }
   }
 
-  async getUserTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
+  async getUserTestsByUserId(
+    userId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const user = await this.userRepository.getUserById(userId);
       if (!user) {
@@ -177,7 +195,10 @@ class UserTestService implements IUserTestService {
         );
       }
 
-      const userTests = await this.userTestRepository.getUserTestsByUserId(userId, query);
+      const userTests = await this.userTestRepository.getUserTestsByUserId(
+        userId,
+        query
+      );
       return userTests;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -189,6 +210,32 @@ class UserTestService implements IUserTestService {
       );
     }
   }
+  getUserTestByTestId = async (
+    testId: string,
+    requesterId: string
+  ): Promise<IUserTest | null> => {
+    try {
+      const userTest = await this.userTestRepository.getUserTestByTestId(
+        testId,
+        requesterId
+      );
+      if (!userTest) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User test not found"
+        );
+      }
+      return userTest;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Failed to retrieve userTest"
+      );
+    }
+  };
 }
 
 export default UserTestService;

@@ -1,5 +1,5 @@
 import { Inject, Service } from "typedi";
-import mongoose from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
 import { IVocabulary } from "../interfaces/models/IVocabulary";
 import { IVocabularyService } from "../interfaces/services/IVocabularyService";
 import { IVocabularyRepository } from "../interfaces/repositories/IVocabularyRepository";
@@ -12,6 +12,9 @@ import VocabularyRepository from "../repositories/VocabularyRepository";
 import LessonRepository from "../repositories/LessonRepository";
 import Database from "../db/database";
 import { cleanUpFile } from "../utils/fileUtils";
+import UserLessonRepository from "../repositories/UserLessonRepository";
+import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 @Service()
 class VocabularyService implements IVocabularyService {
@@ -20,8 +23,56 @@ class VocabularyService implements IVocabularyService {
     private vocabularyRepository: IVocabularyRepository,
     @Inject(() => LessonRepository)
     private lessonRepository: ILessonRepository,
+    @Inject(() => UserLessonRepository)
+    private userLessonRepository: IUserLessonRepository,
     @Inject() private database: Database
   ) {}
+
+  private updateUserLessonOrderIfNeeded = async (
+    vocabularyId: string,
+    userId: string,
+    session: mongoose.ClientSession,
+    order: number
+  ): Promise<void> => {
+    const lessonId = await this.vocabularyRepository.getLessonIdByVocabularyId(
+      vocabularyId
+    );
+    if (!lessonId) {
+      throw new CustomException(
+        StatusCodeEnum.NotFound_404,
+        "Lesson not found"
+      );
+    }
+
+    const userLesson = await this.userLessonRepository.getExistingUserLesson(
+      userId,
+      lessonId
+    );
+
+    if (!userLesson) {
+      throw new CustomException(
+        StatusCodeEnum.NotFound_404,
+        "User lesson not found"
+      );
+    }
+
+    const currentOrderArr = [...(userLesson.currentOrder || [])];
+    const idx = currentOrderArr.findIndex(
+      (item) => item.for === LessonTrackingType.VOCABULARY
+    );
+    if (idx !== -1) {
+      if (currentOrderArr[idx].order < order) {
+        currentOrderArr[idx].order = order;
+      }
+    } else {
+      currentOrderArr.push({ for: LessonTrackingType.VOCABULARY, order });
+    }
+    await this.userLessonRepository.updateUserLesson(
+      (userLesson._id as ObjectId).toString(),
+      { currentOrder: currentOrderArr },
+      session
+    );
+  };
 
   async createVocabulary(
     lessonId: string,
@@ -70,6 +121,22 @@ class VocabularyService implements IVocabularyService {
       if (imageUrl) {
         await cleanUpFile(imageUrl, "create");
       }
+
+      //update lesson length
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.VOCABULARY
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount += 1;
+      } else {
+        updatedLength.push({ for: LessonTrackingType.VOCABULARY, amount: 1 });
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
+        session
+      );
 
       await this.database.commitTransaction(session);
       return vocabulary;
@@ -213,6 +280,38 @@ class VocabularyService implements IVocabularyService {
         await cleanUpFile(vocabulary.imageUrl, "update");
       }
 
+      //update lesson length
+      const lessonId =
+        await this.vocabularyRepository.getLessonIdByVocabularyId(vocabularyId);
+      if (!lessonId) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      const lesson = await this.lessonRepository.getLessonById(lessonId);
+      if (!lesson) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.VOCABULARY
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount =
+          updatedLength[idx].amount - 1 < 0 ? 0 : updatedLength[idx].amount - 1;
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
+        session
+      );
+
       await this.database.commitTransaction(session);
       return deletedVocabulary;
     } catch (error) {
@@ -227,7 +326,11 @@ class VocabularyService implements IVocabularyService {
     }
   }
 
-  async getVocabularyById(vocabularyId: string): Promise<IVocabulary | null> {
+  async getVocabularyById(
+    vocabularyId: string,
+    userId: string
+  ): Promise<IVocabulary | null> {
+    const session = await this.database.startTransaction();
     try {
       const vocabulary = await this.vocabularyRepository.getVocabularyById(
         vocabularyId
@@ -238,8 +341,18 @@ class VocabularyService implements IVocabularyService {
           "Vocabulary not found"
         );
       }
+
+      await this.updateUserLessonOrderIfNeeded(
+        vocabularyId,
+        userId,
+        session,
+        vocabulary.order
+      );
+
+      await this.database.commitTransaction(session);
       return vocabulary;
     } catch (error) {
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }
@@ -250,13 +363,27 @@ class VocabularyService implements IVocabularyService {
     }
   }
 
-  async getVocabularies(query: IQuery): Promise<IPagination> {
+  async getVocabularies(query: IQuery, userId: string): Promise<IPagination> {
+    const session = await this.database.startTransaction();
     try {
       const vocabularies = await this.vocabularyRepository.getVocabularies(
         query
       );
+
+      if (vocabularies.data.length > 0) {
+        await this.updateUserLessonOrderIfNeeded(
+          vocabularies.data[0]._id.toString(),
+          userId,
+          session,
+          vocabularies.data[0].order
+        );
+      }
+
+      await this.database.commitTransaction(session);
+
       return vocabularies;
     } catch (error) {
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }
@@ -271,8 +398,10 @@ class VocabularyService implements IVocabularyService {
 
   async getVocabulariesByLessonId(
     lessonId: string,
-    query: IQuery
+    query: IQuery,
+    userId: string
   ): Promise<IPagination> {
+    const session = await this.database.startTransaction();
     try {
       const lesson = await this.lessonRepository.getLessonById(lessonId);
       if (!lesson) {
@@ -287,8 +416,20 @@ class VocabularyService implements IVocabularyService {
           lessonId,
           query
         );
+
+      if (vocabularies.data.length > 0) {
+        await this.updateUserLessonOrderIfNeeded(
+          vocabularies.data[0]._id.toString(),
+          userId,
+          session,
+          vocabularies.data[0].order
+        );
+      }
+
+      await this.database.commitTransaction(session);
       return vocabularies;
     } catch (error) {
+      await this.database.abortTransaction(session);
       if (error instanceof CustomException) {
         throw error;
       }

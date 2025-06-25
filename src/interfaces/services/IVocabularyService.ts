@@ -2,7 +2,6 @@ import { IVocabulary } from "../models/IVocabulary";
 import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
 
-
 export interface IVocabularyService {
   createVocabulary(
     lessonId: string,
@@ -11,7 +10,7 @@ export interface IVocabularyService {
     imageUrl: string | undefined,
     order: number
   ): Promise<IVocabulary>;
-  
+
   updateVocabulary(
     vocabularyId: string,
     lessonId: string | undefined,
@@ -23,9 +22,16 @@ export interface IVocabularyService {
 
   deleteVocabulary(vocabularyId: string): Promise<IVocabulary | null>;
 
-  getVocabularyById(vocabularyId: string): Promise<IVocabulary | null>;
+  getVocabularyById(
+    vocabularyId: string,
+    userId: string
+  ): Promise<IVocabulary | null>;
 
-  getVocabularies(query: IQuery): Promise<IPagination>;
+  getVocabularies(query: IQuery, userId: string): Promise<IPagination>;
 
-  getVocabulariesByLessonId(lessonId: string, query: IQuery): Promise<IPagination>;
+  getVocabulariesByLessonId(
+    lessonId: string,
+    query: IQuery,
+    userId: string
+  ): Promise<IPagination>;
 }

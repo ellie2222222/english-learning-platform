@@ -19,4 +19,9 @@ export interface IUserExerciseService {
     userId: string,
     answer: string
   ) => Promise<{ userExercise: IUserExercise | null; message: string }>;
+
+  getUserExerciseByExerciseId: (
+    exerciseId: string,
+    requesterId: string
+  ) => Promise<IUserExercise | null>;
 }

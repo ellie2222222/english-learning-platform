@@ -1,12 +1,13 @@
 import { IUserLesson } from "../models/IUserLesson";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { ILessonTracking } from "../others/ILessonTracking";
 
 export interface IUserLessonService {
   createUserLesson(
     userId: string,
     lessonId: string,
-    currentOrder: number,
+    currentOrder: ILessonTracking[],
     status: string
   ): Promise<IUserLesson>;
 

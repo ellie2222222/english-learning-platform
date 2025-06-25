@@ -24,18 +24,25 @@ userCourseRoutes.post(
 );
 
 userCourseRoutes.get(
+  "/:id/user",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userCourseDto.getUserCoursesByUserId,
+  userCourseController.getUserCoursesByUserId
+);
+
+userCourseRoutes.get(
+  "/:id/course",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userCourseDto.getUserCourseByCourseId,
+  userCourseController.getUserCourseByCourseId
+);
+
+userCourseRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   OwnershipMiddleware(ResourceModel.USER_COURSE),
   userCourseDto.getUserCourseById,
   userCourseController.getUserCourseById
-);
-
-userCourseRoutes.get(
-  "/:id/user",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  userCourseDto.getUserCoursesByUserId,
-  userCourseController.getUserCoursesByUserId
 );
 
 export default userCourseRoutes;

@@ -134,6 +134,24 @@ class UserCourseDto {
       });
     }
   };
+
+  getUserCourseByCourseId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      this.validateObjectId(id);
+
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message: (error as Error).message,
+      });
+    }
+  };
 }
 
 export default UserCourseDto;

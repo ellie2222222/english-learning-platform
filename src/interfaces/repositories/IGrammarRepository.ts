@@ -32,4 +32,6 @@ export interface IGrammarRepository {
     lessonIds: mongoose.Types.ObjectId[],
     session?: mongoose.ClientSession
   ): Promise<boolean>;
+
+  getLessonIdByGrammarId(grammarId: string): Promise<string | null>;
 }

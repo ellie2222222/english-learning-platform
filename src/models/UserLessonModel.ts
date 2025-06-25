@@ -2,6 +2,7 @@ import mongoose, { Model, Schema } from "mongoose";
 import { IUserLesson } from "../interfaces/models/IUserLesson";
 import baseModelSchema from "./BaseModel";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 const UserLessonModelSchema = new Schema<IUserLesson>(
   {
@@ -15,10 +16,19 @@ const UserLessonModelSchema = new Schema<IUserLesson>(
       ref: "Lesson",
       required: true,
     },
-    currentOrder: {
-      type: Number,
-      default: 0,
-    },
+    currentOrder: [
+      {
+        _id: false,
+        for: {
+          type: String,
+          enum: Object.values(LessonTrackingType),
+        },
+        order: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
     status: {
       type: String,
       enum: Object.values(UserLessonStatus),

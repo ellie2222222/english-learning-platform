@@ -20,4 +20,9 @@ export interface IUserCourseService {
   getUserCourseById(userCourseId: string): Promise<IUserCourse | null>;
 
   getUserCoursesByUserId(userId: string, query: IQuery): Promise<IPagination>;
+
+  getUserCourseByCourseId: (
+    id: string,
+    requesterId: string
+  ) => Promise<IUserCourse | null>;
 }

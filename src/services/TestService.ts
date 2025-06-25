@@ -9,7 +9,7 @@ import { IPagination } from "../interfaces/others/IPagination";
 import { ITestRepository } from "../interfaces/repositories/ITestRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
 import TestRepository from "../repositories/TestRepository";
-import LessonRepository from "../repositories/LessonRepository"; 
+import LessonRepository from "../repositories/LessonRepository";
 import ExerciseRepository from "../repositories/ExcerciseRepository";
 import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
 import mongoose from "mongoose";
@@ -35,6 +35,19 @@ import UserTestModel from "../models/UserTestModel";
 import { ILesson } from "../interfaces/models/ILesson";
 import increaseUserPoint from "../utils/userPoint";
 import { IncreasePointEnum } from "../enums/IncreasePointEnum";
+import { notifyAchievement } from "../utils/mailer";
+import UserCourseRepository from "../repositories/UserCourseRepository";
+import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
+import AchievementRepository from "../repositories/AchievementRepository";
+import { IAchievementRepository } from "../interfaces/repositories/IAchievementRepository";
+import UserAchievementRepository from "../repositories/UserAchievementRepository";
+import { IUserAchievementRepository } from "../interfaces/repositories/IUserAchievementRepository";
+import UserRepository from "../repositories/UserRepository";
+import { IUserRepository } from "../interfaces/repositories/IUserRepository";
+import { AchievementTypeEnum } from "../enums/AchievementTypeEnum";
+import getLogger from "../utils/logger";
+import CourseRepository from "../repositories/CourseRepository";
+import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
 
 @Service()
 class TestService implements ITestService {
@@ -49,8 +62,90 @@ class TestService implements ITestService {
     private userTestRepository: IUserTestRepository,
     @Inject(() => ConfigService)
     private configService: IConfigService,
+    @Inject(() => UserCourseRepository)
+    private userCourseRepository: IUserCourseRepository,
+    @Inject(() => AchievementRepository)
+    private achievementRepository: IAchievementRepository,
+    @Inject(() => UserAchievementRepository)
+    private userAchievementRepository: IUserAchievementRepository,
+    @Inject(() => UserRepository)
+    private userRepository: IUserRepository,
+    @Inject(() => CourseRepository)
+    private courseRepository: ICourseRepository,
     @Inject() private database: Database
   ) {}
+
+  courseAchievementTrigger = async (
+    userId: string,
+    session: mongoose.ClientSession
+  ): Promise<void> => {
+    const logger = getLogger("LESSON_COMPLETED");
+    const user = await this.userRepository.getUserById(userId);
+    if (!user) {
+      throw new CustomException(StatusCodeEnum.NotFound_404, "User not found");
+    }
+    const userCourses =
+      await this.userCourseRepository.getUserCourseForAchievement(userId);
+
+    const achievement = await this.achievementRepository.getClosestAchievement(
+      AchievementTypeEnum.CouseCompletion,
+      userCourses.length || 0
+    );
+
+    if (!achievement) {
+      logger.info(
+        `No lesson completed achievement found for this number of lesson(s): ${userCourses.length}`
+      );
+      await this.database.commitTransaction(session);
+      return;
+    }
+
+    if (userCourses.length < achievement?.goal) {
+      logger.info(
+        `Closest achievement goal (${achievement.goal}) not yet reached for completed course(s): ${userCourses.length}`
+      );
+      await this.database.commitTransaction(session);
+      return;
+    }
+
+    const achievedAchievement =
+      await this.userAchievementRepository.findExistingAchievement(
+        (achievement._id as ObjectId).toString(),
+        userId
+      );
+
+    if (achievedAchievement) {
+      logger.info(`User ${userId} already has achievement ${achievement._id}`);
+      await this.database.commitTransaction(session);
+      return;
+    }
+
+    // Create new user achievement
+    const userAchievement =
+      await this.userAchievementRepository.createUserAchievement(
+        {
+          userId,
+          achievementId: achievement._id,
+        },
+        session
+      );
+
+    if (!userAchievement) {
+      logger.error(
+        `Failed to create user achievement for user: ${userId}, achievement: ${achievement._id}`
+      );
+      await this.database.commitTransaction(session);
+      return;
+    }
+
+    logger.info(
+      `Awarded achievement ${achievement._id} to user ${userId} for ${userCourses.length} lesson completed`
+    );
+    await this.database.commitTransaction(session);
+
+    //notify user
+    notifyAchievement(achievement, user.email);
+  };
 
   async createTest(
     name: string,
@@ -341,20 +436,27 @@ class TestService implements ITestService {
     }
   }
 
-   async submitTest(data: ISubmitTest): Promise<IUserTestResponse> {
+  async submitTest(data: ISubmitTest): Promise<IUserTestResponse> {
     const session = await this.database.startTransaction();
     try {
       // Validate test exists
       const test = await this.testRepository.getTestById(data.testId);
       if (!test) {
-        throw new CustomException(StatusCodeEnum.NotFound_404, "Test not found");
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Test not found"
+        );
       }
 
       // Get exercises for the test's lessons
-      const exercises = await this.exerciseRepository.getExercisesByLessonIds(test.lessonIds.map((id) => id.toString()));
+      const exercises = await this.exerciseRepository.getExercisesByLessonIds(
+        test.lessonIds.map((id) => id.toString())
+      );
 
       // Validate all submitted exercise IDs belong to the test's lessons
-      const exerciseIds = exercises.map((ex: IExercise) => (ex._id as mongoose.Types.ObjectId)?.toString());
+      const exerciseIds = exercises.map((ex: IExercise) =>
+        (ex._id as mongoose.Types.ObjectId)?.toString()
+      );
       const invalidExerciseIds = data.answers.filter(
         (ans) => !exerciseIds.includes(ans.exerciseId)
       );
@@ -369,7 +471,9 @@ class TestService implements ITestService {
       let correctAnswers = 0;
       const results = data.answers.map((answer) => {
         const exercise = exercises.find(
-          (ex: IExercise) => (ex._id as mongoose.Types.ObjectId)?.toString() === answer.exerciseId?.toString()
+          (ex: IExercise) =>
+            (ex._id as mongoose.Types.ObjectId)?.toString() ===
+            answer.exerciseId?.toString()
         )!;
         let isCorrect: boolean;
 
@@ -408,7 +512,9 @@ class TestService implements ITestService {
         return {
           exerciseId: answer.exerciseId,
           selectedAnswers: answer.selectedAnswers,
-          correctAnswers: Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer],
+          correctAnswers: Array.isArray(exercise.answer)
+            ? exercise.answer
+            : [exercise.answer],
           isCorrect,
         };
       });
@@ -419,7 +525,7 @@ class TestService implements ITestService {
       // Get passing point from config (default to 80 if not found)
       let passingPoint = 80;
       try {
-        const config = await this.configService.getConfig('test_passing_point');
+        const config = await this.configService.getConfig("test_passing_point");
         passingPoint = parseInt(config.value, 10);
       } catch (configError) {
         // Use default value if config not found
@@ -428,7 +534,9 @@ class TestService implements ITestService {
 
       // Determine status based on score and passing point
       const status =
-        score >= passingPoint ? UserTestStatusEnum.PASSED : UserTestStatusEnum.FAILED;
+        score >= passingPoint
+          ? UserTestStatusEnum.PASSED
+          : UserTestStatusEnum.FAILED;
 
       // Get the latest attempt number
       const lastAttempt = await this.userTestRepository.getLatestAttempt(
@@ -444,7 +552,10 @@ class TestService implements ITestService {
         attemptNo,
         score,
         status,
-        description: status === UserTestStatusEnum.PASSED ? "Test passed successfully" : "Test failed"
+        description:
+          status === UserTestStatusEnum.PASSED
+            ? "Test passed successfully"
+            : "Test failed",
       };
 
       // Save submission
@@ -455,12 +566,17 @@ class TestService implements ITestService {
 
       // Update user course status if test is passed
       if (status === UserTestStatusEnum.PASSED) {
-        await this.updateUserCourseStatus(data.userId, test.courseId.toString(), session);
+        await this.updateUserCourseStatus(
+          data.userId,
+          test.courseId.toString(),
+          session
+        );
         await increaseUserPoint(data.userId, IncreasePointEnum.TEST);
+        await this.courseAchievementTrigger(data.userId, session);
       }
- 
+
       await this.database.commitTransaction(session);
- 
+
       return {
         id: savedSubmission._id!.toString(),
         userId: savedSubmission.userId.toString(),
@@ -499,42 +615,52 @@ class TestService implements ITestService {
   ): Promise<void> {
     try {
       // 1. Get all lessons for the course
-      const courseLessons = await this.lessonRepository.getLessonsByCourseIdV2(courseId);
-      
+      const courseLessons = await this.lessonRepository.getLessonsByCourseIdV2(
+        courseId
+      );
+
       // 2. Check if all lessons are completed by the user
       const userLessons = await UserLessonModel.find({
         userId: new mongoose.Types.ObjectId(userId),
         lessonId: { $in: courseLessons.map((lesson: ILesson) => lesson._id) },
       });
-      
-      const allLessonsCompleted = courseLessons.length > 0 && 
+
+      const allLessonsCompleted =
+        courseLessons.length > 0 &&
         userLessons.length === courseLessons.length &&
-        userLessons.every(userLesson => userLesson.status === UserLessonStatus.COMPLETED);
-      
+        userLessons.every(
+          (userLesson) => userLesson.status === UserLessonStatus.COMPLETED
+        );
+
       // 3. Get all tests for the course directly
-      const courseTests = await this.testRepository.getTestsByCourseId(courseId);
-      
+      const courseTests = await this.testRepository.getTestsByCourseId(
+        courseId
+      );
+
       // 4. Check if all tests are passed by the user
       const userTests = await UserTestModel.find({
         userId: new mongoose.Types.ObjectId(userId),
-        testId: { $in: courseTests.map(test => test._id) },
+        testId: { $in: courseTests.map((test) => test._id) },
         status: UserTestStatusEnum.PASSED,
-      }).sort({ createdAt: -1 }).lean();
-      
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+
       // Count unique test IDs that have been passed
       const passedTestIds = new Set<string>();
       for (const test of userTests as any[]) {
         passedTestIds.add(test.testId.toString());
       }
-      
-      const allTestsPassed = courseTests.length > 0 &&
-        passedTestIds.size === courseTests.length;
-      
+
+      const allTestsPassed =
+        courseTests.length > 0 && passedTestIds.size === courseTests.length;
+
       // 5. Update user course status
-      const newStatus = (allLessonsCompleted && allTestsPassed) 
-        ? UserCourseStatus.COMPLETED 
-        : UserCourseStatus.ONGOING;
-      
+      const newStatus =
+        allLessonsCompleted && allTestsPassed
+          ? UserCourseStatus.COMPLETED
+          : UserCourseStatus.ONGOING;
+
       // Find or create user course record
       const userCourse = await UserCourseModel.findOneAndUpdate(
         {
@@ -545,18 +671,27 @@ class TestService implements ITestService {
           $set: {
             status: newStatus,
             lessonFinished: userLessons.filter(
-              ul => ul.status === UserLessonStatus.COMPLETED
+              (ul) => ul.status === UserLessonStatus.COMPLETED
             ).length,
-          }
+          },
         },
         { upsert: true, new: true, session }
       );
-      
+
+      //increase user point if course is completed
+      if (newStatus === UserCourseStatus.COMPLETED) {
+        const course = await this.courseRepository.getCourseById(courseId);
+        const level = course?.level;
+        await increaseUserPoint(userId, IncreasePointEnum.COURSE, level);
+      }
       // Calculate and update average score if there are passed tests
       if (userTests.length > 0) {
-        const totalScore = userTests.reduce((sum: number, test: IUserTest) => sum + test.score, 0);
+        const totalScore = userTests.reduce(
+          (sum: number, test: IUserTest) => sum + test.score,
+          0
+        );
         const averageScore = Math.round(totalScore / userTests.length);
-        
+
         await UserCourseModel.findByIdAndUpdate(
           userCourse._id,
           { $set: { averageScore } },
@@ -566,11 +701,41 @@ class TestService implements ITestService {
     } catch (error) {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Failed to update user course status"
+        error instanceof Error
+          ? error.message
+          : "Failed to update user course status"
       );
     }
   }
+  getUserTestByTestId = async (
+    testId: string,
+    requesterId: string
+  ): Promise<IUserTest | null> => {
+    try {
+      const userTest = await this.userTestRepository.getUserTestByTestId(
+        testId,
+        requesterId
+      );
 
+      if (!userTest) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User test not found"
+        );
+      }
+
+      return userTest;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
   // async getTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
   //   try {
   //     const user = await this.userRepository.getUserById(userId);

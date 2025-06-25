@@ -230,6 +230,25 @@ class GrammarRepository implements IGrammarRepository {
       );
     }
   }
+
+  async getLessonIdByGrammarId(grammarId: string): Promise<string | null> {
+    try {
+      const lessonId = await this.grammarModel
+        .findOne({ _id: grammarId, isDeleted: false })
+        .select("lessonId")
+        .exec();
+      return lessonId?.lessonId as string | null;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default GrammarRepository;
