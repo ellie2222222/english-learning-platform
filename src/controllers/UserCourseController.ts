@@ -4,6 +4,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import { IUserCourseService } from "../interfaces/services/IUserCourseService";
 import UserCourseService from "../services/UserCourseService";
+import { UserCourseStatus } from "../enums/UserCourseStatus";
 
 @Service()
 class UserCourseController {
@@ -18,16 +19,16 @@ class UserCourseController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId, courseId, currentOrder, status } = req.body;
+      const { userId, courseId } = req.body;
       const userCourse = await this.userCourseService.createUserCourse(
         userId,
         courseId,
-        currentOrder,
-        status
+        0, // Default currentOrder to 0
+        UserCourseStatus.ONGOING // Default status to ONGOING
       );
       res.status(StatusCodeEnum.Created_201).json({
         userCourse,
-        message: "User lesson created successfully",
+        message: "User course created successfully",
       });
     } catch (error) {
       next(error);
@@ -48,7 +49,7 @@ class UserCourseController {
       );
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
-        message: "User lesson updated successfully",
+        message: "User course updated successfully",
       });
     } catch (error) {
       next(error);
@@ -65,7 +66,7 @@ class UserCourseController {
       const userCourse = await this.userCourseService.deleteUserCourse(id);
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
-        message: "User lesson deleted successfully",
+        message: "User course deleted successfully",
       });
     } catch (error) {
       next(error);
@@ -82,7 +83,7 @@ class UserCourseController {
       const userCourse = await this.userCourseService.getUserCourseById(id);
       res.status(StatusCodeEnum.OK_200).json({
         userCourse,
-        message: "User lesson retrieved successfully",
+        message: "User course retrieved successfully",
       });
     } catch (error) {
       next(error);
@@ -108,7 +109,7 @@ class UserCourseController {
       );
       res.status(StatusCodeEnum.OK_200).json({
         ...userCourses,
-        message: "User lessons retrieved successfully",
+        message: "User courses retrieved successfully",
       });
     } catch (error) {
       next(error);

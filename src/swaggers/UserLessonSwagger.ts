@@ -10,7 +10,7 @@
  * /api/user-lessons:
  *   post:
  *     summary: Create a new user lesson
- *     description: Creates a new user lesson to track a user's progress in a lesson. Only accessible by users with Admin (1) role.
+ *     description: Creates a new user lesson to track a user's progress in a lesson. Only requires userId and lessonId. Only accessible by users with Admin (1) role.
  *     tags: [UserLessons]
 
  *     requestBody:
@@ -33,7 +33,7 @@
  *                   type: string
  *                   example: "User lesson created successfully"
  *       400:
- *         description: Bad request (e.g., invalid userId, lessonId, or status)
+ *         description: Bad request (e.g., invalid userId or lessonId)
  *         content:
  *           application/json:
  *             schema:
@@ -334,13 +334,13 @@
  *           description: The ID of the lesson (MongoDB ObjectId)
  *         currentOrder:
  *           type: number
- *           example: 1
- *           description: The order of the lesson for the user
+ *           example: 0
+ *           description: The order of the lesson for the user (defaults to 0)
  *         status:
  *           type: string
  *           enum: [ongoing, completed]
  *           example: "ongoing"
- *           description: The status of the user lesson
+ *           description: The status of the user lesson (defaults to "ongoing")
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -356,8 +356,6 @@
  *       required:
  *         - userId
  *         - lessonId
- *         - currentOrder
- *         - status
  *       properties:
  *         userId:
  *           type: string
@@ -367,16 +365,6 @@
  *           type: string
  *           description: The ID of the lesson (must be a valid MongoDB ObjectId)
  *           example: "54321"
- *         currentOrder:
- *           type: number
- *           minimum: 0
- *           description: The order of the lesson for the user
- *           example: 1
- *         status:
- *           type: string
- *           enum: [ongoing, completed]
- *           description: The status of the user lesson
- *           example: "ongoing"
  *     UserLessonUpdate:
  *       type: object
  *       required:

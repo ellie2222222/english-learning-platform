@@ -4,6 +4,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import UserLessonService from "../services/UserLessonService";
 import { IUserLessonService } from "../interfaces/services/IUserLessonService";
+import { UserLessonStatus } from "../enums/UserLessonStatus";
 
 @Service()
 class UserLessonController {
@@ -18,12 +19,12 @@ class UserLessonController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId, lessonId, currentOrder, status } = req.body;
+      const { userId, lessonId } = req.body;
       const userLesson = await this.userLessonService.createUserLesson(
         userId,
         lessonId,
-        currentOrder,
-        status
+        0, // Default currentOrder to 0
+        UserLessonStatus.ONGOING // Default status to ONGOING
       );
       res.status(StatusCodeEnum.Created_201).json({
         userLesson,

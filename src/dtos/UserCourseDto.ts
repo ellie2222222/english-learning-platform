@@ -17,46 +17,13 @@ class UserCourseDto {
     }
   };
 
-  private validateLessonFinished = (lessonFinished: number): void => {
-    if (
-      lessonFinished !== undefined &&
-      (isNaN(lessonFinished) || lessonFinished < 0)
-    ) {
-      throw new Error(
-        "Lesson finished must be a number greater than or equal to 0"
-      );
-    }
-  };
-
-  private validateAverageScore = (averageScore: number): void => {
-    if (
-      averageScore !== undefined &&
-      averageScore !== null &&
-      (isNaN(averageScore) || averageScore < 0 || averageScore > 100)
-    ) {
-      throw new Error(
-        "Average score must be a number between 0 and 100 or null"
-      );
-    }
-  };
-
-  private validateStatus = (status: string): void => {
-    if (
-      status &&
-      !Object.values(UserCourseStatus).includes(status as UserCourseStatusType)
-    ) {
-      throw new Error("Invalid status");
-    }
-  };
-
   createUserCourse = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId, courseId, lessonFinished, averageScore, status } =
-        req.body;
+      const { userId, courseId } = req.body;
 
       if (!userId || !courseId) {
         throw new Error(
@@ -66,9 +33,6 @@ class UserCourseDto {
 
       this.validateObjectId(userId);
       this.validateObjectId(courseId);
-      this.validateLessonFinished(lessonFinished);
-      this.validateAverageScore(averageScore);
-      this.validateStatus(status);
 
       next();
     } catch (error) {
@@ -85,12 +49,13 @@ class UserCourseDto {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { lessonFinished, averageScore, status } = req.body;
+      const { status } = req.body;
 
       this.validateObjectId(id);
-      this.validateLessonFinished(lessonFinished);
-      this.validateAverageScore(averageScore);
-      this.validateStatus(status);
+      
+      if (status && !Object.values(UserCourseStatus).includes(status as UserCourseStatusType)) {
+        throw new Error("Invalid status");
+      }
 
       next();
     } catch (error) {
@@ -106,8 +71,8 @@ class UserCourseDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userCourseId } = req.params;
-      this.validateObjectId(userCourseId);
+      const { id } = req.params;
+      this.validateObjectId(id);
       next();
     } catch (error) {
       res.status(StatusCodeEnum.BadRequest_400).json({

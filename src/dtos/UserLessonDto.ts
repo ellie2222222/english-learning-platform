@@ -17,33 +17,13 @@ class UserLessonDto {
     }
   };
 
-  private validateCurrentOrder = (currentOrder: number): void => {
-    if (
-      currentOrder !== undefined &&
-      (isNaN(currentOrder) || currentOrder < 0)
-    ) {
-      throw new Error(
-        "Current order must be a number greater than or equal to 0"
-      );
-    }
-  };
-
-  private validateStatus = (status: string): void => {
-    if (
-      status &&
-      !Object.values(UserLessonStatus).includes(status as UserLessonStatusType)
-    ) {
-      throw new Error("Invalid status");
-    }
-  };
-
   createUserLesson = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId, lessonId, currentOrder, status } = req.body;
+      const { userId, lessonId } = req.body;
 
       if (!userId || !lessonId) {
         throw new Error(
@@ -53,8 +33,6 @@ class UserLessonDto {
 
       this.validateObjectId(userId);
       this.validateObjectId(lessonId);
-      this.validateCurrentOrder(currentOrder);
-      this.validateStatus(status);
 
       next();
     } catch (error) {
@@ -74,7 +52,10 @@ class UserLessonDto {
       const { status } = req.body;
 
       this.validateObjectId(id);
-      this.validateStatus(status);
+      
+      if (status && !Object.values(UserLessonStatus).includes(status as UserLessonStatusType)) {
+        throw new Error("Invalid status");
+      }
 
       next();
     } catch (error) {
