@@ -435,6 +435,29 @@ class UserCourseRepository implements IUserCourseRepository {
       );
     }
   }
+
+  async getUserCourseByCourseId(
+    id: string,
+    requesterId: string
+  ): Promise<IUserCourse | null> {
+    try {
+      const userCourse = await UserCourseModel.findOne({
+        courseId: new mongoose.Types.ObjectId(id),
+        userId: new mongoose.Types.ObjectId(requesterId),
+        isDeleted: false,
+      });
+
+      return userCourse;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserCourseRepository;

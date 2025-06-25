@@ -269,6 +269,34 @@ class UserExerciseService implements IUserExerciseService {
       await session.endSession();
     }
   };
+
+  getUserExerciseByExerciseId = async (
+    exerciseId: string,
+    requesterId: string
+  ): Promise<IUserExercise | null> => {
+    try {
+      const userExercise =
+        await this.userExerciseRepository.getUserExerciseByExerciseId(
+          requesterId,
+          exerciseId
+        );
+      if (!userExercise) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User exercise not found"
+        );
+      }
+      return userExercise;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
 }
 
 export default UserExerciseService;

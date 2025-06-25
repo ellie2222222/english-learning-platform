@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /api/user-exercises/submition:
+ * /api/user-exercises/submission:
  *   post:
  *     summary: Submit a user exercise
  *     tags: [UserExercise]
@@ -187,4 +187,48 @@
  *                   example: Invalid user exercise ID
  *       401:
  *         description: Unauthorized, missing or invalid token
+ */
+
+/**
+ * @swagger
+ * /api/user-exercises/{id}/exercise:
+ *   get:
+ *     summary: Get user exercise by exercise ID
+ *     description: Retrieves a user exercise by exerciseId for the authenticated user. Returns the user's submission for the specified exercise.
+ *     tags: [UserExercise]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the exercise (MongoDB ObjectId)
+ *     responses:
+ *       200:
+ *         description: User exercise retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userExercise:
+ *                   type: object
+ *                   description: The user exercise object
+ *                 message:
+ *                   type: string
+ *                   example: User exercise retrieved successfully
+ *       400:
+ *         description: Bad request due to invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid user exercise ID
+ *       401:
+ *         description: Unauthorized, missing or invalid token
+ *       404:
+ *         description: User exercise not found
  */

@@ -130,6 +130,21 @@ class UserTestDto {
       });
     }
   };
+  getUserTestByTestId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { id } = req.params;
+      this.validateObjectId(id);
+      next();
+    } catch (error) {
+      res.status(StatusCodeEnum.BadRequest_400).json({
+        message: (error as Error).message,
+      });
+    }
+  };
 }
 
 export default UserTestDto;

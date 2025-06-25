@@ -198,6 +198,61 @@
 
 /**
  * @swagger
+ * /api/user-courses/{id}/course:
+ *   get:
+ *     summary: Get user course by course ID
+ *     description: Retrieves a user course by courseId for the authenticated user. Accessible by users with Admin (1) or User (0) roles. Returns the user's progress in the specified course.
+ *     tags: [UserCourses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the course (MongoDB ObjectId)
+ *     responses:
+ *       200:
+ *         description: User course retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userCourse:
+ *                   $ref: '#/components/schemas/UserCourse'
+ *                 message:
+ *                   type: string
+ *                   example: User course retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden (user is not enrolled in the course)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User course not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     UserCourse:

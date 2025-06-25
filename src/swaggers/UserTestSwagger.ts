@@ -204,6 +204,61 @@
 
 /**
  * @swagger
+ * /api/user-tests/{id}/test:
+ *   get:
+ *     summary: Get user test by test ID
+ *     description: Retrieves a user test by testId for the authenticated user. Accessible by users with Admin (1) or User (0) roles. Returns the user's test attempt for the specified test.
+ *     tags: [UserTests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the test (MongoDB ObjectId)
+ *     responses:
+ *       200:
+ *         description: User test retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userTest:
+ *                   $ref: '#/components/schemas/UserTest'
+ *                 message:
+ *                   type: string
+ *                   example: User test retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden (user is not associated with the test)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User test not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     UserTest:

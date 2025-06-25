@@ -22,18 +22,25 @@ userTestRoutes.post(
 );
 
 userTestRoutes.get(
+  "/:id/user",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userTestDto.getUserTestsByUserId,
+  userTestController.getUserTestsByUserId
+);
+
+userTestRoutes.get(
+  "/:id/test",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userTestDto.getUserTestByTestId,
+  userTestController.getUserTestByTestId
+);
+
+userTestRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   OwnershipMiddleware(ResourceModel.USER_TEST),
   userTestDto.getUserTestById,
   userTestController.getUserTestById
-);
-
-userTestRoutes.get(
-  "/:id/user",
-  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  userTestDto.getUserTestsByUserId,
-  userTestController.getUserTestsByUserId
 );
 
 export default userTestRoutes;

@@ -79,5 +79,27 @@ class UserExerciseController {
       next(error);
     }
   };
+
+  getUserExerciseByExerciseId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { id } = req.params;
+      const requesterId = req.userInfo.userId;
+      const userExercise =
+        await this.userExerciseService.getUserExerciseByExerciseId(
+          id,
+          requesterId
+        );
+      res.status(StatusCodeEnum.OK_200).json({
+        userExercise: userExercise,
+        message: "User exercise retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 export default UserExerciseController;

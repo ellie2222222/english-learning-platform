@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { IUserTest } from "../interfaces/models/IUserTest"; 
+import { IUserTest } from "../interfaces/models/IUserTest";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { Service } from "typedi";
-import { IPagination } from "../interfaces/others/IPagination"; 
+import { IPagination } from "../interfaces/others/IPagination";
 import { IUserTestRepository } from "../interfaces/repositories/IUserTestRepository";
-import UserTestModel from "../models/UserTestModel"; 
+import UserTestModel from "../models/UserTestModel";
 
 @Service()
 class UserTestRepository implements IUserTestRepository {
@@ -115,7 +115,10 @@ class UserTestRepository implements IUserTestRepository {
     }
   }
 
-  async getUserTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
+  async getUserTestsByUserId(
+    userId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const matchQuery = {
         userId: new mongoose.Types.ObjectId(userId),
@@ -163,7 +166,10 @@ class UserTestRepository implements IUserTestRepository {
     }
   }
 
-  async getUserTestsByTestId(testId: string, query: IQuery): Promise<IPagination> {
+  async getUserTestsByTestId(
+    testId: string,
+    query: IQuery
+  ): Promise<IPagination> {
     try {
       const matchQuery = {
         testId: new mongoose.Types.ObjectId(testId),
@@ -211,7 +217,11 @@ class UserTestRepository implements IUserTestRepository {
     }
   }
 
-  async getUserTestByTestUserAndAttempt(testId: string, userId: string, attemptNo: number): Promise<IUserTest | null> {
+  async getUserTestByTestUserAndAttempt(
+    testId: string,
+    userId: string,
+    attemptNo: number
+  ): Promise<IUserTest | null> {
     try {
       const userTest = await UserTestModel.findOne({
         testId: new mongoose.Types.ObjectId(testId),
@@ -228,7 +238,10 @@ class UserTestRepository implements IUserTestRepository {
     }
   }
 
-  async getLatestAttempt(userId: string, testId: string): Promise<IUserTest | null> {
+  async getLatestAttempt(
+    userId: string,
+    testId: string
+  ): Promise<IUserTest | null> {
     try {
       const userTests = await UserTestModel.find({
         userId: new mongoose.Types.ObjectId(userId),
@@ -242,10 +255,35 @@ class UserTestRepository implements IUserTestRepository {
     } catch (error) {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Failed to retrieve latest attempt"
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve latest attempt"
       );
     }
-  }   
+  }
+  async getUserTestByTestId(
+    testId: string,
+    requesterId: string
+  ): Promise<IUserTest | null> {
+    try {
+      const userTest = await UserTestModel.findOne({
+        testId: new mongoose.Types.ObjectId(testId),
+        userId: new mongoose.Types.ObjectId(requesterId),
+        isDeleted: false,
+      });
+
+      return userTest;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default UserTestRepository;

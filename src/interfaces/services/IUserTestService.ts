@@ -10,7 +10,7 @@ export interface IUserTestService {
     attemptNo: number,
     score: number,
     status: UserTestStatusEnumType,
-    description: string,
+    description: string
   ): Promise<IUserTest>;
 
   deleteUserTest(userTestId: string): Promise<IUserTest | null>;
@@ -20,4 +20,9 @@ export interface IUserTestService {
   getUserTestsByTestId(testId: string, query: IQuery): Promise<IPagination>;
 
   getUserTestsByUserId(userId: string, query: IQuery): Promise<IPagination>;
+
+  getUserTestByTestId(
+    testId: string,
+    requesterId: string
+  ): Promise<IUserTest | null>;
 }

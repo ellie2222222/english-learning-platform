@@ -114,6 +114,28 @@ class UserCourseController {
       next(error);
     }
   };
+
+  getUserCourseByCourseId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.userInfo.userId;
+      const userCourse = await this.userCourseService.getUserCourseByCourseId(
+        id,
+        userId
+      );
+
+      res.status(StatusCodeEnum.OK_200).json({
+        userCourse,
+        message: "User course retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default UserCourseController;

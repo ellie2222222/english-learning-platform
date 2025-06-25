@@ -27,4 +27,9 @@ export interface IUserCourseRepository {
   getUserProgressHierarchy(userId: string): Promise<object[]>;
 
   getUserCourseForAchievement(userId: string): Promise<IUserCourse[]>;
+
+  getUserCourseByCourseId(
+    id: string,
+    requesterId: string
+  ): Promise<IUserCourse | null>;
 }

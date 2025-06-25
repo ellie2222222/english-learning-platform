@@ -74,13 +74,13 @@ class UserExerciseDto {
 
   submitExercise = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { exerciseId, answer } = req.body;
+      const { id, answer } = req.body;
 
-      if (!exerciseId || !answer) {
+      if (!id || !answer) {
         throw new Error("User exercise ID and answer are required");
       }
 
-      if (!mongoose.isValidObjectId(exerciseId)) {
+      if (!mongoose.isValidObjectId(id)) {
         throw new Error("Invalid user exercise ID");
       }
 
@@ -88,6 +88,30 @@ class UserExerciseDto {
         throw new Error("Answer must be a string");
       }
 
+      next();
+    } catch (error) {
+      res
+        .status(StatusCodeEnum.BadRequest_400)
+        .json({ message: (error as Error).message });
+      return;
+    }
+  };
+
+  getUserExerciseByExerciseId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        throw new Error("Exercise ID is required");
+      }
+
+      if (!mongoose.isValidObjectId(id)) {
+        throw new Error("Invalid exercise ID");
+      }
       next();
     } catch (error) {
       res
