@@ -7,7 +7,7 @@ export interface ILessonService {
     courseId: string,
     name: string,
     description: string | undefined,
-    length: number
+    length: ILessonLengthObject[]
   ): Promise<ILesson>;
 
   updateLesson(

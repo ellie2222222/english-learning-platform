@@ -239,6 +239,10 @@ class GrammarRepository implements IGrammarRepository {
         .exec();
       return lessonId?.lessonId as string | null;
     } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"

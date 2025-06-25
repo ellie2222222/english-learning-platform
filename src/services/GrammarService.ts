@@ -117,6 +117,22 @@ class GrammarService implements IGrammarService {
         session
       );
 
+      //update lesson length
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.GRAMMAR
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount += 1;
+      } else {
+        updatedLength.push({ for: LessonTrackingType.GRAMMAR, amount: 1 });
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
+        session
+      );
+
       await this.database.commitTransaction(session);
       return grammar;
     } catch (error) {
@@ -233,6 +249,40 @@ class GrammarService implements IGrammarService {
         grammarId,
         session
       );
+
+      const lessonId = await this.grammarRepository.getLessonIdByGrammarId(
+        grammarId
+      );
+      if (!lessonId) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+      const lesson = await this.lessonRepository.getLessonById(lessonId);
+      if (!lesson) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.GRAMMAR
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount =
+          updatedLength[idx].amount - 1 < 0 ? 0 : updatedLength[idx].amount - 1;
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        {
+          length: updatedLength,
+        },
+        session
+      );
+
       await this.database.commitTransaction(session);
       return deletedGrammar;
     } catch (error) {

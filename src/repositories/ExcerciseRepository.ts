@@ -230,7 +230,7 @@ class ExerciseRepository implements IExerciseRepository {
 
       const exercises = await ExerciseModel.find(matchQuery);
 
-      return exercises;    
+      return exercises;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -400,7 +400,9 @@ class ExerciseRepository implements IExerciseRepository {
     }
   }
 
-  async countExercisesByLessonIds(lessonIds: mongoose.Types.ObjectId[]): Promise<number> {
+  async countExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[]
+  ): Promise<number> {
     try {
       const count = await ExerciseModel.countDocuments({
         lessonId: { $in: lessonIds },
@@ -420,7 +422,9 @@ class ExerciseRepository implements IExerciseRepository {
     }
   }
 
-  async countDeletedExercisesByLessonIds(lessonIds: mongoose.Types.ObjectId[]): Promise<number> {
+  async countDeletedExercisesByLessonIds(
+    lessonIds: mongoose.Types.ObjectId[]
+  ): Promise<number> {
     try {
       const count = await ExerciseModel.countDocuments({
         lessonId: { $in: lessonIds },
@@ -438,7 +442,33 @@ class ExerciseRepository implements IExerciseRepository {
         error instanceof Error ? error.message : "Internal Server Error"
       );
     }
-  } 
+  }
+
+  async getLessonIdByExerciseId(id: string): Promise<string | null> {
+    try {
+      const exercise = await ExerciseModel.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+      }).select("lessonId");
+
+      if (!exercise) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Exercise not found"
+        );
+      }
+
+      return exercise.lessonId.toString();
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default ExerciseRepository;

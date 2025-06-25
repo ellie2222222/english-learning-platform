@@ -10,7 +10,7 @@ import LessonRepository from "../repositories/LessonRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
 import UserLessonRepository from "../repositories/UserLessonRepository";
 import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
-import mongoose from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
 import GrammarRepository from "../repositories/GrammarRepository";
 import { IGrammarRepository } from "../interfaces/repositories/IGrammarRepository";
 import VocabularyRepository from "../repositories/VocabularyRepository";
@@ -20,6 +20,9 @@ import { IExerciseRepository } from "../interfaces/repositories/IExerciseReposit
 import TestRepository from "../repositories/TestRepository";
 import { ITestRepository } from "../interfaces/repositories/ITestRepository";
 import { ITest } from "../interfaces/models/ITest";
+import { ILessonLengthObject } from "../interfaces/others/ILessonLengthObject";
+import CourseRepository from "../repositories/CourseRepository";
+import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
 
 @Service()
 class LessonService implements ILessonService {
@@ -36,6 +39,8 @@ class LessonService implements ILessonService {
     private exerciseRepository: IExerciseRepository,
     @Inject(() => TestRepository)
     private testRepository: ITestRepository,
+    @Inject(() => CourseRepository)
+    private courseRepository: ICourseRepository,
     @Inject() private database: Database
   ) {}
 
@@ -43,7 +48,7 @@ class LessonService implements ILessonService {
     courseId: string,
     name: string,
     description: string | undefined,
-    length: number
+    length: ILessonLengthObject[]
   ): Promise<ILesson> {
     const session = await this.database.startTransaction();
     try {
@@ -53,6 +58,23 @@ class LessonService implements ILessonService {
           name,
           description,
           length,
+        },
+        session
+      );
+
+      //update course totalLessons
+      const course = await this.courseRepository.getCourseById(courseId);
+      if (!course) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
+      }
+
+      await this.courseRepository.updateCourse(
+        courseId,
+        {
+          totalLessons: course.totalLessons + 1,
         },
         session
       );
@@ -77,8 +99,7 @@ class LessonService implements ILessonService {
     id: string,
     courseId?: string,
     name?: string,
-    description?: string,
-    length?: number
+    description?: string
   ): Promise<ILesson | null> {
     const session = await this.database.startTransaction();
     try {
@@ -94,7 +115,6 @@ class LessonService implements ILessonService {
       if (courseId !== undefined) updateData.courseId = courseId;
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
-      if (length !== undefined) updateData.length = length;
 
       const updatedLesson = await this.lessonRepository.updateLesson(
         id,
@@ -160,7 +180,10 @@ class LessonService implements ILessonService {
         );
         if (updatedLessonIds.length === 0) {
           // Delete test if no lessons remain
-          await this.testRepository.deleteTest((test._id as string).toString(), session);
+          await this.testRepository.deleteTest(
+            (test._id as string).toString(),
+            session
+          );
         } else {
           // Update test with remaining lessonIds
           await this.testRepository.updateTest(
@@ -170,6 +193,24 @@ class LessonService implements ILessonService {
           );
         }
       }
+
+      //update course totalLessons
+      const course = await this.courseRepository.getCourseById(
+        (lesson.courseId as ObjectId).toString()
+      );
+      if (!course) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
+      }
+      await this.courseRepository.updateCourse(
+        (lesson.courseId as ObjectId).toString(),
+        {
+          totalLessons: course.totalLessons - 1,
+        },
+        session
+      );
 
       await this.database.commitTransaction(session);
       return deletedLesson;

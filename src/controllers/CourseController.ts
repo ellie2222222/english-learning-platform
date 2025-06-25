@@ -13,11 +13,15 @@ class CourseController {
     private courseService: ICourseService
   ) {}
 
-  createCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { name, description, type, level, totalLessons } = req.body;
-      const imageFile = req.file as Express.Multer.File | undefined; 
-      
+      const { name, description, type, level } = req.body;
+      const imageFile = req.file as Express.Multer.File | undefined;
+
       let imageUrl: string;
       if (process.env.STORAGE_TYPE === "cloudinary") {
         imageUrl = await uploadToCloudinary(imageFile!);
@@ -25,7 +29,14 @@ class CourseController {
         imageUrl = formatPathSingle(imageFile!);
       }
 
-      const course = await this.courseService.createCourse(name, description, type, level, totalLessons, imageUrl);
+      const course = await this.courseService.createCourse(
+        name,
+        description,
+        type,
+        level,
+        0,
+        imageUrl
+      );
       res.status(StatusCodeEnum.Created_201).json({
         course,
         message: "Course created successfully",
@@ -35,11 +46,21 @@ class CourseController {
     }
   };
 
-  updateCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { name, description, type, level, totalLessons } = req.body;
-      const course = await this.courseService.updateCourse(id, name, description, type, level, totalLessons);
+      const { name, description, type, level } = req.body;
+      const course = await this.courseService.updateCourse(
+        id,
+        name,
+        description,
+        type,
+        level
+      );
       res.status(StatusCodeEnum.OK_200).json({
         course,
         message: "Course updated successfully",
@@ -49,7 +70,11 @@ class CourseController {
     }
   };
 
-  deleteCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const course = await this.courseService.deleteCourse(id);
@@ -62,7 +87,11 @@ class CourseController {
     }
   };
 
-  getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getCourseById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const course = await this.courseService.getCourseById(id);
@@ -75,7 +104,11 @@ class CourseController {
     }
   };
 
-  getCourses = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search, type } = req.query;
       const courses = await this.courseService.getCourses(

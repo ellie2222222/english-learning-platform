@@ -15,7 +15,10 @@ import { cleanUpFile } from "../utils/fileUtils";
 import TestRepository from "../repositories/TestRepository";
 import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
 import { ITestRepository } from "../interfaces/repositories/ITestRepository";
-import { ISubmitExercises, IUserExerciseResponse } from "../interfaces/others/ISubmission";
+import {
+  ISubmitExercises,
+  IUserExerciseResponse,
+} from "../interfaces/others/ISubmission";
 import UserExerciseRepository from "../repositories/UserExerciseRepository";
 import { IUserExerciseRepository } from "../interfaces/repositories/IUserExerciseRepository";
 import UserLessonRepository from "../repositories/UserLessonRepository";
@@ -24,6 +27,7 @@ import { UserLessonStatus } from "../enums/UserLessonStatus";
 import UserExerciseModel from "../models/UserExerciseModel";
 import UserLessonModel from "../models/UserLessonModel";
 import increaseUserPoint from "../utils/userPoint";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 @Service()
 class ExerciseService implements IExerciseService {
@@ -88,6 +92,22 @@ class ExerciseService implements IExerciseService {
           image,
           order,
         },
+        session
+      );
+
+      //update lesson length
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.EXERCISE
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount += 1;
+      } else {
+        updatedLength.push({ for: LessonTrackingType.EXERCISE, amount: 1 });
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
         session
       );
 
@@ -282,9 +302,7 @@ class ExerciseService implements IExerciseService {
       const lessonId = exercise.lessonId.toString();
 
       // Find tests that include the exercise's lesson
-      const tests = await this.testRepository.getTestsByLessonIdV2(
-        lessonId,
-      );
+      const tests = await this.testRepository.getTestsByLessonIdV2(lessonId);
 
       let canDelete = true;
       for (const test of tests) {
@@ -337,7 +355,10 @@ class ExerciseService implements IExerciseService {
           (lid) => lid?.toString() !== exercise.lessonId?.toString()
         );
         if (remainingLessonIds.length === 0) {
-          await this.testRepository.deleteTest((test._id as string).toString(), session);
+          await this.testRepository.deleteTest(
+            (test._id as string).toString(),
+            session
+          );
         } else {
           await this.testRepository.updateTest(
             (test._id as string).toString(),
@@ -346,6 +367,29 @@ class ExerciseService implements IExerciseService {
           );
         }
       }
+
+      //update lesson length
+      const lesson = await this.lessonRepository.getLessonById(lessonId);
+      if (!lesson) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.EXERCISE
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount =
+          updatedLength[idx].amount - 1 < 0 ? 0 : updatedLength[idx].amount - 1;
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
+        session
+      );
 
       await this.database.commitTransaction(session);
       return deletedExercise;
@@ -401,7 +445,9 @@ class ExerciseService implements IExerciseService {
     }
   };
 
-  submitExercises = async (data: ISubmitExercises): Promise<IUserExerciseResponse> => {
+  submitExercises = async (
+    data: ISubmitExercises
+  ): Promise<IUserExerciseResponse> => {
     const session = await this.database.startTransaction();
     try {
       // Validate lesson exists
@@ -414,13 +460,13 @@ class ExerciseService implements IExerciseService {
       }
 
       // Validate all exercise IDs exist and belong to the specified lesson
-      const exerciseIds = data.answers.map(answer => answer.exerciseId);
+      const exerciseIds = data.answers.map((answer) => answer.exerciseId);
       const exercises = await Promise.all(
-        exerciseIds.map(id => this.exerciseRepository.getExercise(id))
+        exerciseIds.map((id) => this.exerciseRepository.getExercise(id))
       );
-      
+
       // Check if any exercises were not found
-      const missingExercises = exercises.findIndex(ex => !ex);
+      const missingExercises = exercises.findIndex((ex) => !ex);
       if (missingExercises !== -1) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -430,9 +476,9 @@ class ExerciseService implements IExerciseService {
 
       // Validate all exercises belong to the specified lesson
       const invalidExercises = exercises.filter(
-        exercise => exercise?.lessonId.toString() !== data.lessonId
+        (exercise) => exercise?.lessonId.toString() !== data.lessonId
       );
-      
+
       if (invalidExercises.length > 0) {
         throw new CustomException(
           StatusCodeEnum.BadRequest_400,
@@ -449,7 +495,7 @@ class ExerciseService implements IExerciseService {
         switch (exercise.type) {
           case ExerciseTypeEnum.MULTIPLE_CHOICE:
             // Exact match for multiple-choice answers
-            isCorrect = 
+            isCorrect =
               answer.selectedAnswers.length === 1 &&
               exercise.answer.length === 1 &&
               answer.selectedAnswers[0] === exercise.answer[0];
@@ -460,16 +506,20 @@ class ExerciseService implements IExerciseService {
             isCorrect =
               answer.selectedAnswers.length === 1 &&
               exercise.answer.length >= 1 &&
-              (Array.isArray(exercise.answer) && exercise.answer.some((correctAns: string) => 
-                correctAns.toLowerCase().trim() === answer.selectedAnswers[0].toLowerCase().trim()
-              ));
+              Array.isArray(exercise.answer) &&
+              exercise.answer.some(
+                (correctAns: string) =>
+                  correctAns.toLowerCase().trim() ===
+                  answer.selectedAnswers[0].toLowerCase().trim()
+              );
             break;
           case ExerciseTypeEnum.FILL_IN_THE_BLANK:
             // Exact match for fill-in-the-blank answers
             isCorrect =
               answer.selectedAnswers.length === exercise.answer.length &&
               answer.selectedAnswers.every(
-                (ans, idx) => ans.trim() === (exercise.answer as string[])[idx].trim()
+                (ans, idx) =>
+                  ans.trim() === (exercise.answer as string[])[idx].trim()
               );
             break;
           default:
@@ -479,23 +529,27 @@ class ExerciseService implements IExerciseService {
         return {
           exerciseId: answer.exerciseId,
           selectedAnswers: answer.selectedAnswers,
-          correctAnswers: Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer as string],
+          correctAnswers: Array.isArray(exercise.answer)
+            ? exercise.answer
+            : [exercise.answer as string],
           isCorrect, // Return actual correctness
         };
       });
 
       // Get total exercises for this lesson
-      const totalExercises = await this.exerciseRepository.getAllLessonExercise(data.lessonId);
+      const totalExercises = await this.exerciseRepository.getAllLessonExercise(
+        data.lessonId
+      );
       const totalExerciseCount = totalExercises.length;
-      
+
       // Mark all exercises in the lesson as completed regardless of correctness
       await this.userExerciseRepository.markAllExercisesInLessonAsCompleted(
         data.userId,
         data.lessonId,
-        totalExercises.map(ex => ex._id as mongoose.Types.ObjectId),
+        totalExercises.map((ex) => ex._id as mongoose.Types.ObjectId),
         session
       );
-      
+
       // Mark lesson as completed
       await this.userLessonRepository.markLessonAsCompleted(
         data.userId,
@@ -503,7 +557,7 @@ class ExerciseService implements IExerciseService {
         totalExerciseCount,
         session
       );
-      
+
       // Increase user points for completing the lesson
       try {
         await increaseUserPoint(data.userId, "lesson");
@@ -511,14 +565,14 @@ class ExerciseService implements IExerciseService {
         console.error("Failed to increase user points:", error);
         // Continue execution even if points couldn't be increased
       }
-      
+
       await this.database.commitTransaction(session);
-      
+
       // Return the submission response with actual correctness
       return {
         userId: data.userId,
         submittedAt: new Date(),
-        results
+        results,
       };
     } catch (error) {
       await this.database.abortTransaction(session);

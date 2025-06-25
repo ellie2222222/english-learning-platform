@@ -1,6 +1,7 @@
 import mongoose, { Model, Schema } from "mongoose";
 import baseModelSchema from "./BaseModel";
 import { ILesson } from "../interfaces/models/ILesson";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 const LessonModelSchema = new Schema<ILesson>(
   {
@@ -11,11 +12,19 @@ const LessonModelSchema = new Schema<ILesson>(
     },
     name: { type: String, required: true },
     description: { type: String, require: false },
-    length: {
-      type: Number,
-      required: false,
-      min: 0,
-    },
+    length: [
+      {
+        _id: false,
+        for: {
+          type: String,
+          enum: Object.values(LessonTrackingType),
+        },
+        amount: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
     order: {
       type: Number,
       required: true,

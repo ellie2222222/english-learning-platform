@@ -122,6 +122,22 @@ class VocabularyService implements IVocabularyService {
         await cleanUpFile(imageUrl, "create");
       }
 
+      //update lesson length
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.VOCABULARY
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount += 1;
+      } else {
+        updatedLength.push({ for: LessonTrackingType.VOCABULARY, amount: 1 });
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
+        session
+      );
+
       await this.database.commitTransaction(session);
       return vocabulary;
     } catch (error) {
@@ -263,6 +279,38 @@ class VocabularyService implements IVocabularyService {
       if (vocabulary.imageUrl) {
         await cleanUpFile(vocabulary.imageUrl, "update");
       }
+
+      //update lesson length
+      const lessonId =
+        await this.vocabularyRepository.getLessonIdByVocabularyId(vocabularyId);
+      if (!lessonId) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      const lesson = await this.lessonRepository.getLessonById(lessonId);
+      if (!lesson) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Lesson not found"
+        );
+      }
+
+      const updatedLength = [...lesson.length];
+      const idx = updatedLength.findIndex(
+        (item) => item.for === LessonTrackingType.VOCABULARY
+      );
+      if (idx !== -1) {
+        updatedLength[idx].amount =
+          updatedLength[idx].amount - 1 < 0 ? 0 : updatedLength[idx].amount - 1;
+      }
+      await this.lessonRepository.updateLesson(
+        lessonId,
+        { length: updatedLength },
+        session
+      );
 
       await this.database.commitTransaction(session);
       return deletedVocabulary;

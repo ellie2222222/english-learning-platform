@@ -4,6 +4,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
 import LessonService from "../services/LessonService";
 import { ILessonService } from "../interfaces/services/ILessonService";
+import { LessonTrackingType } from "../enums/LessonTrackingTypeEnum";
 
 @Service()
 class LessonController {
@@ -18,12 +19,16 @@ class LessonController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { courseId, name, description, length } = req.body;
+      const { courseId, name, description } = req.body;
       const lesson = await this.lessonService.createLesson(
         courseId,
         name,
         description,
-        length
+        [
+          { for: LessonTrackingType.EXERCISE, amount: 0 },
+          { for: LessonTrackingType.VOCABULARY, amount: 0 },
+          { for: LessonTrackingType.GRAMMAR, amount: 0 },
+        ]
       );
       res.status(StatusCodeEnum.Created_201).json({
         lesson,
@@ -41,7 +46,7 @@ class LessonController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { courseId, name, description, length } = req.body;
+      const { courseId, name, description } = req.body;
       const lesson = await this.lessonService.updateLesson(
         id,
         courseId,

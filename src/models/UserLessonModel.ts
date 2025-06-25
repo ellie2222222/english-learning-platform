@@ -18,6 +18,7 @@ const UserLessonModelSchema = new Schema<IUserLesson>(
     },
     currentOrder: [
       {
+        _id: false,
         for: {
           type: String,
           enum: Object.values(LessonTrackingType),

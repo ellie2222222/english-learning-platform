@@ -25,7 +25,7 @@ export interface IExerciseRepository {
   getExercises(query: IQuery, lessonId?: string): Promise<IPagination>;
 
   getExercisesByLessonIds(
-    lessonIds: mongoose.Types.ObjectId[] | string[],
+    lessonIds: mongoose.Types.ObjectId[] | string[]
   ): Promise<IExercise[]>;
 
   getExercisesForTest(
@@ -48,10 +48,12 @@ export interface IExerciseRepository {
   getExerciseOrder(lessonId: string): Promise<number>;
 
   countExercisesByLessonIds(
-    lessonIds: mongoose.Types.ObjectId[] | string[],
+    lessonIds: mongoose.Types.ObjectId[] | string[]
   ): Promise<number>;
 
   countDeletedExercisesByLessonIds(
-    lessonIds: mongoose.Types.ObjectId[] | string[],
+    lessonIds: mongoose.Types.ObjectId[] | string[]
   ): Promise<number>;
+
+  getLessonIdByExerciseId(id: string): Promise<string | null>;
 }
