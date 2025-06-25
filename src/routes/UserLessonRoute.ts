@@ -18,7 +18,7 @@ userLessonRoutes.use(AuthMiddleware);
 
 userLessonRoutes.post(
   "/",
-  RoleMiddleware([UserEnum.ADMIN]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userLessonDto.createUserLesson,
   userLessonController.createUserLesson
 );

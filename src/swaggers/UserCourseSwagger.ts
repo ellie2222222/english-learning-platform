@@ -10,7 +10,7 @@
  * /api/user-courses:
  *   post:
  *     summary: Create a new user course
- *     description: Creates a new user course to track a user's enrollment and progress in a course. Accessible by users with Admin (1) or User (0) roles.
+ *     description: Creates a new user course to track a user's enrollment in a course. Only requires userId and courseId. Accessible by users with Admin (1) or User (0) roles.
  *     tags: [UserCourses]
  *     security:
  *       - bearerAuth: []
@@ -34,7 +34,7 @@
  *                   type: string
  *                   example: "User course created successfully"
  *       400:
- *         description: Bad request (e.g., invalid userId, courseId, or status)
+ *         description: Bad request (e.g., invalid userId or courseId)
  *         content:
  *           application/json:
  *             schema:
@@ -217,13 +217,13 @@
  *           description: The ID of the course (MongoDB ObjectId)
  *         currentOrder:
  *           type: number
- *           example: 1
- *           description: The current order of the course for the user
+ *           example: 0
+ *           description: The current order of the course for the user (defaults to 0)
  *         status:
  *           type: string
  *           enum: [ongoing, completed]
  *           example: "ongoing"
- *           description: The status of the user course
+ *           description: The status of the user course (defaults to "ongoing")
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -239,8 +239,6 @@
  *       required:
  *         - userId
  *         - courseId
- *         - currentOrder
- *         - status
  *       properties:
  *         userId:
  *           type: string
@@ -250,16 +248,6 @@
  *           type: string
  *           description: The ID of the course (must be a valid MongoDB ObjectId)
  *           example: "54321"
- *         currentOrder:
- *           type: number
- *           minimum: 0
- *           description: The current order of the course for the user
- *           example: 1
- *         status:
- *           type: string
- *           enum: [ongoing, completed]
- *           description: The status of the user course
- *           example: "ongoing"
  *     Error:
  *       type: object
  *       properties:
@@ -274,4 +262,4 @@
  *       type: http
  *       scheme: bearer
  *       bearerFormat: JWT
- * */
+ */
