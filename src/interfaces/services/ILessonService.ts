@@ -1,6 +1,7 @@
 import { ILesson } from "../models/ILesson";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { ILessonLengthObject } from "../others/ILessonLengthObject";
 
 export interface ILessonService {
   createLesson(
