@@ -51,8 +51,7 @@ class LessonController {
         id,
         courseId,
         name,
-        description,
-        length
+        description
       );
       res.status(StatusCodeEnum.OK_200).json({
         lesson,

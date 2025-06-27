@@ -8,8 +8,7 @@ export interface IGrammarService {
     title: string,
     structure: string,
     example: string | undefined,
-    explanation: string | undefined,
-    order: number
+    explanation: string | undefined
   ): Promise<IGrammar>;
 
   updateGrammar(
@@ -18,8 +17,7 @@ export interface IGrammarService {
     title: string | undefined,
     structure: string | undefined,
     example: string | undefined,
-    explanation: string | undefined,
-    order: number | undefined
+    explanation: string | undefined
   ): Promise<IGrammar | null>;
 
   deleteGrammar(grammarId: string): Promise<IGrammar | null>;

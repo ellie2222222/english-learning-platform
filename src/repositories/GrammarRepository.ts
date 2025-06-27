@@ -249,6 +249,21 @@ class GrammarRepository implements IGrammarRepository {
       );
     }
   }
+
+  async getGrammarOrder(lessonId: string): Promise<number> {
+    try {
+      const grammar = await this.grammarModel
+        .findOne({ lessonId, isDeleted: false })
+        .sort({ order: -1 })
+        .exec();
+      return grammar?.order || 0;
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default GrammarRepository;
