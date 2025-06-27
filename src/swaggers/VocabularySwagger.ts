@@ -270,7 +270,6 @@
  *         - englishContent
  *         - vietnameseContent
  *         - vocabularyImage
- *         - order
  *       properties:
  *         lessonId:
  *           type: string
@@ -285,9 +284,6 @@
  *           type: string
  *           format: binary
  *           description: The image file for the vocabulary (jpeg, jpg, png, gif)
- *         order:
- *           type: number
- *           description: The order of the vocabulary in the lesson (non-negative)
  *     VocabularyUpdate:
  *       type: object
  *       required:
@@ -306,7 +302,4 @@
  *           type: string
  *           format: binary
  *           description: The new image file for the vocabulary (required, jpeg, jpg, png, gif)
- *         order:
- *           type: number
- *           description: The order of the vocabulary in the lesson (optional, non-negative)
  */

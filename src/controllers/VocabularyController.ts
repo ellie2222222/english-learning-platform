@@ -19,7 +19,7 @@ class VocabularyController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { lessonId, englishContent, vietnameseContent, order } = req.body;
+      const { lessonId, englishContent, vietnameseContent } = req.body;
       const imageFile = req.file as Express.Multer.File | undefined;
 
       let imageUrl: string;
@@ -33,8 +33,7 @@ class VocabularyController {
         lessonId,
         englishContent,
         vietnameseContent,
-        imageUrl,
-        order
+        imageUrl
       );
       res.status(StatusCodeEnum.Created_201).json({
         vocabulary,
@@ -52,7 +51,7 @@ class VocabularyController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { lessonId, englishContent, vietnameseContent, order } = req.body;
+      const { lessonId, englishContent, vietnameseContent } = req.body;
       const imageFile = req.file as Express.Multer.File | undefined;
 
       // Image is validated as required in VocabularyDto, so req.file should exist
@@ -70,8 +69,7 @@ class VocabularyController {
         lessonId,
         englishContent,
         vietnameseContent,
-        imageUrl,
-        order
+        imageUrl
       );
       res.status(StatusCodeEnum.OK_200).json({
         vocabulary,

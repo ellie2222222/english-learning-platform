@@ -11,12 +11,33 @@
  *   post:
  *     tags: [Grammar]
  *     summary: Create a new grammar
+ *     description: Creates a new grammar item associated with a lesson.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/GrammarCreate'
+ *             type: object
+ *             required:
+ *               - lessonId
+ *               - title
+ *               - structure
+ *             properties:
+ *               lessonId:
+ *                 type: string
+ *                 example: "64f9d35ee9df932a347cd6b2"
+ *               title:
+ *                 type: string
+ *                 example: "Present Simple Tense"
+ *               structure:
+ *                 type: string
+ *                 example: "Subject + Verb(s/es)"
+ *               example:
+ *                 type: string
+ *                 example: "He goes to school every day."
+ *               explanation:
+ *                 type: string
+ *                 example: "The present simple is used for habits and general truths."
  *     responses:
  *       201:
  *         description: Grammar created successfully
@@ -66,12 +87,29 @@
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID of the grammar item to update
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/GrammarUpdate'
+ *             type: object
+ *             properties:
+ *               lessonId:
+ *                 type: string
+ *                 example: "64f9d35ee9df932a347cd6b2"
+ *               title:
+ *                 type: string
+ *                 example: "Updated Title"
+ *               structure:
+ *                 type: string
+ *                 example: "Updated structure"
+ *               example:
+ *                 type: string
+ *                 example: "Updated example sentence"
+ *               explanation:
+ *                 type: string
+ *                 example: "Updated explanation text"
  *     responses:
  *       200:
  *         description: Grammar updated successfully
@@ -130,7 +168,6 @@
  *         - lessonId
  *         - title
  *         - structure
- *         - order
  *       properties:
  *         lessonId:
  *           type: string
@@ -142,8 +179,6 @@
  *           type: string
  *         explanation:
  *           type: string
- *         order:
- *           type: number
  *     GrammarUpdate:
  *       type: object
  *       properties:
@@ -157,6 +192,4 @@
  *           type: string
  *         explanation:
  *           type: string
- *         order:
- *           type: number
  */

@@ -264,6 +264,21 @@ class VocabularyRepository implements IVocabularyRepository {
       );
     }
   }
+
+  async getVocabularyOrder(lessonId: string): Promise<number> {
+    try {
+      const vocabulary = await this.vocabularyModel
+        .findOne({ lessonId, isDeleted: false })
+        .sort({ order: -1 })
+        .exec();
+      return vocabulary?.order || 0;
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default VocabularyRepository;

@@ -7,8 +7,7 @@ export interface IVocabularyService {
     lessonId: string,
     englishContent: string,
     vietnameseContent: string,
-    imageUrl: string | undefined,
-    order: number
+    imageUrl: string | undefined
   ): Promise<IVocabulary>;
 
   updateVocabulary(
@@ -16,8 +15,7 @@ export interface IVocabularyService {
     lessonId: string | undefined,
     englishContent: string | undefined,
     vietnameseContent: string | undefined,
-    imageUrl: string | undefined,
-    order: number | undefined
+    imageUrl: string | undefined
   ): Promise<IVocabulary | null>;
 
   deleteVocabulary(vocabularyId: string): Promise<IVocabulary | null>;
