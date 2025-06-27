@@ -77,8 +77,7 @@ class GrammarService implements IGrammarService {
     title: string,
     structure: string,
     example: string | undefined,
-    explanation: string | undefined,
-    order: number
+    explanation: string | undefined
   ): Promise<IGrammar> {
     const session = await this.database.startTransaction();
     try {
@@ -104,7 +103,8 @@ class GrammarService implements IGrammarService {
           `Grammar with title "${title}" already exists for this lesson`
         );
       }
-
+      const order =
+        (await this.grammarRepository.getGrammarOrder(lessonId)) + 1;
       const grammar = await this.grammarRepository.createGrammar(
         {
           lessonId: new mongoose.Types.ObjectId(lessonId),
@@ -153,8 +153,7 @@ class GrammarService implements IGrammarService {
     title: string | undefined,
     structure: string | undefined,
     example: string | undefined,
-    explanation: string | undefined,
-    order: number | undefined
+    explanation: string | undefined
   ): Promise<IGrammar | null> {
     const session = await this.database.startTransaction();
     try {
@@ -205,7 +204,6 @@ class GrammarService implements IGrammarService {
         ...(structure && { structure }),
         ...(example !== undefined && { example }),
         ...(explanation !== undefined && { explanation }),
-        ...(order !== undefined && { order }),
       };
 
       const updatedGrammar = await this.grammarRepository.updateGrammar(

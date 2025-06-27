@@ -49,12 +49,18 @@ class GrammarDto {
     }
   };
 
-  createGrammar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createGrammar = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { lessonId, title, structure, example, explanation, order } = req.body;
+      const { lessonId, title, structure, example, explanation } = req.body;
 
-      if (!lessonId || !title || !structure || order === undefined) {
-        throw new Error("Missing required fields: lessonId, title, structure, and order are required");
+      if (!lessonId || !title || !structure) {
+        throw new Error(
+          "Missing required fields: lessonId, title, structure are required"
+        );
       }
 
       this.validateObjectId(lessonId);
@@ -62,7 +68,6 @@ class GrammarDto {
       this.validateStructure(structure);
       this.validateExample(example);
       this.validateExplanation(explanation);
-      this.validateOrder(order);
 
       next();
     } catch (error) {
@@ -72,10 +77,14 @@ class GrammarDto {
     }
   };
 
-  updateGrammar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateGrammar = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { lessonId, title, structure, example, explanation, order } = req.body;
+      const { lessonId, title, structure, example, explanation } = req.body;
 
       this.validateObjectId(id);
       if (lessonId) this.validateObjectId(lessonId);
@@ -83,7 +92,6 @@ class GrammarDto {
       if (structure) this.validateStructure(structure);
       this.validateExample(example);
       this.validateExplanation(explanation);
-      this.validateOrder(order);
 
       next();
     } catch (error) {
@@ -93,7 +101,11 @@ class GrammarDto {
     }
   };
 
-  deleteGrammar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  deleteGrammar = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       this.validateObjectId(id);
@@ -105,7 +117,11 @@ class GrammarDto {
     }
   };
 
-  getGrammarById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getGrammarById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       this.validateObjectId(id);
@@ -117,14 +133,24 @@ class GrammarDto {
     }
   };
 
-  getGrammars = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getGrammars = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy } = req.query;
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {
@@ -142,17 +168,27 @@ class GrammarDto {
     }
   };
 
-  getGrammarsByLessonId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getGrammarsByLessonId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { page, size, order, sortBy } = req.query;
 
       this.validateObjectId(id);
 
-      if (page && (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)) {
+      if (
+        page &&
+        (isNaN(parseInt(page as string)) || parseInt(page as string) < 1)
+      ) {
         throw new Error("Invalid page number");
       }
-      if (size && (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)) {
+      if (
+        size &&
+        (isNaN(parseInt(size as string)) || parseInt(size as string) < 1)
+      ) {
         throw new Error("Invalid size");
       }
       if (order && !Object.values(OrderType).includes(order as OrderType)) {

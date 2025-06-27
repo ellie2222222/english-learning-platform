@@ -78,8 +78,7 @@ class VocabularyService implements IVocabularyService {
     lessonId: string,
     englishContent: string,
     vietnameseContent: string,
-    imageUrl: string,
-    order: number
+    imageUrl: string
   ): Promise<IVocabulary> {
     const session = await this.database.startTransaction();
     try {
@@ -106,6 +105,9 @@ class VocabularyService implements IVocabularyService {
           `Vocabulary with English content "${englishContent}" already exists for this lesson`
         );
       }
+
+      const order =
+        (await this.vocabularyRepository.getVocabularyOrder(lessonId)) + 1;
 
       const vocabulary = await this.vocabularyRepository.createVocabulary(
         {
@@ -160,8 +162,7 @@ class VocabularyService implements IVocabularyService {
     lessonId: string | undefined,
     englishContent: string | undefined,
     vietnameseContent: string | undefined,
-    imageUrl: string | undefined,
-    order: number | undefined
+    imageUrl: string | undefined
   ): Promise<IVocabulary | null> {
     const session = await this.database.startTransaction();
     try {
@@ -215,7 +216,6 @@ class VocabularyService implements IVocabularyService {
         ...(englishContent && { englishContent }),
         ...(vietnameseContent && { vietnameseContent }),
         ...(imageUrl !== undefined && { imageUrl }),
-        ...(order !== undefined && { order }),
       };
 
       const updatedVocabulary =

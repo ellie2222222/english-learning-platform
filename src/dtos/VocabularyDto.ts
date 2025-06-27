@@ -52,14 +52,9 @@ class VocabularyDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { lessonId, englishContent, vietnameseContent, order } = req.body;
+      const { lessonId, englishContent, vietnameseContent } = req.body;
 
-      if (
-        !lessonId ||
-        !englishContent ||
-        !vietnameseContent ||
-        order === undefined
-      ) {
+      if (!lessonId || !englishContent || !vietnameseContent) {
         throw new Error(
           "Missing required fields: lessonId, englishContent, vietnameseContent, and order are required"
         );
@@ -69,7 +64,6 @@ class VocabularyDto {
       this.validateEnglishContent(englishContent);
       this.validateVietnameseContent(vietnameseContent);
       this.validateImage(req, true);
-      this.validateOrder(order);
 
       next();
     } catch (error) {
@@ -86,14 +80,13 @@ class VocabularyDto {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { lessonId, englishContent, vietnameseContent, order } = req.body;
+      const { lessonId, englishContent, vietnameseContent } = req.body;
 
       this.validateObjectId(id);
       if (lessonId) this.validateObjectId(lessonId);
       if (englishContent) this.validateEnglishContent(englishContent);
       if (vietnameseContent) this.validateVietnameseContent(vietnameseContent);
       this.validateImage(req, true);
-      this.validateOrder(order);
 
       next();
     } catch (error) {

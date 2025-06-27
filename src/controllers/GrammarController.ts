@@ -18,16 +18,14 @@ class GrammarController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { lessonId, title, structure, example, explanation, order } =
-        req.body;
+      const { lessonId, title, structure, example, explanation } = req.body;
 
       const grammar = await this.grammarService.createGrammar(
         lessonId,
         title,
         structure,
         example,
-        explanation,
-        order
+        explanation
       );
       res.status(StatusCodeEnum.Created_201).json({
         grammar,
@@ -45,16 +43,14 @@ class GrammarController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { lessonId, title, structure, example, explanation, order } =
-        req.body;
+      const { lessonId, title, structure, example, explanation } = req.body;
       const grammar = await this.grammarService.updateGrammar(
         id,
         lessonId,
         title,
         structure,
         example,
-        explanation,
-        order
+        explanation
       );
       res.status(StatusCodeEnum.OK_200).json({
         grammar,

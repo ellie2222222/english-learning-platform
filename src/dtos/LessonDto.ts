@@ -43,9 +43,9 @@ class LessonDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { courseId, name, description, length, order } = req.body;
+      const { courseId, name, description } = req.body;
 
-      if (!courseId || !name || !length) {
+      if (!courseId || !name) {
         throw new Error(
           "Missing required fields: courseId, name, and length are required"
         );
@@ -54,8 +54,6 @@ class LessonDto {
       this.validateObjectId(courseId);
       this.validateName(name);
       this.validateDescription(description);
-      this.validateLength(length);
-      this.validateOrder(order);
 
       next();
     } catch (error) {
@@ -72,14 +70,12 @@ class LessonDto {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { courseId, name, description, length, order } = req.body;
+      const { courseId, name, description } = req.body;
 
       this.validateObjectId(id);
       if (courseId) this.validateObjectId(courseId);
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
-      this.validateLength(length);
-      this.validateOrder(order);
 
       next();
     } catch (error) {

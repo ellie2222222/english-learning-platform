@@ -16,26 +16,33 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LessonCreate'
+ *             type: object
+ *             required:
+ *               - name
+ *               - courseId
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Past Tense Introduction"
+ *               description:
+ *                 type: string
+ *                 example: "Learn how to use the past tense in English."
+ *               courseId:
+ *                 type: string
+ *                 example: "64f9d35ee9df932a347cd6b2"
  *     responses:
  *       201:
  *         description: Lesson created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Lesson'
- *   get:
- *     tags: [Lesson]
- *     summary: Get all lessons
- *     responses:
- *       200:
- *         description: List of lessons
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Lesson'
+ *               type: object
+ *               properties:
+ *                 lesson:
+ *                   $ref: '#/components/schemas/Lesson'
+ *                 message:
+ *                   type: string
+ *                   example: Lesson created successfully
  */
 
 /**
@@ -61,24 +68,41 @@
  *     tags: [Lesson]
  *     summary: Update a lesson
  *     parameters:
- *       - name: lessonId
- *         in: path
- *         required: true
+ *       - in: path
+ *         name: lessonId
  *         schema:
  *           type: string
+ *         required: true
+ *         description: The ID of the lesson
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LessonUpdate'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Updated Lesson Name"
+ *               description:
+ *                 type: string
+ *                 example: "Updated lesson description"
+ *               courseId:
+ *                 type: string
+ *                 example: "64f9d35ee9df932a347cd6b2"
  *     responses:
  *       200:
  *         description: Lesson updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Lesson'
+ *               type: object
+ *               properties:
+ *                 lesson:
+ *                   $ref: '#/components/schemas/Lesson'
+ *                 message:
+ *                   type: string
+ *                   example: Lesson updated successfully
  *   delete:
  *     tags: [Lesson]
  *     summary: Delete a lesson
@@ -254,9 +278,9 @@
  *       properties:
  *         _id:
  *           type: string
- *         title:
+ *         name:
  *           type: string
- *         content:
+ *         description:
  *           type: string
  *         courseId:
  *           type: string

@@ -32,4 +32,6 @@ export interface IVocabularyRepository {
   ): Promise<boolean>;
 
   getLessonIdByVocabularyId(vocabularyId: string): Promise<string | null>;
+
+  getVocabularyOrder(lessonId: string): Promise<number>;
 }

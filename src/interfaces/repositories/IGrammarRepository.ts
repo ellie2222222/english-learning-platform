@@ -34,4 +34,6 @@ export interface IGrammarRepository {
   ): Promise<boolean>;
 
   getLessonIdByGrammarId(grammarId: string): Promise<string | null>;
+
+  getGrammarOrder(lessonId: string): Promise<number>;
 }
