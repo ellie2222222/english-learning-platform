@@ -5,7 +5,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import CustomException from "../exceptions/CustomException";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import { IPagination } from "../interfaces/others/IPagination";
-import { IQuery } from "../interfaces/others/IQuery";
+import { IQuery, OrderType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
 import { INewUsers } from "../interfaces/others/IStatisticData";
 
@@ -191,14 +191,50 @@ class UserRepository implements IUserRepository {
     }
   }
 
-  // TODO
   async getUsers(query: IQuery): Promise<IPagination> {
     try {
-      const users = await UserModel.find({}).lean();
+      const { page, size, search, role, order, sortBy } = query;
+      const skip = (page - 1) * size;
+      
+      // Build filter conditions
+      let filter: any = {};
+
+      // Add search functionality
+      if (search) {
+        filter.$or = [
+          { username: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      // Add role filter
+      if (role !== undefined && role !== '') {
+        filter.role = parseInt(role as string);
+      }
+
+      // Sort options
+      let sortOptions: any = {};
+      if (sortBy === 'name') {
+        sortOptions.username = order === OrderType.ASC ? 1 : -1;
+      } else {
+        // Default sort by date (createdAt)
+        sortOptions.createdAt = order === OrderType.ASC ? 1 : -1;
+      }
+
+      // Execute query with pagination
+      const [users, total] = await Promise.all([
+        UserModel.find(filter)
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(size)
+          .lean(),
+        UserModel.countDocuments(filter)
+      ]);
+
       return {
-        page: 1,
-        totalPages: 1,
-        total: 10,
+        page,
+        totalPages: Math.ceil(total / size),
+        total,
         data: users,
       };
     } catch (error) {
