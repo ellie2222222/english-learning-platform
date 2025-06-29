@@ -36,5 +36,5 @@ export interface IUserRepository {
 
   getAllUserForLoginAchievement(goal: number): Promise<IUser[]>;
 
-  getTopLeaderBoardUser(top: number, field: string): Promise<IUser[]>;
+  getTopLeaderBoardUser(top: number, field: string): Promise<IUser[]>; 
 }

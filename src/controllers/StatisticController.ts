@@ -51,6 +51,42 @@ class StatisticController {
       next(error);
     }
   };
+
+  getUserStatistics = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+
+      const userStats = await this.statisticService.getUserStatistics(userId);
+
+      res.status(StatusCodeEnum.OK_200).json({
+        statistics: userStats,
+        message: "Get user statistics successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getCompletionRate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const completionRate = await this.statisticService.getCompletionRate();
+
+      res.status(StatusCodeEnum.OK_200).json({
+        completionRate: completionRate,
+        message: "Get completion rate successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default StatisticController;

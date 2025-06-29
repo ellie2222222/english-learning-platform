@@ -96,14 +96,41 @@ class UserTestRepository implements IUserTestRepository {
         _id: new mongoose.Types.ObjectId(id),
         isDeleted: false,
       };
-      const userTest = await UserTestModel.findOne(matchQuery);
-      if (!userTest) {
+      const userTest = await UserTestModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "tests",
+            localField: "testId",
+            foreignField: "_id",
+            as: "test",
+          },
+        },
+        { $unwind: { path: "$test", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
+      ]);
+
+      if (!userTest || userTest.length === 0) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "UserTest not found"
         );
       }
-      return userTest;
+      return userTest[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -140,6 +167,30 @@ class UserTestRepository implements IUserTestRepository {
 
       const userTests = await UserTestModel.aggregate([
         { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "tests",
+            localField: "testId",
+            foreignField: "_id",
+            as: "test",
+          },
+        },
+        { $unwind: { path: "$test", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
         {
           $sort: { [sortField]: sortOrder },
         },
@@ -191,6 +242,30 @@ class UserTestRepository implements IUserTestRepository {
 
       const userTests = await UserTestModel.aggregate([
         { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "tests",
+            localField: "testId",
+            foreignField: "_id",
+            as: "test",
+          },
+        },
+        { $unwind: { path: "$test", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
         {
           $sort: { [sortField]: sortOrder },
         },
@@ -284,6 +359,25 @@ class UserTestRepository implements IUserTestRepository {
       );
     }
   }
+
+  countCompletedByUserId = async (userId: string): Promise<number> => {
+    try {
+      const count = await UserTestModel.countDocuments({
+        userId,
+        status: "completed"
+      });
+      
+      return count;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error counting completed tests:", error.message);
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Error counting completed tests"
+      );
+    }
+  };
 }
 
 export default UserTestRepository;

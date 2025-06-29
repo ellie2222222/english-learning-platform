@@ -1,6 +1,8 @@
-export const RevenueTimeEnum = {
-  DAY: "day",
-  WEEK: "week",
-  MONTH: "month",
-  YEAR: "year",
-};
+enum RevenueTimeEnum {
+  DAY = "day",
+  WEEK = "week",
+  MONTH = "month",
+  YEAR = "year",
+}
+
+export default RevenueTimeEnum;

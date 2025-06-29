@@ -239,5 +239,24 @@ class FlashcardSetRepository implements IFlashcardSetRepository {
       );
     }
   }
+
+  async getFlashcardSetsByUserId(userId: string): Promise<IFlashcardSet[]> {
+    try {
+      const flashcardSets = await FlashcardSetModel.find({
+        userId,
+        isDeleted: false,
+      });
+      return flashcardSets;
+  } catch (error) {
+    if (error instanceof CustomException) {
+      throw error;
+    }
+
+    throw new CustomException(
+      StatusCodeEnum.InternalServerError_500,
+      error instanceof Error ? error.message : "Internal Server Error"
+    );
+  }
+  }
 }
 export default FlashcardSetRepository;

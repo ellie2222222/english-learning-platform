@@ -252,8 +252,39 @@ class UserLessonRepository implements IUserLessonRepository {
         lessonId: new mongoose.Types.ObjectId(lessonId),
         isDeleted: false,
       };
-      const existingUserLesson = await UserLessonModel.findOne(matchQuery);
-      return existingUserLesson;
+      const userLesson = await UserLessonModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
+      ]);
+
+      if (!userLesson || userLesson.length === 0) {
+        return null;
+      }
+
+      return userLesson[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -269,12 +300,38 @@ class UserLessonRepository implements IUserLessonRepository {
     userId: string
   ): Promise<IUserLesson[]> {
     try {
-      const userLessons = await UserLessonModel.find({
+      const matchQuery = {
         userId: new mongoose.Types.ObjectId(userId),
         isDeleted: false,
         status: UserLessonStatus.COMPLETED,
-      });
-
+      };
+      const userLessons = await UserLessonModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
+      ]);
       return userLessons;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -282,9 +339,7 @@ class UserLessonRepository implements IUserLessonRepository {
       }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error
-          ? error.message
-          : "Failed to retrieve user lessons"
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   }
@@ -337,6 +392,26 @@ class UserLessonRepository implements IUserLessonRepository {
       );
     }
   }
+
+  // Add countCompletedByUserId method
+  countCompletedByUserId = async (userId: string): Promise<number> => {
+    try {
+      const count = await UserLessonModel.countDocuments({
+        userId,
+        status: "completed"
+      });
+      
+      return count;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error counting completed lessons:", error.message);
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Error counting completed lessons"
+      );
+    }
+  };
 }
 
 export default UserLessonRepository;

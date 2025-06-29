@@ -24,4 +24,6 @@ export interface IFlashcardSetService {
   getFlashcardSet: (id: string) => Promise<IFlashcardSet | null>;
 
   getFlashcardSets: (query: IQuery, userId?: string) => Promise<IPagination>;
+
+  getFlashcardSetsByUserId: (userId: string) => Promise<IFlashcardSet[]>;
 }

@@ -5,6 +5,7 @@ export enum OrderType {
 export enum SortByType {
   NAME = "name",
   DATE = "date",
+  EMAIL = "email",
 }
 export interface IQuery {
   page: number;

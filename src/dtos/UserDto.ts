@@ -7,6 +7,7 @@ import {
   validatePassword,
 } from "../utils/validator";
 import CustomException from "../exceptions/CustomException";
+import { OrderType, SortByType } from "../interfaces/others/IQuery";
 
 class UserDto {
   async createUser(
@@ -92,16 +93,16 @@ class UserDto {
       return;
     }
 
-    const validSortBy = ["date", "username"];
-    if (sortBy && !validSortBy.includes(sortBy as string)) {
+    const validSortBy = Object.values(SortByType);
+    if (sortBy && !validSortBy.includes(sortBy as SortByType)) {
       res.status(StatusCodeEnum.BadRequest_400).json({
         message: `Sort by must be one of: ${validSortBy.join(", ")}`,
       });
       return;
     }
 
-    const validOrder = ["asc", "desc"];
-    if (order && !validOrder.includes(order as string)) {
+    const validOrder = Object.values(OrderType);
+    if (order && !validOrder.includes(order as OrderType)) {
       res.status(StatusCodeEnum.BadRequest_400).json({
         message: `Order must be one of: ${validOrder.join(", ")}`,
       });

@@ -38,4 +38,6 @@ export interface IUserTestRepository {
   ): Promise<IUserTest | null>;
 
   getLatestAttempt(userId: string, lessonId: string): Promise<IUserTest | null>;
+
+  countCompletedByUserId(userId: string): Promise<number>;
 }

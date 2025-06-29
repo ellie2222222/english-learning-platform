@@ -28,4 +28,6 @@ export interface IFlashcardSetRepository {
     name: string,
     id?: string
   ): Promise<IFlashcardSet | null>;
+
+  getFlashcardSetsByUserId(userId: string): Promise<IFlashcardSet[]>;
 }

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import mongoose from "mongoose";
 import { OrderType, SortByType } from "../interfaces/others/IQuery";
+import CustomException from "../exceptions/CustomException";
 
 class FlashcardSetDto {
   createFlashcardSet = async (
@@ -125,6 +126,27 @@ class FlashcardSetDto {
         .status(StatusCodeEnum.BadRequest_400)
         .json({ message: (error as Error).message });
       return;
+    }
+  };
+
+  getFlashcardSetsByUserId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "User ID is required"
+        );
+      }
+
+      next();
+    } catch (error) {
+      next(error);
     }
   };
 }

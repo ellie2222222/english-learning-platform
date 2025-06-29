@@ -5,7 +5,7 @@ import StatusCodeEnum from "../enums/StatusCodeEnum";
 import CustomException from "../exceptions/CustomException";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import { IPagination } from "../interfaces/others/IPagination";
-import { IQuery, OrderType } from "../interfaces/others/IQuery";
+import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import { Service } from "typedi";
 import { INewUsers } from "../interfaces/others/IStatisticData";
 
@@ -214,8 +214,10 @@ class UserRepository implements IUserRepository {
 
       // Sort options
       let sortOptions: any = {};
-      if (sortBy === 'name') {
+      if (sortBy === SortByType.NAME) {
         sortOptions.username = order === OrderType.ASC ? 1 : -1;
+      } else if (sortBy === SortByType.EMAIL) {
+        sortOptions.email = order === OrderType.ASC ? 1 : -1;
       } else {
         // Default sort by date (createdAt)
         sortOptions.createdAt = order === OrderType.ASC ? 1 : -1;

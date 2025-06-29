@@ -49,7 +49,6 @@ const RoleMiddleware = (roles: Array<number>) => {
 
       next();
     } catch (error) {
-      console.log(error);
       res
         .status(StatusCodeEnum.InternalServerError_500)
         .json({ message: "Internal Server Error" });

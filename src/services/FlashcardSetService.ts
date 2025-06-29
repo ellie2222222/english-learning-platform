@@ -17,7 +17,7 @@ import { IFlashcardRepository } from "../interfaces/repositories/IFlashcardRepos
 class FlashcardSetService implements IFlashcardSetService {
   constructor(
     @Inject(() => FlashcardSetRepository)
-    private flashcardsetRepository: IFlashcardSetRepository,
+    private flashcardSetRepository: IFlashcardSetRepository,
     @Inject() private database: Database,
     @Inject(() => FlashcardRepository)
     private flashcardRepository: IFlashcardRepository
@@ -31,7 +31,7 @@ class FlashcardSetService implements IFlashcardSetService {
     const session = await this.database.startTransaction();
     try {
       const checkFlashcardSet =
-        await this.flashcardsetRepository.getFlashcardSetByName(name);
+        await this.flashcardSetRepository.getFlashcardSetByName(name);
 
       if (checkFlashcardSet) {
         throw new CustomException(
@@ -39,7 +39,7 @@ class FlashcardSetService implements IFlashcardSetService {
           "Flashcard set already exists"
         );
       }
-      const flashcardSet = await this.flashcardsetRepository.createFlashcardSet(
+      const flashcardSet = await this.flashcardSetRepository.createFlashcardSet(
         { name, description, userId },
         session
       );
@@ -70,7 +70,7 @@ class FlashcardSetService implements IFlashcardSetService {
   ): Promise<IFlashcardSet | null> => {
     const session = await this.database.startTransaction();
     try {
-      const flashcardSet = await this.flashcardsetRepository.getFlashcardSet(
+      const flashcardSet = await this.flashcardSetRepository.getFlashcardSet(
         id
       );
 
@@ -90,7 +90,7 @@ class FlashcardSetService implements IFlashcardSetService {
 
       if (name && name !== flashcardSet.name) {
         const checkFlashcardSet =
-          await this.flashcardsetRepository.getFlashcardSetByName(name, id);
+          await this.flashcardSetRepository.getFlashcardSetByName(name, id);
 
         if (checkFlashcardSet) {
           throw new CustomException(
@@ -101,7 +101,7 @@ class FlashcardSetService implements IFlashcardSetService {
       }
 
       const updatedFlashcardSet =
-        await this.flashcardsetRepository.updateFlashcardSet(
+        await this.flashcardSetRepository.updateFlashcardSet(
           id,
           { name, description, userId },
           session
@@ -131,7 +131,7 @@ class FlashcardSetService implements IFlashcardSetService {
   ): Promise<IFlashcardSet | null> => {
     const session = await this.database.startTransaction();
     try {
-      const flashcardSet = await this.flashcardsetRepository.getFlashcardSet(
+      const flashcardSet = await this.flashcardSetRepository.getFlashcardSet(
         id
       );
 
@@ -150,7 +150,7 @@ class FlashcardSetService implements IFlashcardSetService {
       }
 
       const deletedFlashcardSet =
-        await this.flashcardsetRepository.deleteFlashcardSet(id, session);
+        await this.flashcardSetRepository.deleteFlashcardSet(id, session);
 
       await this.flashcardRepository.deleteBatchFlashcards(id, session);
 
@@ -174,7 +174,7 @@ class FlashcardSetService implements IFlashcardSetService {
 
   getFlashcardSet = async (id: string): Promise<IFlashcardSet | null> => {
     try {
-      const flashcardSet = await this.flashcardsetRepository.getFlashcardSet(
+      const flashcardSet = await this.flashcardSetRepository.getFlashcardSet(
         id
       );
 
@@ -203,7 +203,7 @@ class FlashcardSetService implements IFlashcardSetService {
     userId?: string
   ): Promise<IPagination> => {
     try {
-      const flashcardSets = await this.flashcardsetRepository.getFlashcardSets(
+      const flashcardSets = await this.flashcardSetRepository.getFlashcardSets(
         query,
         userId
       );
@@ -220,6 +220,18 @@ class FlashcardSetService implements IFlashcardSetService {
       );
     }
   };
+
+  async getFlashcardSetsByUserId(userId: string): Promise<IFlashcardSet[]> {
+    try {
+      const flashcardSets = await this.flashcardSetRepository.getFlashcardSetsByUserId(userId);
+      return flashcardSets;
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Failed to get flashcard sets"
+      );
+    }
+  }
 }
 
 export default FlashcardSetService;

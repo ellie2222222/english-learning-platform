@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
-import { RevenueTimeEnum } from "../enums/RevenueTimeEnum";
+import RevenueTimeEnum from "../enums/RevenueTimeEnum";
 
 class StatisticDto {
   getRevenueOverTime = (req: Request, res: Response, next: NextFunction) => {
@@ -10,7 +10,8 @@ class StatisticDto {
         throw new Error("Time type is required");
       }
 
-      if (!Object.values(RevenueTimeEnum).includes(time as string)) {
+      const timeValues = Object.values(RevenueTimeEnum) as string[];
+      if (!timeValues.includes(time as string)) {
         throw new Error("Invalid time type");
       }
 
@@ -45,7 +46,8 @@ class StatisticDto {
         throw new Error("Time type is required");
       }
 
-      if (!Object.values(RevenueTimeEnum).includes(time as string)) {
+      const timeValues = Object.values(RevenueTimeEnum) as string[];
+      if (!timeValues.includes(time as string)) {
         throw new Error("Invalid time type");
       }
 

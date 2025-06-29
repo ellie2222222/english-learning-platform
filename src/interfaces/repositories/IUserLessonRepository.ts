@@ -39,4 +39,6 @@ export interface IUserLessonRepository {
     currentOrder: number,
     session?: mongoose.ClientSession
   ): Promise<IUserLesson | null>;
+
+  countCompletedByUserId(userId: string): Promise<number>;
 }

@@ -25,4 +25,15 @@ statisticRoutes.get(
   statisticController.getNewUserOvertime
 );
 
+// Add the new endpoint for user statistics
+statisticRoutes.get(
+  "/user/:userId",
+  statisticController.getUserStatistics
+);
+
+statisticRoutes.get(
+  "/completion-rate",
+  statisticController.getCompletionRate
+);
+
 export default statisticRoutes;

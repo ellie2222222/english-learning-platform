@@ -47,4 +47,18 @@ flashcardSetRoutes.get(
   flashcardSetController.getFlashcardSet
 );
 
+flashcardSetRoutes.get(
+  "/:id/flashcard-set",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  flashcardSetDto.getFlashcardSet,
+  flashcardSetController.getFlashcardSet
+);
+
+flashcardSetRoutes.get(
+  "/:id/user",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  flashcardSetDto.getFlashcardSetsByUserId,
+  flashcardSetController.getFlashcardSetsByUserId
+);
+
 export default flashcardSetRoutes;

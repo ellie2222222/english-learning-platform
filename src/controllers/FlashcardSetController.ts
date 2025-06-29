@@ -124,6 +124,24 @@ class FlashcardSetController {
       next(error);
     }
   };
+
+  getFlashcardSetsByUserId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { id } = req.params;
+      const flashcardSets = await this.flashcardSetService.getFlashcardSetsByUserId(id);
+
+      res.status(StatusCodeEnum.OK_200).json({
+        data: flashcardSets,
+        message: "User flashcard sets retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default FlashcardSetController;

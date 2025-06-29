@@ -92,6 +92,15 @@ class UserCourseRepository implements IUserCourseRepository {
     }
   }
 
+  async getAllUserCourses(): Promise<IUserCourse[]> {
+    try {
+      const userCourses = await UserCourseModel.find({ isDeleted: false });
+      return userCourses;
+    } catch (error) {
+      throw new CustomException(StatusCodeEnum.InternalServerError_500, "Internal Server Error");
+    }
+  }
+
   async getUserCourseById(id: string): Promise<IUserCourse | null> {
     try {
       const matchQuery = {
@@ -199,7 +208,7 @@ class UserCourseRepository implements IUserCourseRepository {
         },
         { $skip: skip },
         { $limit: query.size },
-      ]);
+      ]); 
 
       const total = await UserCourseModel.countDocuments(matchQuery);
 
@@ -418,12 +427,38 @@ class UserCourseRepository implements IUserCourseRepository {
 
   async getUserCourseForAchievement(userId: string): Promise<IUserCourse[]> {
     try {
-      const userCourses = await UserCourseModel.find({
+      const matchQuery = {
         userId: new mongoose.Types.ObjectId(userId),
         isDeleted: false,
         status: UserCourseStatus.COMPLETED,
-      });
-
+      };
+      const userCourses = await UserCourseModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "courses",
+            localField: "courseId",
+            foreignField: "_id",
+            as: "course",
+          },
+        },
+        { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
+      ]);
       return userCourses;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -441,13 +476,44 @@ class UserCourseRepository implements IUserCourseRepository {
     requesterId: string
   ): Promise<IUserCourse | null> {
     try {
-      const userCourse = await UserCourseModel.findOne({
+      const matchQuery = {
         courseId: new mongoose.Types.ObjectId(id),
         userId: new mongoose.Types.ObjectId(requesterId),
         isDeleted: false,
-      });
+      };
+      const userCourse = await UserCourseModel.aggregate([
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "courses",
+            localField: "courseId",
+            foreignField: "_id",
+            as: "course",
+          },
+        },
+        { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            "user.password": 0,
+            "user.resetPasswordPin": 0,
+          },
+        },
+      ]);
 
-      return userCourse;
+      if (!userCourse || userCourse.length === 0) {
+        return null;
+      }
+
+      return userCourse[0];
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -458,6 +524,26 @@ class UserCourseRepository implements IUserCourseRepository {
       );
     }
   }
+
+  // Add the countCompletedByUserId method
+  countCompletedByUserId = async (userId: string): Promise<number> => {
+    try {
+      const count = await UserCourseModel.countDocuments({
+        userId,
+        status: "completed"
+      });
+      
+      return count;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error counting completed courses:", error.message);
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Error counting completed courses"
+      );
+    }
+  };
 }
 
 export default UserCourseRepository;
