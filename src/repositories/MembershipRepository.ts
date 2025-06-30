@@ -140,9 +140,14 @@ class MembershipRepository implements IMembershipRepository {
         case SortByType.DATE:
           sortField = "createdAt";
           break;
-
         case SortByType.NAME:
           sortField = "name";
+          break;
+        case SortByType.PRICE:
+          sortField = "price";
+          break;
+        case SortByType.DURATION:
+          sortField = "duration";
           break;
         default:
           break;
