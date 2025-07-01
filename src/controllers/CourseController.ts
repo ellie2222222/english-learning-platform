@@ -20,13 +20,19 @@ class CourseController {
   ): Promise<void> => {
     try {
       const { name, description, type, level } = req.body;
-      const imageFile = req.file as Express.Multer.File | undefined;
+      const imageFile = req.file;
 
-      let imageUrl: string;
-      if (process.env.STORAGE_TYPE === "cloudinary") {
-        imageUrl = await uploadToCloudinary(imageFile!);
-      } else {
-        imageUrl = formatPathSingle(imageFile!);
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        try {
+          if (process.env.STORAGE_TYPE === "cloudinary") {
+            imageUrl = await uploadToCloudinary(imageFile);
+          } else {
+            imageUrl = formatPathSingle(imageFile);
+          }
+        } catch (error) {
+          throw new Error("Failed to process course cover image: " + (error instanceof Error ? error.message : "Unknown error"));
+        }
       }
 
       const course = await this.courseService.createCourse(
@@ -54,12 +60,29 @@ class CourseController {
     try {
       const { id } = req.params;
       const { name, description, type, level } = req.body;
+      const imageFile = req.file;
+
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        try {
+          if (process.env.STORAGE_TYPE === "cloudinary") {
+            imageUrl = await uploadToCloudinary(imageFile);
+          } else {
+            imageUrl = formatPathSingle(imageFile);
+          }
+        } catch (error) {
+          throw new Error("Failed to process course cover image: " + (error instanceof Error ? error.message : "Unknown error"));
+        }
+      }
+
       const course = await this.courseService.updateCourse(
         id,
         name,
         description,
         type,
-        level
+        level,
+        undefined,  // totalLessons is not updated through this endpoint
+        imageUrl
       );
       res.status(StatusCodeEnum.OK_200).json({
         course,

@@ -49,10 +49,10 @@ class CourseDto {
 
   private validateImage = (req: Request, isRequired: boolean): void => {
     if (isRequired && !req.file) {
-      throw new Error("Image file is required");
+      throw new Error("Course cover image is required");
     }
-    if (req.file && req.file.path.length > 500) {
-      throw new Error("Image URL must not exceed 500 characters");
+    if (req.file && req.file.size > 2 * 1024 * 1024) {  // 2MB limit
+      throw new Error("Image file size must not exceed 2MB");
     }
   };
 
@@ -62,8 +62,7 @@ class CourseDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { name, description, type, level, totalLessons, coverImage } =
-        req.body;
+      const { name, description, type, level } = req.body;
 
       if (!name || !type || !level) {
         throw new Error(
@@ -75,14 +74,7 @@ class CourseDto {
       this.validateDescription(description);
       this.validateCourseType(type);
       this.validateLevel(level);
-      this.validateImage(coverImage, true);
-
-      if (
-        totalLessons !== undefined &&
-        (isNaN(totalLessons) || totalLessons < 1)
-      ) {
-        throw new Error("Total lessons must be a number greater than 0");
-      }
+      this.validateImage(req, true);  // Pass the whole request object
 
       next();
     } catch (error) {
@@ -99,22 +91,14 @@ class CourseDto {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { name, description, type, level, totalLessons, coverImage } =
-        req.body;
+      const { name, description, type, level } = req.body;
 
       this.validateObjectId(id);
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
-      this.validateCourseType(type);
+      if (type) this.validateCourseType(type);
       if (level) this.validateLevel(level);
-      if (coverImage) this.validateImage(coverImage, false);
-
-      if (
-        totalLessons !== undefined &&
-        (isNaN(totalLessons) || totalLessons < 1)
-      ) {
-        throw new Error("Total lessons must be a number greater than 0");
-      }
+      this.validateImage(req, false);  // Pass the whole request object, not required for update
 
       next();
     } catch (error) {

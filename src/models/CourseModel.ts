@@ -21,7 +21,8 @@ const CourseModelSchema = new Schema<ICourse>(
     totalLessons: {
       type: Number,
       required: false,
-      min: 1,
+      min: 0,
+      default: 0
     },
     coverImage: {
       type: String,

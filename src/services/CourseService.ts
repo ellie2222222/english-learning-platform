@@ -39,7 +39,7 @@ class CourseService implements ICourseService {
     description: string | undefined,
     type: string,
     level: string,
-    totalLessons: number | undefined,
+    totalLessons: number | undefined = 0,
     coverImage?: string | undefined,
   ): Promise<ICourse> {
     const session = await this.database.startTransaction();
@@ -50,7 +50,7 @@ class CourseService implements ICourseService {
           description,
           type,
           level,
-          totalLessons,
+          totalLessons: totalLessons || 0,
           coverImage,
         },
         session
