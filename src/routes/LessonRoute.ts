@@ -5,10 +5,8 @@ import LessonDto from "../dtos/LessonDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import {
-  CourseResourceAccessMiddleware,
-  GenericResourceAccessMiddleware,
-  LessonResourceAccessMiddleware,
+import { 
+  GenericResourceAccessMiddleware, 
   MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import GrammarDto from "../dtos/GrammarDto";

@@ -43,6 +43,7 @@ class LessonDto {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log(req.body);
       const { courseId, name, description } = req.body;
 
       if (!courseId || !name) {

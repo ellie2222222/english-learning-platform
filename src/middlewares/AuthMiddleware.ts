@@ -22,13 +22,13 @@ const AuthMiddleware = async (
       logger.info("Handling public route");
 
       if (token) {
-        const { userId } = jwt.verify(
+        const { userId, email, role } = jwt.verify(
           token,
           process.env.ACCESS_TOKEN_SECRET!
         ) as IJwtPayload;
 
         if (mongoose.Types.ObjectId.isValid(userId)) {
-          req.userInfo = { ...req.userInfo, userId };
+          req.userInfo = { ...req.userInfo, userId, email, role };
           logger.info(`Valid token for User ID: ${userId}`);
         } else {
           logger.warn("Invalid user ID in token.");

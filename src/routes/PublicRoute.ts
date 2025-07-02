@@ -36,6 +36,7 @@ const publicRoutes: PublicRoutes[] = [
   // Course
   { path: "/api/courses", method: "GET" },
   { path: "/api/courses/:id", method: "GET" },
+  { path: "/api/courses/:id/details", method: "GET" },
 ];
 
 export default publicRoutes;

@@ -156,26 +156,26 @@ class TestService implements ITestService {
     const session = await this.database.startTransaction();
     let courseId: string | null = null;
     try {
-      // Validate lesson IDs
-      for (const lessonId of lessonIds) {
-        const lesson = await this.lessonRepository.getLessonById(lessonId);
+      // Validate lesson IDs and get courseId
+      const firstLesson = await this.lessonRepository.getLessonById(lessonIds[0]);
+      if (!firstLesson) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          `Lesson with ID ${lessonIds[0]} not found`
+        );
+      }
+      courseId = firstLesson.courseId.toString();
+
+      // Validate remaining lessons are from same course
+      for (let i = 1; i < lessonIds.length; i++) {
+        const lesson = await this.lessonRepository.getLessonById(lessonIds[i]);
         if (!lesson) {
           throw new CustomException(
             StatusCodeEnum.NotFound_404,
-            `Lesson with ID ${lessonId} not found`
+            `Lesson with ID ${lessonIds[i]} not found`
           );
         }
-
-        if (courseId === null) {
-          courseId = lesson.courseId.toString();
-        } else if (courseId !== lesson.courseId.toString()) {
-          // console.log(
-          //   courseId === lesson.courseId.toString(),
-          //   courseId,
-          //   lesson.courseId,
-          //   typeof courseId,
-          //   typeof lesson.courseId.toString()
-          // );
+        if (courseId !== lesson.courseId.toString()) {
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             "A test's lessonIds must be inside the same course"
@@ -199,30 +199,24 @@ class TestService implements ITestService {
         );
       }
 
-      const order = await this.testRepository.getTestOrder(courseId as string);
-      const test = await this.testRepository.createTest(
-        {
+      // Get the next order number for this course
+      const order = await this.testRepository.getTestOrder(courseId);
+
+      // Create the test with courseId
+      const test = await this.testRepository.createTest({
           name,
           description,
+        lessonIds: lessonObjectIds,
           totalQuestions,
-          lessonIds,
-          courseId: new ObjectId(courseId as string),
-          order,
-        },
-        session
-      );
+        courseId: new mongoose.Types.ObjectId(courseId),
+        order
+      }, session);
 
       await this.database.commitTransaction(session);
       return test;
     } catch (error) {
       await this.database.abortTransaction(session);
-      if (error instanceof CustomException) {
         throw error;
-      }
-      throw new CustomException(
-        StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Failed to create test"
-      );
     }
   }
 
