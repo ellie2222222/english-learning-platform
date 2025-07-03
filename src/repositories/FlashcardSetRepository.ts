@@ -117,6 +117,32 @@ class FlashcardSetRepository implements IFlashcardSetRepository {
           },
         },
         { $unwind: "$user" },
+        {
+          $lookup: {
+            from: "flashcards",
+            localField: "_id",
+            foreignField: "flashcardSetId",
+            as: "flashcards",
+          },
+        },
+        {
+          $addFields: {
+            flashcardCount: {
+              $size: {
+                $filter: {
+                  input: "$flashcards",
+                  as: "flashcard",
+                  cond: { $eq: ["$$flashcard.isDeleted", false] },
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            flashcards: 0,
+          },
+        },
       ]);
 
       if (!flashcardSet[0]) {
@@ -184,6 +210,32 @@ class FlashcardSetRepository implements IFlashcardSetRepository {
           },
         },
         { $unwind: "$user" },
+        {
+          $lookup: {
+            from: "flashcards",
+            localField: "_id",
+            foreignField: "flashcardSetId",
+            as: "flashcards",
+          },
+        },
+        {
+          $addFields: {
+            flashcardCount: {
+              $size: {
+                $filter: {
+                  input: "$flashcards",
+                  as: "flashcard",
+                  cond: { $eq: ["$$flashcard.isDeleted", false] },
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            flashcards: 0,
+          },
+        },
         { $sort: { [sortField]: sortOrder } },
         { $skip: skip },
         { $limit: query.size },
@@ -247,16 +299,16 @@ class FlashcardSetRepository implements IFlashcardSetRepository {
         isDeleted: false,
       });
       return flashcardSets;
-  } catch (error) {
-    if (error instanceof CustomException) {
-      throw error;
-    }
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
 
-    throw new CustomException(
-      StatusCodeEnum.InternalServerError_500,
-      error instanceof Error ? error.message : "Internal Server Error"
-    );
-  }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
   }
 }
 export default FlashcardSetRepository;

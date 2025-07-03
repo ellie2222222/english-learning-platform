@@ -132,7 +132,8 @@ class FlashcardSetController {
   ) => {
     try {
       const { id } = req.params;
-      const flashcardSets = await this.flashcardSetService.getFlashcardSetsByUserId(id);
+      const flashcardSets =
+        await this.flashcardSetService.getFlashcardSetsByUserId(id);
 
       res.status(StatusCodeEnum.OK_200).json({
         data: flashcardSets,
