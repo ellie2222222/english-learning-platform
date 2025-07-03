@@ -100,7 +100,7 @@ class BlogService implements IBlogService {
       status?: string;
     };
     try {
-      const checkBlog = await this.blogRepository.getBlog(id);
+      const checkBlog = await this.blogRepository.getBlog(id, true);
       if (!checkBlog) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
