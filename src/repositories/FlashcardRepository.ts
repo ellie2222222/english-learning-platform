@@ -210,7 +210,7 @@ class FlashcardRepository implements IFlashcardRepository {
   async getFlashcardOrder(flashcardSetId: string): Promise<number> {
     try {
       const flashcards = await FlashcardModel.find({
-        flashcardflashcardSetId: new mongoose.Types.ObjectId(flashcardSetId),
+        flashcardSetId: new mongoose.Types.ObjectId(flashcardSetId),
         isDeleted: false,
       }).sort({ order: -1 });
 
