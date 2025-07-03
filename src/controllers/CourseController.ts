@@ -152,6 +152,23 @@ class CourseController {
       next(error);
     }
   };
+
+  getCourseDetails = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const courseDetails = await this.courseService.getCourseDetails(id);
+      res.status(StatusCodeEnum.OK_200).json({
+        course: courseDetails,
+        message: "Course details retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default CourseController;

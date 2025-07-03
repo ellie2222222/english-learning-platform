@@ -18,13 +18,12 @@ class VocabularyRepository implements IVocabularyRepository {
 
   async createVocabulary(
     vocabulary: object,
-    session?: any
+    session?: mongoose.ClientSession
   ): Promise<IVocabulary> {
     try {
-      const newVocabulary = await this.vocabularyModel.create([vocabulary], {
-        session,
-      });
-      return newVocabulary[0];
+      const options = session ? { session } : {};
+      const [newVocabulary] = await this.vocabularyModel.create([vocabulary], options);
+      return newVocabulary;
     } catch (error) {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
@@ -39,8 +38,9 @@ class VocabularyRepository implements IVocabularyRepository {
     session?: mongoose.ClientSession
   ): Promise<IVocabulary | null> {
     try {
+      const options = session ? { new: true, session } : { new: true };
       const updatedVocabulary = await this.vocabularyModel
-        .findByIdAndUpdate(vocabularyId, updateData, { new: true, session })
+        .findByIdAndUpdate(vocabularyId, updateData, options)
         .exec();
       return updatedVocabulary;
     } catch (error) {
@@ -56,11 +56,12 @@ class VocabularyRepository implements IVocabularyRepository {
     session?: mongoose.ClientSession
   ): Promise<IVocabulary | null> {
     try {
+      const options = session ? { new: true, session } : { new: true };
       const deletedVocabulary = await this.vocabularyModel
         .findByIdAndUpdate(
           vocabularyId,
           { isDeleted: true },
-          { new: true, session }
+          options
         )
         .exec();
       return deletedVocabulary;
@@ -189,14 +190,7 @@ class VocabularyRepository implements IVocabularyRepository {
         { lessonId: new mongoose.Types.ObjectId(lessonId) },
         { isDeleted: true },
         { session }
-      );
-
-      if (result.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No vocabulary found for the provided lesson ID"
-        );
-      }
+      ); 
 
       return result.acknowledged;
     } catch (error) {
@@ -212,34 +206,25 @@ class VocabularyRepository implements IVocabularyRepository {
 
   async deleteVocabularyByLessonIds(
     lessonIds: Types.ObjectId[],
-    session?: ClientSession
+    session?: mongoose.ClientSession
   ): Promise<boolean> {
     try {
+      const options = session ? { session } : {};
       const result = await this.vocabularyModel.updateMany(
         {
           lessonId: {
-            $in: lessonIds.map((id) => new mongoose.Types.ObjectId(id)),
+            $in: lessonIds.map((id) => new mongoose.Types.ObjectId(id.toString())),
           },
         },
         { isDeleted: true },
-        { session }
-      );
-
-      if (result.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No vocabulary found for the provided lesson IDs"
-        );
-      }
+        options
+      ); 
 
       return result.acknowledged;
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
+        error instanceof Error ? error.message : "Failed to delete vocabularies"
       );
     }
   }

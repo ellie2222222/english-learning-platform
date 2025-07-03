@@ -208,6 +208,13 @@ class UserService implements IUserService {
         );
       }
 
+      if (user.role === UserEnum.ADMIN) {
+        throw new CustomException(
+          StatusCodeEnum.Forbidden_403,
+          "Cannot delete admin user"
+        );
+      }
+
       await this.userRepository.deleteUserById(id, session);
       // if (user.avatar) {
       //   await cleanUpFile(user.avatar, "delete");

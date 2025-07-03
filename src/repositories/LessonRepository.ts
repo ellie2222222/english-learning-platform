@@ -270,14 +270,7 @@ class LessonRepository implements ILessonRepository {
         { courseId: new mongoose.Types.ObjectId(courseId) },
         { $set: { isDeleted: true } },
         { session }
-      );
-
-      if (deletedLessons.matchedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No lessons found for this course"
-        );
-      }
+      ); 
 
       return deletedLessons.acknowledged;
     } catch (error) {

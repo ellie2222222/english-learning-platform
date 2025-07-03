@@ -43,7 +43,7 @@ class TestDto {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { name, description, order, lessonIds, totalQuestions } = req.body;
+      const { name, description, lessonIds, totalQuestions } = req.body;
 
       if (!name || !lessonIds || !totalQuestions) {
         throw new Error(
@@ -53,8 +53,7 @@ class TestDto {
 
       this.validateName(name);
       this.validateDescription(description);
-      this.validateLength(totalQuestions);
-      this.validateOrder(order);
+      this.validateLength(totalQuestions); 
       lessonIds.forEach((lessonId: string) => this.validateObjectId(lessonId));
       if (isNaN(totalQuestions) || totalQuestions < 0) {
         throw new Error(

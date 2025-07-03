@@ -1,6 +1,18 @@
 import { ICourse } from "../models/ICourse";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
+import { ILesson } from "../models/ILesson";
+import { ITest } from "../models/ITest";
+import { IExercise } from "../models/IExercise";
+
+export interface ICourseDetails extends ICourse {
+  lessons: Array<{
+    lesson: ILesson;
+    exercises: IExercise[];
+    tests: ITest[];
+  }>;
+  courseTests: ITest[];
+}
 
 export interface ICourseService {
   createCourse(
@@ -27,4 +39,6 @@ export interface ICourseService {
   getCourses(query: IQuery, type?: string): Promise<IPagination>;
 
   getCourseById(id: string): Promise<ICourse | null>;
+
+  getCourseDetails(id: string): Promise<ICourseDetails | null>;
 }

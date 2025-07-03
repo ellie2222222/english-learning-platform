@@ -346,13 +346,6 @@ class ExerciseRepository implements IExerciseRepository {
         { session, new: true }
       );
 
-      if (exercises.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No exercises found for the provided lesson ID"
-        );
-      }
-
       return exercises.acknowledged;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -378,15 +371,7 @@ class ExerciseRepository implements IExerciseRepository {
         },
         { $set: { isDeleted: true } },
         { session, new: true }
-      );
-
-      if (exercises.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No exercises found for the provided lesson IDs"
-        );
-      }
-
+      ); 
       return exercises.acknowledged;
     } catch (error) {
       if (error instanceof CustomException) {

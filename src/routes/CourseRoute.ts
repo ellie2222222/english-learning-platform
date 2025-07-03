@@ -38,6 +38,15 @@ courseRoutes.get(
   courseController.getCourseById
 );
 
+courseRoutes.get(
+  "/:id/details",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  MembershipAccessLimitMiddleware(ResourceType.COURSE),
+  GenericResourceAccessMiddleware(ResourceType.COURSE),
+  courseDto.getCourseById,
+  courseController.getCourseDetails
+);
+
 //get lesson by courseId => id: courseId => ResourceType.COURSE
 courseRoutes.get(
   "/:id/lessons",

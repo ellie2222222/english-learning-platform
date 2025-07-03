@@ -1,4 +1,4 @@
-import mongoose, { ClientSession, Types } from "mongoose";
+import mongoose, { ClientSession, Types, Model } from "mongoose";
 import { ITest } from "../interfaces/models/ITest";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
@@ -11,82 +11,65 @@ import test from "node:test";
 
 @Service()
 class TestRepository implements ITestRepository {
+  private testModel: Model<ITest>;
+
+  constructor() {
+    this.testModel = TestModel;
+  }
+
   async createTest(
     data: object,
     session?: mongoose.ClientSession
   ): Promise<ITest> {
     try {
-      const test = await TestModel.create([data], { session });
-      return test[0];
+      const options = session ? { session } : {};
+      const [newTest] = await this.testModel.create([data], options);
+      return newTest;
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
+        error instanceof Error ? error.message : "Failed to create test"
       );
     }
   }
 
   async updateTest(
-    id: string,
+    testId: string,
     data: object,
     session?: mongoose.ClientSession
   ): Promise<ITest | null> {
     try {
-      const test = await TestModel.findOneAndUpdate(
-        {
-          _id: new mongoose.Types.ObjectId(id),
-          isDeleted: false,
-        },
-        { ...data },
-        { session, new: true }
-      );
-      if (!test) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "Test not found"
-        );
-      }
-      return test;
+      const options = session ? { new: true, session } : { new: true };
+      const updatedTest = await this.testModel
+        .findByIdAndUpdate(testId, data, options)
+        .exec();
+      return updatedTest;
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
+        error instanceof Error ? error.message : "Failed to update test"
       );
     }
   }
 
   async deleteTest(
-    id: string,
+    testId: string,
     session?: mongoose.ClientSession
   ): Promise<ITest | null> {
     try {
-      const test = await TestModel.findOneAndUpdate(
-        {
-          _id: new mongoose.Types.ObjectId(id),
-        },
-        { $set: { isDeleted: true } },
-        { session, new: true }
-      );
-      if (!test) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "Test not found"
-        );
-      }
-      return test;
+      const options = session ? { new: true, session } : { new: true };
+      const deletedTest = await this.testModel
+        .findByIdAndUpdate(
+          testId,
+          { isDeleted: true },
+          options
+        )
+        .exec();
+      return deletedTest;
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
+        error instanceof Error ? error.message : "Failed to delete test"
       );
     }
   }
@@ -98,7 +81,7 @@ class TestRepository implements ITestRepository {
         isDeleted: false,
       };
 
-      const test = await TestModel.findOne(matchQuery);
+      const test = await this.testModel.findOne(matchQuery);
       if (!test) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -137,7 +120,7 @@ class TestRepository implements ITestRepository {
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
-      const tests = await TestModel.aggregate([
+      const tests = await this.testModel.aggregate([
         { $match: matchQuery },
         {
           $lookup: {
@@ -154,7 +137,7 @@ class TestRepository implements ITestRepository {
         { $limit: query.size },
       ]);
 
-      const total = await TestModel.countDocuments(matchQuery);
+      const total = await this.testModel.countDocuments(matchQuery);
 
       return {
         data: tests,
@@ -175,7 +158,7 @@ class TestRepository implements ITestRepository {
 
   async getTestOrder(courseId: string): Promise<number> {
     try {
-      const test = await TestModel.findOne({
+      const test = await this.testModel.findOne({
         courseId: new mongoose.Types.ObjectId(courseId),
         isDeleted: false,
       }).sort({ order: -1 });
@@ -253,7 +236,7 @@ class TestRepository implements ITestRepository {
     lessonId: string,
   ): Promise<ITest[]> {
     try {
-      const tests = await TestModel.find({
+      const tests = await this.testModel.find({
         lessonIds: { $in: [new mongoose.Types.ObjectId(lessonId)] },
         isDeleted: false,
       });
@@ -293,7 +276,7 @@ class TestRepository implements ITestRepository {
       const sortOrder: 1 | -1 = query.order === OrderType.ASC ? 1 : -1;
       const skip = (query.page - 1) * query.size;
 
-      const tests = await TestModel.aggregate([
+      const tests = await this.testModel.aggregate([
         { $match: matchQuery },
         {
           $lookup: {
@@ -310,7 +293,7 @@ class TestRepository implements ITestRepository {
         { $limit: query.size },
       ]);
 
-      const total = await TestModel.countDocuments(matchQuery);
+      const total = await this.testModel.countDocuments(matchQuery);
 
       return {
         data: tests,
@@ -332,42 +315,33 @@ class TestRepository implements ITestRepository {
   async deleteTestsByCourseOrLessons(
     courseId: string,
     lessonIds: Types.ObjectId[],
-    session?: ClientSession
+    session?: mongoose.ClientSession
   ): Promise<boolean> {
     try {
-      const result = await TestModel.updateMany(
+      const options = session ? { session } : {};
+      const result = await this.testModel.updateMany(
         {
           $or: [
             { courseId: new mongoose.Types.ObjectId(courseId) },
-            { lessonIds: { $in: lessonIds } },
+            { lessonIds: { $in: lessonIds.map(id => new mongoose.Types.ObjectId(id.toString())) } },
           ],
         },
         { isDeleted: true },
-        { session }
+        options
       );
       
-      if (result.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No tests found for the provided course ID or lesson IDs"
-        );
-      }
-
       return result.acknowledged;
     } catch (error) {
-      if (error instanceof CustomException) {
-        throw error;
-      }
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
-        error instanceof Error ? error.message : "Internal Server Error"
+        error instanceof Error ? error.message : "Failed to delete tests"
       );
     }
   }
 
   async getTestsByCourseId(courseId: string): Promise<ITest[]> {
     try {
-      const tests = await TestModel.find({
+      const tests = await this.testModel.find({
         courseId: new mongoose.Types.ObjectId(courseId),
         isDeleted: false,
       });

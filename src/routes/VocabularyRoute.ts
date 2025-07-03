@@ -5,8 +5,7 @@ import VocabularyDto from "../dtos/VocabularyDto";
 import Container from "typedi";
 import RoleMiddleware from "../middlewares/RoleMiddleware";
 import UserEnum from "../enums/UserEnum";
-import {
-  CourseResourceAccessMiddleware,
+import { 
   GenericResourceAccessMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import { uploadFile } from "../middlewares/storeFile";

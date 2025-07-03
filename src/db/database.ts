@@ -63,7 +63,7 @@ class Database {
   public async startTransaction(): Promise<mongoose.ClientSession> {
     try {
       const session = await mongoose.startSession();
-      session.startTransaction();
+      await session.startTransaction();
       return session;
     } catch (error) {
       logger.error(
@@ -77,15 +77,18 @@ class Database {
     }
   }
 
-  // Commit the transaction (accept session as parameter)
+  // Commit the transaction
   public async commitTransaction(
     session: mongoose.ClientSession
   ): Promise<void> {
+    if (!session || !session.inTransaction()) {
+      logger.warn("No active transaction to commit");
+      return;
+    }
+
     try {
-      if (session) {
-        await session.commitTransaction();
-        logger.info("Commit change to database successfully!");
-      }
+      await session.commitTransaction();
+      logger.info("Transaction committed successfully");
     } catch (error) {
       logger.error(
         "Error committing transaction:",
@@ -95,20 +98,21 @@ class Database {
         StatusCodeEnum.InternalServerError_500,
         (error as Error | CustomException).message
       );
-    } finally {
-      await this.endSession(session); // Ensure session is ended after commit
     }
   }
 
-  // Abort the transaction (accept session as parameter)
+  // Abort the transaction
   public async abortTransaction(
     session: mongoose.ClientSession
   ): Promise<void> {
+    if (!session || !session.inTransaction()) {
+      logger.warn("No active transaction to abort");
+      return;
+    }
+
     try {
-      if (session) {
-        await session.abortTransaction();
-        logger.info("Transaction aborted!");
-      }
+      await session.abortTransaction();
+      logger.info("Transaction aborted successfully");
     } catch (error) {
       logger.error(
         "Error aborting transaction:",
@@ -118,26 +122,25 @@ class Database {
         StatusCodeEnum.InternalServerError_500,
         (error as Error | CustomException).message
       );
-    } finally {
-      await this.endSession(session); // Ensure session is ended after abort
     }
   }
 
-  // End the session (accept session as parameter)
-  private async endSession(session: mongoose.ClientSession): Promise<void> {
+  // End the session
+  public async endSession(session: mongoose.ClientSession): Promise<void> {
+    if (!session) {
+      logger.warn("No session to end");
+      return;
+    }
+
     try {
-      if (session) {
-        await session.endSession();
-        logger.info("Session ended.");
-      }
+      await session.endSession();
+      logger.info("Session ended successfully");
     } catch (error) {
       logger.error(
         `Error ending session: ${(error as Error | CustomException).message}`
       );
-      throw new CustomException(
-        StatusCodeEnum.InternalServerError_500,
-        (error as Error | CustomException).message
-      );
+      // Don't throw here, just log the error
+      logger.warn("Failed to end session, but continuing execution");
     }
   }
 
@@ -160,3 +163,4 @@ class Database {
 }
 
 export default Database;
+

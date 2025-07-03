@@ -1,6 +1,6 @@
 import { Inject, Service } from "typedi";
 import { ICourse } from "../interfaces/models/ICourse";
-import { ICourseService } from "../interfaces/services/ICourseService";
+import { ICourseService, ICourseDetails } from "../interfaces/services/ICourseService";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import Database from "../db/database";
@@ -15,6 +15,7 @@ import VocabularyRepository from "../repositories/VocabularyRepository";
 import TestRepository from "../repositories/TestRepository";
 import ExerciseRepository from "../repositories/ExcerciseRepository";
 import { Types } from "mongoose";
+import { ILesson } from "../interfaces/models/ILesson";
 
 @Service()
 class CourseService implements ICourseService {
@@ -99,12 +100,12 @@ class CourseService implements ICourseService {
       }
 
       const updateData: Partial<ICourse> = {};
-      if (name !== undefined) updateData.name = name;
-      if (description !== undefined) updateData.description = description;
-      if (type !== undefined) updateData.type = type;
-      if (level !== undefined) updateData.level = level;
-      if (totalLessons !== undefined) updateData.totalLessons = totalLessons;
-      if (coverImage !== undefined) updateData.coverImage = coverImage;
+      if (name) updateData.name = name;
+      if (description) updateData.description = description;
+      if (type) updateData.type = type;
+      if (level) updateData.level = level;
+      if (totalLessons) updateData.totalLessons = totalLessons;
+      if (coverImage) updateData.coverImage = coverImage;
 
       const updatedCourse = await this.courseRepository.updateCourse(
         id,
@@ -157,34 +158,38 @@ class CourseService implements ICourseService {
       }
 
       // Find all lessons associated with the course
-    const lessons = await this.lessonRepository.getLessonsByCourseIdV2(id);
+      const lessons = await this.lessonRepository.getLessonsByCourseIdV2(id);
 
-    // Extract lesson IDs
-    const lessonIds: Types.ObjectId[] = lessons.map(lesson => lesson._id as Types.ObjectId);
+      // Extract lesson IDs
+      const lessonIds: Types.ObjectId[] = lessons.map(lesson => lesson._id as Types.ObjectId);
 
-    // Delete related data in parallel where possible
-    await Promise.all([
-      // Delete exercises associated with the lessons
-      this.exerciseRepository.deleteExercisesByLessonIds(lessonIds, session),
-      // Delete grammar documents associated with the lessons
-      this.grammarRepository.deleteGrammarByLessonIds(lessonIds, session),
-      // Delete vocabulary documents associated with the lessons
-      this.vocabularyRepository.deleteVocabularyByLessonIds(lessonIds, session),
-      // Delete tests associated with the course or lessons
-      this.testRepository.deleteTestsByCourseOrLessons(id, lessonIds, session),
-      // Delete lessons associated with the course
-      this.lessonRepository.deleteLessonsByCourseId(id, session),
-    ]);
+      // Delete related data sequentially to maintain transaction integrity
+      // 1. Delete exercises first as they depend on lessons
+      await this.exerciseRepository.deleteExercisesByLessonIds(lessonIds, session);
+      
+      // 2. Delete grammar documents
+      await this.grammarRepository.deleteGrammarByLessonIds(lessonIds, session);
+      
+      // 3. Delete vocabulary documents
+      await this.vocabularyRepository.deleteVocabularyByLessonIds(lessonIds, session);
+      
+      // 4. Delete tests
+      await this.testRepository.deleteTestsByCourseOrLessons(id, lessonIds, session);
+      
+      // 5. Delete lessons
+      await this.lessonRepository.deleteLessonsByCourseId(id, session);
 
-
-      const deletedCourse = await this.courseRepository.deleteCourse(
-        id,
-        session
-      );
+      // 6. Finally, delete the course itself
+      const deletedCourse = await this.courseRepository.deleteCourse(id, session);
+      
+      // Commit the transaction
       await this.database.commitTransaction(session);
+      
       return deletedCourse;
     } catch (error) {
+      // Abort the transaction if there's an error
       await this.database.abortTransaction(session);
+      
       if (error instanceof CustomException) {
         throw error;
       }
@@ -193,7 +198,8 @@ class CourseService implements ICourseService {
         error instanceof Error ? error.message : "Failed to delete course"
       );
     } finally {
-      await session.endSession();
+      // End the session in the finally block
+      await this.database.endSession(session);
     }
   }
 
@@ -223,6 +229,63 @@ class CourseService implements ICourseService {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to retrieve courses"
+      );
+    }
+  }
+
+  async getCourseDetails(id: string): Promise<ICourseDetails | null> {
+    try {
+      // Get the course
+      const course = await this.courseRepository.getCourseById(id);
+      if (!course) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "Course not found"
+        );
+      }
+
+      // Get all lessons for the course
+      const lessons = await this.lessonRepository.getLessonsByCourseIdV2(id);
+
+      // Get course-level tests
+      const courseTests = await this.testRepository.getTestsByCourseId(id);
+
+      // Get details for each lesson
+      const lessonDetails = await Promise.all(
+        lessons.map(async (lesson) => {
+          if (!lesson._id) {
+            throw new CustomException(
+              StatusCodeEnum.InternalServerError_500,
+              "Invalid lesson data"
+            );
+          }
+          const lessonId = typeof lesson._id === 'string' 
+            ? lesson._id 
+            : lesson._id.toString();
+
+          const exercises = await this.exerciseRepository.getAllLessonExercise(lessonId);
+          const tests = await this.testRepository.getTestsByLessonIdV2(lessonId);
+
+          return {
+            lesson,
+            exercises,
+            tests,
+          };
+        })
+      );
+
+      return {
+        ...course.toObject(),
+        lessons: lessonDetails,
+        courseTests,
+      };
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Failed to get course details"
       );
     }
   }

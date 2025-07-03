@@ -180,14 +180,7 @@ class GrammarRepository implements IGrammarRepository {
         { lessonId: new mongoose.Types.ObjectId(lessonId) },
         { $set: { isDeleted: true } },
         { session }
-      );
-
-      if (result.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No grammar found for the provided lesson ID"
-        );
-      }
+      ); 
 
       return result.acknowledged;
     } catch (error) {
@@ -210,14 +203,7 @@ class GrammarRepository implements IGrammarRepository {
         { lessonId: { $in: lessonIds } },
         { $set: { isDeleted: true } },
         { session }
-      );
-
-      if (result.modifiedCount === 0) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "No grammar found for the provided lesson IDs"
-        );
-      }
+      ); 
 
       return result.acknowledged;
     } catch (error) {
