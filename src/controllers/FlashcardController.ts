@@ -58,9 +58,9 @@ class FlashcardController {
   deleteFlashcard = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.userInfo.userId;
+      const { userId, role } = req.userInfo;
 
-      const flashcard = await this.flashcardService.deleteFlashcard(id, userId);
+      const flashcard = await this.flashcardService.deleteFlashcard(id, userId, role);
 
       res.status(StatusCodeEnum.OK_200).json({
         flashcard: flashcard,

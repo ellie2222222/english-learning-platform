@@ -12,6 +12,7 @@ import { ObjectId } from "mongoose";
 import getLogger from "../utils/logger";
 import FlashcardRepository from "../repositories/FlashcardRepository";
 import { IFlashcardRepository } from "../interfaces/repositories/IFlashcardRepository";
+import UserEnum from "../enums/UserEnum";
 
 @Service()
 class FlashcardSetService implements IFlashcardSetService {
@@ -84,7 +85,7 @@ class FlashcardSetService implements IFlashcardSetService {
       if ((flashcardSet.userId as ObjectId).toString() !== userId) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
-          "You do not have permission to update this flashcard set"
+          "You are not the author of this flashcard set and cannot update it"
         );
       }
 
@@ -127,7 +128,8 @@ class FlashcardSetService implements IFlashcardSetService {
 
   deleteFlashcardSet = async (
     id: string,
-    userId: string
+    userId: string,
+    userRole?: number
   ): Promise<IFlashcardSet | null> => {
     const session = await this.database.startTransaction();
     try {
@@ -142,10 +144,11 @@ class FlashcardSetService implements IFlashcardSetService {
         );
       }
 
-      if ((flashcardSet.userId as ObjectId).toString() !== userId) {
+      // Allow admins to delete any flashcard set, otherwise check ownership
+      if (userRole !== UserEnum.ADMIN && (flashcardSet.userId as ObjectId).toString() !== userId) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
-          "You do not have permission to delete this flashcard set"
+          "You are not the author of this flashcard set and cannot delete it"
         );
       }
 

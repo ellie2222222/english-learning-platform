@@ -17,7 +17,11 @@ export interface IFlashcardService {
     vietnameseContent?: string
   ) => Promise<IFlashcard | null>;
 
-  deleteFlashcard: (id: string, userId: string) => Promise<IFlashcard | null>;
+  deleteFlashcard: (
+    id: string, 
+    userId: string, 
+    userRole?: number
+  ) => Promise<IFlashcard | null>;
 
   getFlashcard: (id: string) => Promise<IFlashcard | null>;
 

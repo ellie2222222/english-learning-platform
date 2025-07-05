@@ -10,6 +10,7 @@ import FlashcardRepository from "../repositories/FlashcardRepository";
 import { IFlashcardRepository } from "../interfaces/repositories/IFlashcardRepository";
 import FlashcardSetRepository from "../repositories/FlashcardSetRepository";
 import { IFlashcardSetRepository } from "../interfaces/repositories/IFlashcardSetRepository";
+import UserEnum from "../enums/UserEnum";
 
 @Service()
 class FlashcardService implements IFlashcardService {
@@ -43,7 +44,7 @@ class FlashcardService implements IFlashcardService {
       if (flashcardSet.userId.toString() !== userId) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
-          "You do not have permission to create flashcards in this set"
+          "You are not the author of this flashcard set and cannot create flashcards in it"
         );
       }
 
@@ -107,7 +108,7 @@ class FlashcardService implements IFlashcardService {
       if (flashcardSet.userId.toString() !== userId) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
-          "You do not have permission to update this flashcard"
+          "You are not the author of this flashcard set and cannot update this flashcard"
         );
       }
 
@@ -150,7 +151,8 @@ class FlashcardService implements IFlashcardService {
 
   deleteFlashcard = async (
     id: string,
-    userId: string
+    userId: string,
+    userRole?: number
   ): Promise<IFlashcard | null> => {
     const session = await this.database.startTransaction();
     try {
@@ -172,12 +174,15 @@ class FlashcardService implements IFlashcardService {
           "Flashcard set not found"
         );
       }
-      if (flashcardSet.userId.toString() !== userId) {
+      
+      // Allow admins to delete any flashcard, otherwise check ownership
+      if (userRole !== UserEnum.ADMIN && flashcardSet.userId.toString() !== userId) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
-          "You do not have permission to delete this flashcard"
+          "You are not the author of this flashcard set and cannot delete this flashcard"
         );
       }
+      
       const deletedFlashcard = await this.flashcardRepository.deleteFlashcard(
         id
       );

@@ -67,10 +67,11 @@ class FlashcardSetController {
   ) => {
     try {
       const { id } = req.params;
-      const { userId } = req.userInfo;
+      const { userId, role } = req.userInfo;
       const flashcardSet = await this.flashcardSetService.deleteFlashcardSet(
         id,
-        userId
+        userId,
+        role
       );
 
       res.status(StatusCodeEnum.OK_200).json({

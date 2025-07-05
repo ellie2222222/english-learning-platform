@@ -18,7 +18,8 @@ export interface IFlashcardSetService {
 
   deleteFlashcardSet: (
     id: string,
-    userId: string
+    userId: string,
+    userRole?: number
   ) => Promise<IFlashcardSet | null>;
 
   getFlashcardSet: (id: string) => Promise<IFlashcardSet | null>;
