@@ -436,6 +436,7 @@ class TestService implements ITestService {
   }
 
   async submitTest(data: ISubmitTest): Promise<IUserTestResponse> {
+    console.log(data);
     const session = await this.database.startTransaction();
     try {
       // Validate test exists
@@ -480,6 +481,10 @@ class TestService implements ITestService {
         );
       }
 
+      function normalize(str: string) {
+        return str.replace(/[.,]/g, "").trim().toLowerCase();
+      }
+
       // Grade the submission
       let correctAnswers = 0;
       const results = data.answers.map((answer) => {
@@ -513,11 +518,13 @@ class TestService implements ITestService {
             break;
           case ExerciseTypeEnum.TRANSLATE:
             // Case-insensitive match for translation answers
-            isCorrect =
-              answer.selectedAnswers.length === 1 &&
-              exercise.answer.length === 1 &&
-              answer.selectedAnswers[0].toLowerCase().trim() ===
-                exercise.answer[0].toLowerCase().trim();
+            isCorrect = answer.selectedAnswers.some(
+              (selected) =>
+                Array.isArray(exercise.answer) &&
+                exercise.answer.some(
+                  (correct) => normalize(selected) === normalize(correct)
+                )
+            );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
               if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
@@ -531,11 +538,13 @@ class TestService implements ITestService {
             break;
           case ExerciseTypeEnum.IMAGE_TRANSLATE:
             // Case-insensitive match for translation answers
-            isCorrect =
-              answer.selectedAnswers.length === 1 &&
-              exercise.answer.length === 1 &&
-              answer.selectedAnswers[0].toLowerCase().trim() ===
-                exercise.answer[0].toLowerCase().trim();
+            isCorrect = answer.selectedAnswers.some(
+              (selected) =>
+                Array.isArray(exercise.answer) &&
+                exercise.answer.some(
+                  (correct) => normalize(selected) === normalize(correct)
+                )
+            );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
               if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
@@ -549,11 +558,13 @@ class TestService implements ITestService {
             break;
           case ExerciseTypeEnum.FILL_IN_THE_BLANK:
             // Exact match for fill-in-the-blank answers
-            isCorrect =
-              answer.selectedAnswers.length === exercise.answer.length &&
-              answer.selectedAnswers.every(
-                (ans, idx) => ans.trim() === exercise.answer[idx].trim()
-              );
+            isCorrect = answer.selectedAnswers.some(
+              (selected) =>
+                Array.isArray(exercise.answer) &&
+                exercise.answer.some(
+                  (correct) => normalize(selected) === normalize(correct)
+                )
+            );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
               if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
@@ -610,9 +621,10 @@ class TestService implements ITestService {
       const attemptNo = lastAttempt ? lastAttempt.attemptNo + 1 : 1;
 
       // Create submission
-      const submission: Partial<IUserTest> = {
-        userId: new mongoose.Schema.Types.ObjectId(data.userId),
-        testId: new mongoose.Schema.Types.ObjectId(data.testId),
+      //no partial => partial use schema.types => wrong
+      const submission = {
+        userId: new mongoose.Types.ObjectId(data.userId),
+        testId: new mongoose.Types.ObjectId(data.testId),
         attemptNo,
         score,
         status,
