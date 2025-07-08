@@ -8,6 +8,8 @@ import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRep
 import UserRepository from "../repositories/UserRepository";
 import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import UserEnum from "../enums/UserEnum";
+import UserTestRepository from "../repositories/UserTestRepository";
+import { IUserTestRepository } from "../interfaces/repositories/IUserTestRepository";
 
 @Service()
 class AIService implements IAIService {
@@ -15,7 +17,9 @@ class AIService implements IAIService {
     @Inject(() => UserCourseRepository)
     private userCourseRepository: IUserCourseRepository,
     @Inject(() => UserRepository)
-    private userRepository: IUserRepository
+    private userRepository: IUserRepository,
+    @Inject(() => UserTestRepository)
+    private userTestRepository: IUserTestRepository
   ) {}
   askEnglishTutorAI = async (prompt: string): Promise<string> => {
     try {
@@ -88,8 +92,36 @@ class AIService implements IAIService {
         "Structure the response as a JSON object with fields: strengths (array of strings), weaknesses (array of strings), recommendations (array of strings), and summary (string). " +
         "Do not include any code or implementation details in the response, only the analysis and advice.";
 
+      const userCourse = await this.userCourseRepository.countCompletedByUserId(
+        userId
+      );
+
+      if (userCourse === 0) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Insufficient data to generate progress hierarchy"
+        );
+      }
+
+      const userTest = await this.userTestRepository.countUserTestByUserId(
+        userId
+      );
+
+      if (userTest === 0) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Insufficient data to generate progress hierarchy"
+        );
+      }
+
       const dataStructure =
         await this.userCourseRepository.getUserProgressHierarchy(userId);
+      if (!userCourse) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "User course not found"
+        );
+      }
 
       const response = await sendPromptToAIWithRule(
         rule,

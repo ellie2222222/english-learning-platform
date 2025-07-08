@@ -364,9 +364,9 @@ class UserTestRepository implements IUserTestRepository {
     try {
       const count = await UserTestModel.countDocuments({
         userId,
-        status: "completed"
+        status: "completed",
       });
-      
+
       return count;
     } catch (error) {
       if (error instanceof Error) {
@@ -375,6 +375,24 @@ class UserTestRepository implements IUserTestRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         "Error counting completed tests"
+      );
+    }
+  };
+
+  countUserTestByUserId = async (userId: string): Promise<number> => {
+    try {
+      const count = await UserTestModel.countDocuments({
+        userId: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      });
+      return count || 0;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error counting tests:", error.message);
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Error counting tests"
       );
     }
   };
