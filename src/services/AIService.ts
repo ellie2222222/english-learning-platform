@@ -70,7 +70,7 @@ class AIService implements IAIService {
       }
 
       const notAdmin = requester?.role !== UserEnum.ADMIN;
-      const notOwner = requesterId.toString() === userId.toString();
+      const notOwner = requesterId.toString() !== userId.toString();
 
       if (notAdmin && notOwner) {
         throw new CustomException(
@@ -143,9 +143,21 @@ class AIService implements IAIService {
 
       if (response.content) {
         // Extract the JSON string after </think> or use the entire content if </think> is not present
-        const jsonString = response.content.includes("</think>")
-          ? response.content.split("</think>").pop()?.trim()
-          : response.content.trim();
+        let jsonString = response.content.trim();
+
+        // Remove code fences if present
+        if (jsonString.startsWith("```json")) {
+          jsonString = jsonString
+            .replace(/^```json/, "")
+            .replace(/```$/, "")
+            .trim();
+        }
+
+        // Try to extract the first {...} block if extra text is present
+        const match = jsonString.match(/{[\s\S]*}/);
+        if (match) {
+          jsonString = match[0];
+        }
 
         if (!jsonString) {
           throw new CustomException(
@@ -154,6 +166,7 @@ class AIService implements IAIService {
           );
         }
 
+        console.log(jsonString);
         try {
           // Parse the JSON string
           const parsedResponse = JSON.parse(jsonString);
