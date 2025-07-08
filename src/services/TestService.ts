@@ -48,6 +48,7 @@ import { AchievementTypeEnum } from "../enums/AchievementTypeEnum";
 import getLogger from "../utils/logger";
 import CourseRepository from "../repositories/CourseRepository";
 import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
+import { ExerciseFocusEnum } from "../enums/ExerciseFocusEnum";
 
 @Service()
 class TestService implements ITestService {
@@ -157,7 +158,9 @@ class TestService implements ITestService {
     let courseId: string | null = null;
     try {
       // Validate lesson IDs and get courseId
-      const firstLesson = await this.lessonRepository.getLessonById(lessonIds[0]);
+      const firstLesson = await this.lessonRepository.getLessonById(
+        lessonIds[0]
+      );
       if (!firstLesson) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -203,20 +206,23 @@ class TestService implements ITestService {
       const order = await this.testRepository.getTestOrder(courseId);
 
       // Create the test with courseId
-      const test = await this.testRepository.createTest({
+      const test = await this.testRepository.createTest(
+        {
           name,
           description,
-        lessonIds: lessonObjectIds,
+          lessonIds: lessonObjectIds,
           totalQuestions,
-        courseId: new mongoose.Types.ObjectId(courseId),
-        order
-      }, session);
+          courseId: new mongoose.Types.ObjectId(courseId),
+          order,
+        },
+        session
+      );
 
       await this.database.commitTransaction(session);
       return test;
     } catch (error) {
       await this.database.abortTransaction(session);
-        throw error;
+      throw error;
     }
   }
 
@@ -373,8 +379,7 @@ class TestService implements ITestService {
         lessonObjectIds
       );
 
-      test.exercises = exercises;
-      return test;
+      return { ...test, exercises } as ITest;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -447,6 +452,20 @@ class TestService implements ITestService {
         test.lessonIds.map((id) => id.toString())
       );
 
+      let incorrectDetail = {
+        totalQuestion: 0,
+        incorrectQuestion: 0,
+        incorrectFocus: {
+          [ExerciseFocusEnum.VOCABULARY]: 0,
+          [ExerciseFocusEnum.GRAMMAR]: 0,
+        },
+        incorrectType: {
+          [ExerciseTypeEnum.MULTIPLE_CHOICE]: 0,
+          [ExerciseTypeEnum.TRANSLATE]: 0,
+          [ExerciseTypeEnum.IMAGE_TRANSLATE]: 0,
+          [ExerciseTypeEnum.FILL_IN_THE_BLANK]: 0,
+        },
+      };
       // Validate all submitted exercise IDs belong to the test's lessons
       const exerciseIds = exercises.map((ex: IExercise) =>
         (ex._id as mongoose.Types.ObjectId)?.toString()
@@ -464,6 +483,7 @@ class TestService implements ITestService {
       // Grade the submission
       let correctAnswers = 0;
       const results = data.answers.map((answer) => {
+        incorrectDetail.totalQuestion++;
         const exercise = exercises.find(
           (ex: IExercise) =>
             (ex._id as mongoose.Types.ObjectId)?.toString() ===
@@ -480,8 +500,35 @@ class TestService implements ITestService {
               answer.selectedAnswers.every((ans) =>
                 exercise.answer.includes(ans)
               );
+            if (!isCorrect) {
+              incorrectDetail.incorrectQuestion++;
+              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
+              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
+              }
+              incorrectDetail.incorrectType[ExerciseTypeEnum.MULTIPLE_CHOICE]++;
+            }
+
             break;
           case ExerciseTypeEnum.TRANSLATE:
+            // Case-insensitive match for translation answers
+            isCorrect =
+              answer.selectedAnswers.length === 1 &&
+              exercise.answer.length === 1 &&
+              answer.selectedAnswers[0].toLowerCase().trim() ===
+                exercise.answer[0].toLowerCase().trim();
+            if (!isCorrect) {
+              incorrectDetail.incorrectQuestion++;
+              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
+              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
+              }
+              incorrectDetail.incorrectType[ExerciseTypeEnum.TRANSLATE]++;
+            }
+
+            break;
           case ExerciseTypeEnum.IMAGE_TRANSLATE:
             // Case-insensitive match for translation answers
             isCorrect =
@@ -489,6 +536,16 @@ class TestService implements ITestService {
               exercise.answer.length === 1 &&
               answer.selectedAnswers[0].toLowerCase().trim() ===
                 exercise.answer[0].toLowerCase().trim();
+            if (!isCorrect) {
+              incorrectDetail.incorrectQuestion++;
+              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
+              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
+              }
+              incorrectDetail.incorrectType[ExerciseTypeEnum.IMAGE_TRANSLATE]++;
+            }
+
             break;
           case ExerciseTypeEnum.FILL_IN_THE_BLANK:
             // Exact match for fill-in-the-blank answers
@@ -497,9 +554,22 @@ class TestService implements ITestService {
               answer.selectedAnswers.every(
                 (ans, idx) => ans.trim() === exercise.answer[idx].trim()
               );
+            if (!isCorrect) {
+              incorrectDetail.incorrectQuestion++;
+              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
+              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
+              }
+
+              incorrectDetail.incorrectType[
+                ExerciseTypeEnum.FILL_IN_THE_BLANK
+              ]++;
+            }
             break;
           default:
             isCorrect = false;
+            incorrectDetail.incorrectType[exercise.type]++;
         }
 
         if (isCorrect) correctAnswers++;
@@ -548,8 +618,44 @@ class TestService implements ITestService {
         status,
         description:
           status === UserTestStatusEnum.PASSED
-            ? "Test passed successfully"
-            : "Test failed",
+            ? `Test passed successfully, this test include ${
+                incorrectDetail.totalQuestion
+              } questions, ${
+                incorrectDetail.incorrectQuestion
+              } questions are incorrect, \n About focus:${
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]
+              } questions are incorrect in vocabulary, \n ${
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]
+              } questions are incorrect in grammar, \n About type: ${
+                incorrectDetail.incorrectType[ExerciseTypeEnum.MULTIPLE_CHOICE]
+              } questions are incorrect in multiple choice, \n ${
+                incorrectDetail.incorrectType[ExerciseTypeEnum.TRANSLATE]
+              } questions are incorrect in translate, \n ${
+                incorrectDetail.incorrectType[ExerciseTypeEnum.IMAGE_TRANSLATE]
+              } questions are incorrect in image translate, \n ${
+                incorrectDetail.incorrectType[
+                  ExerciseTypeEnum.FILL_IN_THE_BLANK
+                ]
+              } questions are incorrect in fill in the blank`
+            : `Test failed, this test include ${
+                incorrectDetail.totalQuestion
+              } questions, ${
+                incorrectDetail.incorrectQuestion
+              } questions are incorrect, \n About focus:${
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]
+              } questions are incorrect in vocabulary, \n ${
+                incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]
+              } questions are incorrect in grammar, \n About type: ${
+                incorrectDetail.incorrectType[ExerciseTypeEnum.MULTIPLE_CHOICE]
+              } questions are incorrect in multiple choice, \n ${
+                incorrectDetail.incorrectType[ExerciseTypeEnum.TRANSLATE]
+              } questions are incorrect in translate, \n ${
+                incorrectDetail.incorrectType[ExerciseTypeEnum.IMAGE_TRANSLATE]
+              } questions are incorrect in image translate, \n ${
+                incorrectDetail.incorrectType[
+                  ExerciseTypeEnum.FILL_IN_THE_BLANK
+                ]
+              } questions are incorrect in fill in the blank`,
       };
 
       // Save submission

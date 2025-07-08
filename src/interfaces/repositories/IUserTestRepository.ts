@@ -40,4 +40,6 @@ export interface IUserTestRepository {
   getLatestAttempt(userId: string, lessonId: string): Promise<IUserTest | null>;
 
   countCompletedByUserId(userId: string): Promise<number>;
+
+  countUserTestByUserId(userId: string): Promise<number>;
 }

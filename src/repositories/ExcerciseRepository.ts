@@ -250,10 +250,10 @@ class ExerciseRepository implements IExerciseRepository {
     try {
       const matchQuery = {
         lessonId: { $in: lessonIds },
+        isDeleted: false,
       };
 
       const exercises = await ExerciseModel.aggregate([
-        { $match: matchQuery },
         {
           $lookup: {
             from: "lessons",
@@ -265,7 +265,9 @@ class ExerciseRepository implements IExerciseRepository {
         {
           $unwind: "$lesson",
         },
+        { $match: matchQuery },
         { $sample: { size: length } },
+        { $project: { answer: 0, explanation: 0 } },
       ]);
 
       if (exercises.length < length) {
@@ -371,7 +373,7 @@ class ExerciseRepository implements IExerciseRepository {
         },
         { $set: { isDeleted: true } },
         { session, new: true }
-      ); 
+      );
       return exercises.acknowledged;
     } catch (error) {
       if (error instanceof CustomException) {

@@ -59,11 +59,7 @@ class TestRepository implements ITestRepository {
     try {
       const options = session ? { new: true, session } : { new: true };
       const deletedTest = await this.testModel
-        .findByIdAndUpdate(
-          testId,
-          { isDeleted: true },
-          options
-        )
+        .findByIdAndUpdate(testId, { isDeleted: true }, options)
         .exec();
       return deletedTest;
     } catch (error) {
@@ -81,7 +77,7 @@ class TestRepository implements ITestRepository {
         isDeleted: false,
       };
 
-      const test = await this.testModel.findOne(matchQuery);
+      const test = await this.testModel.findOne(matchQuery).lean();
       if (!test) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
@@ -158,10 +154,12 @@ class TestRepository implements ITestRepository {
 
   async getTestOrder(courseId: string): Promise<number> {
     try {
-      const test = await this.testModel.findOne({
-        courseId: new mongoose.Types.ObjectId(courseId),
-        isDeleted: false,
-      }).sort({ order: -1 });
+      const test = await this.testModel
+        .findOne({
+          courseId: new mongoose.Types.ObjectId(courseId),
+          isDeleted: false,
+        })
+        .sort({ order: -1 });
 
       if (!test) return 1;
       return test.order + 1;
@@ -232,9 +230,7 @@ class TestRepository implements ITestRepository {
   //   }
   // }
 
-  async getTestsByLessonIdV2( 
-    lessonId: string,
-  ): Promise<ITest[]> {
+  async getTestsByLessonIdV2(lessonId: string): Promise<ITest[]> {
     try {
       const tests = await this.testModel.find({
         lessonIds: { $in: [new mongoose.Types.ObjectId(lessonId)] },
@@ -323,13 +319,19 @@ class TestRepository implements ITestRepository {
         {
           $or: [
             { courseId: new mongoose.Types.ObjectId(courseId) },
-            { lessonIds: { $in: lessonIds.map(id => new mongoose.Types.ObjectId(id.toString())) } },
+            {
+              lessonIds: {
+                $in: lessonIds.map(
+                  (id) => new mongoose.Types.ObjectId(id.toString())
+                ),
+              },
+            },
           ],
         },
         { isDeleted: true },
         options
       );
-      
+
       return result.acknowledged;
     } catch (error) {
       throw new CustomException(

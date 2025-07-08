@@ -97,7 +97,10 @@ class UserCourseRepository implements IUserCourseRepository {
       const userCourses = await UserCourseModel.find({ isDeleted: false });
       return userCourses;
     } catch (error) {
-      throw new CustomException(StatusCodeEnum.InternalServerError_500, "Internal Server Error");
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        "Internal Server Error"
+      );
     }
   }
 
@@ -208,7 +211,7 @@ class UserCourseRepository implements IUserCourseRepository {
         },
         { $skip: skip },
         { $limit: query.size },
-      ]); 
+      ]);
 
       const total = await UserCourseModel.countDocuments(matchQuery);
 
@@ -241,6 +244,7 @@ class UserCourseRepository implements IUserCourseRepository {
       );
     }
   }
+
   async getUserProgressHierarchy(userId: string): Promise<object[]> {
     try {
       // Build the match stage to filter by userId if provided
@@ -413,6 +417,12 @@ class UserCourseRepository implements IUserCourseRepository {
         },
       ]);
 
+      if (!aggregation || aggregation.length === 0) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Not enough data to generate progress hierarchy"
+        );
+      }
       return aggregation;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -530,9 +540,9 @@ class UserCourseRepository implements IUserCourseRepository {
     try {
       const count = await UserCourseModel.countDocuments({
         userId,
-        status: "completed"
+        status: "completed",
       });
-      
+
       return count;
     } catch (error) {
       if (error instanceof Error) {

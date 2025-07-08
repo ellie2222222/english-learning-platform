@@ -330,46 +330,46 @@ class UserExerciseRepository implements IUserExerciseRepository {
         {
           userId: new mongoose.Types.ObjectId(userId),
           exerciseId: { $in: exerciseIds },
-          isDeleted: false
+          isDeleted: false,
         },
         { $set: { completed: true } },
         { session }
       );
-      
+
       // Find which exercises don't have records yet
       const existingRecords = await UserExerciseModel.find(
         {
           userId: new mongoose.Types.ObjectId(userId),
           exerciseId: { $in: exerciseIds },
-          isDeleted: false
+          isDeleted: false,
         },
         { exerciseId: 1 },
         { session }
       );
-      
-      const existingExerciseIds = existingRecords.map(record => 
+
+      const existingExerciseIds = existingRecords.map((record) =>
         record.exerciseId.toString()
       );
-      
-      const newExerciseIds = exerciseIds.filter(id => 
-        !existingExerciseIds.includes(id.toString())
+
+      const newExerciseIds = exerciseIds.filter(
+        (id) => !existingExerciseIds.includes(id.toString())
       );
-      
+
       // Create records for exercises that don't have them yet
       if (newExerciseIds.length > 0) {
-        const bulkOps = newExerciseIds.map(exerciseId => ({
+        const bulkOps = newExerciseIds.map((exerciseId) => ({
           insertOne: {
             document: {
               userId: new mongoose.Types.ObjectId(userId),
               exerciseId: exerciseId,
-              completed: true
-            }
-          }
+              completed: true,
+            },
+          },
         }));
-        
+
         await UserExerciseModel.bulkWrite(bulkOps, { session });
       }
-      
+
       return true;
     } catch (error) {
       if (error instanceof CustomException) {

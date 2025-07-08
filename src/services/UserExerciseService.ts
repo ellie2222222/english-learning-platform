@@ -129,7 +129,10 @@ class UserExerciseService implements IUserExerciseService {
         {
           userId: new mongoose.Types.ObjectId(userId),
           lessonId: new mongoose.Types.ObjectId(lessonId),
-          currentOrder: order,
+          currentOrder: {
+            for: LessonTrackingType.EXERCISE,
+            order,
+          },
         },
         session
       );
