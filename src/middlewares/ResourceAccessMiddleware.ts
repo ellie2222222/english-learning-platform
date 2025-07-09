@@ -16,7 +16,7 @@ import CourseModel from "../models/CourseModel";
 import UserModel from "../models/UserModel";
 import { CourseTypeEnum } from "../enums/CourseTypeEnum";
 import { ILesson } from "../interfaces/models/ILesson";
-import { IGrammar } from "../interfaces/models/IGrammar"; 
+import { IGrammar } from "../interfaces/models/IGrammar";
 import { IExercise } from "../interfaces/models/IExercise";
 import { IVocabulary } from "../interfaces/models/IVocabulary";
 import { ITest } from "../interfaces/models/ITest";
@@ -24,8 +24,7 @@ import { ITest } from "../interfaces/models/ITest";
 interface CourseTypeOnly {
   _id: mongoose.Types.ObjectId;
   type: string;
-} 
- 
+}
 
 const MembershipAccessLimitMiddleware = (resourceType: string) => {
   return async (
@@ -40,7 +39,7 @@ const MembershipAccessLimitMiddleware = (resourceType: string) => {
           "User not authenticated"
         );
       }
-      
+
       if (req.userInfo.role === UserEnum.ADMIN) {
         return next();
       }
@@ -61,6 +60,9 @@ const MembershipAccessLimitMiddleware = (resourceType: string) => {
         );
       }
 
+      if (user.role === UserEnum.ADMIN) {
+        next();
+      }
       switch (resourceType) {
         case ResourceType.COURSE: {
           courseType = await CourseModel.findOne({
@@ -163,13 +165,14 @@ const MembershipAccessLimitMiddleware = (resourceType: string) => {
         return;
       }
 
+      console.log(courseType, user.activeUntil);
       if (
         courseType &&
         (courseType as CourseTypeOnly).type === CourseTypeEnum.MEMBERSHIP &&
         (user.activeUntil === null ||
           new Date(user.activeUntil as Date) < new Date())
       ) {
-        res.status(StatusCodeEnum.Forbidden_403).json({
+        res.status(StatusCodeEnum.PaymentRequired_402).json({
           message: "Membership is required for this resource",
         });
         return;
@@ -340,7 +343,4 @@ const GenericResourceAccessMiddleware = (resourceType: string) => {
   };
 };
 
-export {
-  GenericResourceAccessMiddleware,
-  MembershipAccessLimitMiddleware,
-};
+export { GenericResourceAccessMiddleware, MembershipAccessLimitMiddleware };

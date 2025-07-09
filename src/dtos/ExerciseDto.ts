@@ -52,6 +52,7 @@ class ExerciseDto {
           !Array.isArray(options) ||
           options.some((opt: any) => typeof opt !== "string" || !opt)
         ) {
+          console.log(typeof options);
           throw new Error(
             "Options must be a non-empty array of strings for multiple choice exercise"
           );
@@ -208,30 +209,37 @@ class ExerciseDto {
     try {
       const { id } = req.params;
       const { userId, answers } = req.body;
- 
+
       this.validateObjectId(id);
- 
+
       if (!userId || !answers) {
         throw new Error(
           "Missing required fields: userId, answers, and description are required"
         );
       }
- 
-      this.validateObjectId(userId);  
- 
+
+      this.validateObjectId(userId);
+
       if (!Array.isArray(answers) || answers.length === 0) {
         throw new Error("Please provide at least one answer.");
       }
 
       answers.forEach((answer: any, index: number) => {
         if (!answer.exerciseId || !answer.selectedAnswers) {
-          throw new Error(`Answer #${index + 1} is missing required information.`);
+          throw new Error(
+            `Answer #${index + 1} is missing required information.`
+          );
         }
 
         this.validateObjectId(answer.exerciseId);
 
-        if (!Array.isArray(answer.selectedAnswers) || answer.selectedAnswers.length === 0) {
-          throw new Error(`Please select at least one answer for question #${index + 1}.`);
+        if (
+          !Array.isArray(answer.selectedAnswers) ||
+          answer.selectedAnswers.length === 0
+        ) {
+          throw new Error(
+            `Please select at least one answer for question #${index + 1}.`
+          );
         }
 
         answer.selectedAnswers = answer.selectedAnswers
@@ -259,30 +267,37 @@ class ExerciseDto {
     try {
       const { id } = req.params; // lessonId
       const { userId, answers } = req.body;
- 
+
       this.validateObjectId(id);
- 
+
       if (!userId || !answers) {
         throw new Error(
           "Missing required fields: userId and answers are required"
         );
       }
- 
-      this.validateObjectId(userId);  
- 
+
+      this.validateObjectId(userId);
+
       if (!Array.isArray(answers) || answers.length === 0) {
         throw new Error("Please provide at least one answer.");
       }
 
       answers.forEach((answer: any, index: number) => {
         if (!answer.exerciseId || !answer.selectedAnswers) {
-          throw new Error(`Answer #${index + 1} is missing required information.`);
+          throw new Error(
+            `Answer #${index + 1} is missing required information.`
+          );
         }
 
         this.validateObjectId(answer.exerciseId);
 
-        if (!Array.isArray(answer.selectedAnswers) || answer.selectedAnswers.length === 0) {
-          throw new Error(`Please select at least one answer for question #${index + 1}.`);
+        if (
+          !Array.isArray(answer.selectedAnswers) ||
+          answer.selectedAnswers.length === 0
+        ) {
+          throw new Error(
+            `Please select at least one answer for question #${index + 1}.`
+          );
         }
 
         answer.selectedAnswers = answer.selectedAnswers

@@ -40,15 +40,11 @@
  *                 description: The question for the exercise
  *                 example: "What is the capital of France?"
  *               answer:
- *                 oneOf:
- *                   - type: string
- *                     description: The correct answer for multiple_choice exercises, must be one of the options
- *                     example: "Paris"
- *                   - type: array
- *                     items:
- *                       type: string
- *                     description: Array of correct answers for translate, fill_in_the_blank, or image_translate exercises
- *                     example: ["Paris", "París"]
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of correct answers. For multiple_choice, must be a single-element array with one of the options. For translate, fill_in_the_blank, or image_translate, can be multiple correct answers.
+ *                 example: ["Paris", "París"]
  *               focus:
  *                 type: string
  *                 enum: [vocabulary, grammar]
@@ -124,15 +120,11 @@
  *                 description: Updated question for the exercise
  *                 example: "What is the capital of France?"
  *               answer:
- *                 oneOf:
- *                   - type: string
- *                     description: Updated answer for multiple_choice exercises, must be one of the options
- *                     example: "Paris"
- *                   - type: array
- *                     items:
- *                       type: string
- *                     description: Updated array of answers for translate, fill_in_the_blank, or image_translate exercises
- *                     example: ["Paris", "París"]
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Updated array of answers. For multiple_choice, must be a single-element array with one of the options. For translate, fill_in_the_blank, or image_translate, can be multiple correct answers.
+ *                 example: ["Paris", "París"]
  *               focus:
  *                 type: string
  *                 enum: [vocabulary, grammar]

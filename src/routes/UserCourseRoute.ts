@@ -9,6 +9,8 @@ import {
   OwnershipMiddleware,
   ResourceModel,
 } from "../middlewares/OwnershipMiddleware";
+import { MembershipAccessLimitMiddleware } from "../middlewares/ResourceAccessMiddleware";
+import { ResourceType } from "../enums/ResourceType";
 
 const userCourseController = Container.get(UserCourseController);
 const userCourseDto = new UserCourseDto();
@@ -19,6 +21,8 @@ userCourseRoutes.use(AuthMiddleware);
 userCourseRoutes.post(
   "/",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  //block user from enroll to membership course
+  MembershipAccessLimitMiddleware(ResourceType.COURSE),
   userCourseDto.createUserCourse,
   userCourseController.createUserCourse
 );
