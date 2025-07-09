@@ -180,7 +180,7 @@ class GrammarRepository implements IGrammarRepository {
         { lessonId: new mongoose.Types.ObjectId(lessonId) },
         { $set: { isDeleted: true } },
         { session }
-      ); 
+      );
 
       return result.acknowledged;
     } catch (error) {
@@ -203,7 +203,7 @@ class GrammarRepository implements IGrammarRepository {
         { lessonId: { $in: lessonIds } },
         { $set: { isDeleted: true } },
         { session }
-      ); 
+      );
 
       return result.acknowledged;
     } catch (error) {
@@ -244,6 +244,40 @@ class GrammarRepository implements IGrammarRepository {
         .exec();
       return grammar?.order || 0;
     } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async checkExistingGrammar(
+    lessonId: string,
+    title: string,
+    currentId?: string
+  ): Promise<IGrammar | null> {
+    try {
+      const normalized = title.trim().replace(/\s+/g, " ");
+      const matchQuery: any = {
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        title: {
+          $regex: `^${normalized}$`,
+          $options: "i",
+        },
+        isDeleted: false,
+      };
+
+      if (currentId) {
+        matchQuery["_id"] = { $ne: new mongoose.Types.ObjectId(currentId) };
+      }
+
+      const grammar = await GrammarModel.findOne(matchQuery);
+      return grammar;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"

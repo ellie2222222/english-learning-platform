@@ -22,7 +22,10 @@ class VocabularyRepository implements IVocabularyRepository {
   ): Promise<IVocabulary> {
     try {
       const options = session ? { session } : {};
-      const [newVocabulary] = await this.vocabularyModel.create([vocabulary], options);
+      const [newVocabulary] = await this.vocabularyModel.create(
+        [vocabulary],
+        options
+      );
       return newVocabulary;
     } catch (error) {
       throw new CustomException(
@@ -58,11 +61,7 @@ class VocabularyRepository implements IVocabularyRepository {
     try {
       const options = session ? { new: true, session } : { new: true };
       const deletedVocabulary = await this.vocabularyModel
-        .findByIdAndUpdate(
-          vocabularyId,
-          { isDeleted: true },
-          options
-        )
+        .findByIdAndUpdate(vocabularyId, { isDeleted: true }, options)
         .exec();
       return deletedVocabulary;
     } catch (error) {
@@ -190,7 +189,7 @@ class VocabularyRepository implements IVocabularyRepository {
         { lessonId: new mongoose.Types.ObjectId(lessonId) },
         { isDeleted: true },
         { session }
-      ); 
+      );
 
       return result.acknowledged;
     } catch (error) {
@@ -213,12 +212,14 @@ class VocabularyRepository implements IVocabularyRepository {
       const result = await this.vocabularyModel.updateMany(
         {
           lessonId: {
-            $in: lessonIds.map((id) => new mongoose.Types.ObjectId(id.toString())),
+            $in: lessonIds.map(
+              (id) => new mongoose.Types.ObjectId(id.toString())
+            ),
           },
         },
         { isDeleted: true },
         options
-      ); 
+      );
 
       return result.acknowledged;
     } catch (error) {
@@ -261,6 +262,40 @@ class VocabularyRepository implements IVocabularyRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
+  async checkDupplicated(
+    lessonId: string,
+    englishContent: string,
+    currentId?: string
+  ): Promise<IVocabulary | null> {
+    try {
+      // Normalize input: trim and collapse whitespace
+      const normalized = englishContent.trim().replace(/\s+/g, " ");
+      const matchQuery: any = {
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        englishContent: {
+          $regex: `^${normalized}$`,
+          $options: "i",
+        },
+        isDeleted: false,
+      };
+      if (currentId) {
+        matchQuery["_id"] = { $ne: new mongoose.Types.ObjectId(currentId) };
+      }
+      const vocab = await VocabularyModel.findOne(matchQuery);
+      return vocab;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve vocabularies"
       );
     }
   }

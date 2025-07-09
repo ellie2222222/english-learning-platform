@@ -166,7 +166,7 @@ class AIService implements IAIService {
           );
         }
 
-        console.log(jsonString);
+        // console.log(jsonString);
         try {
           // Parse the JSON string
           const parsedResponse = JSON.parse(jsonString);
