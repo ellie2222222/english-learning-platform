@@ -43,4 +43,10 @@ export interface IVocabularyRepository {
   getLessonIdByVocabularyId(vocabularyId: string): Promise<string | null>;
 
   getVocabularyOrder(lessonId: string): Promise<number>;
+
+  checkDupplicated(
+    lessonId: string,
+    englishContent: string,
+    currentId?: string
+  ): Promise<IVocabulary | null>;
 }

@@ -91,13 +91,11 @@ class GrammarService implements IGrammarService {
       }
 
       // Check for duplicate title within the same lesson
-      const existingGrammar = await this.grammarRepository.getGrammars({
+      const existingGrammar = await this.grammarRepository.checkExistingGrammar(
         lessonId,
-        title,
-        page: 1,
-        size: 1,
-      } as IQuery);
-      if (existingGrammar.data.length > 0) {
+        title
+      );
+      if (existingGrammar) {
         throw new CustomException(
           StatusCodeEnum.Conflict_409,
           `Grammar with title "${title}" already exists for this lesson`
@@ -179,16 +177,13 @@ class GrammarService implements IGrammarService {
 
       // Check for duplicate title within the same lesson if title is updated
       if (title && lessonId) {
-        const existingGrammar = await this.grammarRepository.getGrammars({
-          lessonId,
-          title,
-          page: 1,
-          size: 1,
-        } as IQuery);
-        if (
-          existingGrammar.data.length > 0 &&
-          existingGrammar.data[0]._id.toString() !== grammarId
-        ) {
+        const existingGrammar =
+          await this.grammarRepository.checkExistingGrammar(
+            lessonId,
+            title,
+            grammarId
+          );
+        if (existingGrammar) {
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             `Another grammar with title "${title}" already exists for this lesson`
@@ -196,9 +191,9 @@ class GrammarService implements IGrammarService {
         }
       }
 
-      const updateData: Partial<IGrammar> = {
+      const updateData = {
         ...(lessonId && {
-          lessonId: new mongoose.Schema.Types.ObjectId(lessonId),
+          lessonId: new mongoose.Types.ObjectId(lessonId),
         }),
         ...(title && { title }),
         ...(structure && { structure }),

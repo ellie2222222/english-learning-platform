@@ -93,13 +93,13 @@ class VocabularyService implements IVocabularyService {
 
       // Check for duplicate englishContent within the same lesson
       const existingVocabulary =
-        await this.vocabularyRepository.getVocabularies({
+        await this.vocabularyRepository.checkDupplicated(
           lessonId,
-          englishContent,
-          page: 1,
-          size: 1,
-        } as IQuery);
-      if (existingVocabulary.data.length > 0) {
+          englishContent
+        );
+
+      console.log(existingVocabulary);
+      if (existingVocabulary) {
         throw new CustomException(
           StatusCodeEnum.Conflict_409,
           `Vocabulary with English content "${englishContent}" already exists for this lesson`
@@ -192,16 +192,12 @@ class VocabularyService implements IVocabularyService {
       if (englishContent && (lessonId || vocabulary.lessonId)) {
         const targetLessonId = lessonId || vocabulary.lessonId.toString();
         const existingVocabulary =
-          await this.vocabularyRepository.getVocabularies({
-            lessonId: targetLessonId,
+          await this.vocabularyRepository.checkDupplicated(
+            targetLessonId,
             englishContent,
-            page: 1,
-            size: 1,
-          } as IQuery);
-        if (
-          existingVocabulary.data.length > 0 &&
-          existingVocabulary.data[0]._id.toString() !== vocabularyId
-        ) {
+            vocabularyId
+          );
+        if (existingVocabulary) {
           throw new CustomException(
             StatusCodeEnum.Conflict_409,
             `Another vocabulary with English content "${englishContent}" already exists for this lesson`
@@ -209,9 +205,9 @@ class VocabularyService implements IVocabularyService {
         }
       }
 
-      const updateData: Partial<IVocabulary> = {
+      const updateData = {
         ...(lessonId && {
-          lessonId: new mongoose.Schema.Types.ObjectId(lessonId),
+          lessonId: new mongoose.Types.ObjectId(lessonId),
         }),
         ...(englishContent && { englishContent }),
         ...(vietnameseContent && { vietnameseContent }),

@@ -36,4 +36,10 @@ export interface IGrammarRepository {
   getLessonIdByGrammarId(grammarId: string): Promise<string | null>;
 
   getGrammarOrder(lessonId: string): Promise<number>;
+
+  checkExistingGrammar(
+    lessonId: string,
+    title: string,
+    currentId?: string
+  ): Promise<IGrammar | null>;
 }
