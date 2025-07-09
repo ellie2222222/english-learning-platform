@@ -13,6 +13,7 @@ import CourseRepository from "../repositories/CourseRepository";
 import UserRepository from "../repositories/UserRepository";
 import { UserCourseStatusType } from "../enums/UserCourseStatus";
 import UserCourseRepository from "../repositories/UserCourseRepository";
+import { CourseTypeEnum } from "../enums/CourseTypeEnum";
 
 @Service()
 class UserCourseService implements IUserCourseService {
@@ -47,6 +48,18 @@ class UserCourseService implements IUserCourseService {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "Course not found"
+        );
+      }
+
+      if (
+        course.type === CourseTypeEnum.MEMBERSHIP &&
+        (!user.activeUntil ||
+          isNaN(new Date(user.activeUntil).getTime()) ||
+          new Date(user.activeUntil) < new Date())
+      ) {
+        throw new CustomException(
+          StatusCodeEnum.PaymentRequired_402,
+          "This course requires Membership"
         );
       }
 

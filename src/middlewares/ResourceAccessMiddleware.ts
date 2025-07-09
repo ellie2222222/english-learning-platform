@@ -165,7 +165,6 @@ const MembershipAccessLimitMiddleware = (resourceType: string) => {
         return;
       }
 
-      console.log(courseType, user.activeUntil);
       if (
         courseType &&
         (courseType as CourseTypeOnly).type === CourseTypeEnum.MEMBERSHIP &&

@@ -21,8 +21,6 @@ userCourseRoutes.use(AuthMiddleware);
 userCourseRoutes.post(
   "/",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  //block user from enroll to membership course
-  MembershipAccessLimitMiddleware(ResourceType.COURSE),
   userCourseDto.createUserCourse,
   userCourseController.createUserCourse
 );
