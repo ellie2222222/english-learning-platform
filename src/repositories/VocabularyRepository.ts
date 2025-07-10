@@ -1,5 +1,5 @@
 import { Service } from "typedi";
-import mongoose, { ClientSession, Model, Types } from "mongoose";
+import mongoose, { ClientSession, Model, mongo, Types } from "mongoose";
 import { IVocabulary } from "../interfaces/models/IVocabulary";
 import { IVocabularyRepository } from "../interfaces/repositories/IVocabularyRepository";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
@@ -287,6 +287,26 @@ class VocabularyRepository implements IVocabularyRepository {
       }
       const vocab = await VocabularyModel.findOne(matchQuery);
       return vocab;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve vocabularies"
+      );
+    }
+  }
+
+  async getAllVocabulariesByLessonId(lessonId: string): Promise<IVocabulary[]> {
+    try {
+      const vocabularies = await VocabularyModel.find({
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      });
+      return vocabularies;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;

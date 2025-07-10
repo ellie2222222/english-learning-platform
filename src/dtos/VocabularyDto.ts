@@ -86,7 +86,7 @@ class VocabularyDto {
       if (lessonId) this.validateObjectId(lessonId);
       if (englishContent) this.validateEnglishContent(englishContent);
       if (vietnameseContent) this.validateVietnameseContent(vietnameseContent);
-      this.validateImage(req, true);
+      this.validateImage(req, false);
 
       next();
     } catch (error) {

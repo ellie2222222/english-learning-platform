@@ -29,4 +29,9 @@ export interface ILessonRepository {
   getLessonsByCourseIdV2(courseId: string): Promise<ILesson[]>;
 
   getCourseIdByLessonId(lessonId: string): Promise<string | null>;
+
+  deleteLessonsByCourseId(
+    courseId: string,
+    session?: mongoose.ClientSession
+  ): Promise<boolean>;
 }

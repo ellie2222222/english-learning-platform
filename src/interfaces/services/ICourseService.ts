@@ -4,10 +4,14 @@ import { IPagination } from "../others/IPagination";
 import { ILesson } from "../models/ILesson";
 import { ITest } from "../models/ITest";
 import { IExercise } from "../models/IExercise";
+import { IGrammar } from "../models/IGrammar";
+import { IVocabulary } from "../models/IVocabulary";
 
 export interface ICourseDetails extends ICourse {
   lessons: Array<{
     lesson: ILesson;
+    vocabularies: IVocabulary[];
+    grammars: IGrammar[];
     exercises: IExercise[];
     tests: ITest[];
   }>;

@@ -1,6 +1,9 @@
 import { Inject, Service } from "typedi";
 import { ICourse } from "../interfaces/models/ICourse";
-import { ICourseService, ICourseDetails } from "../interfaces/services/ICourseService";
+import {
+  ICourseService,
+  ICourseDetails,
+} from "../interfaces/services/ICourseService";
 import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import Database from "../db/database";
@@ -16,6 +19,11 @@ import TestRepository from "../repositories/TestRepository";
 import ExerciseRepository from "../repositories/ExcerciseRepository";
 import { Types } from "mongoose";
 import { ILesson } from "../interfaces/models/ILesson";
+import { IVocabularyRepository } from "../interfaces/repositories/IVocabularyRepository";
+import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
+import { IGrammarRepository } from "../interfaces/repositories/IGrammarRepository";
+import { ITestRepository } from "../interfaces/repositories/ITestRepository";
+import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
 
 @Service()
 class CourseService implements ICourseService {
@@ -23,15 +31,15 @@ class CourseService implements ICourseService {
     @Inject(() => CourseRepository)
     private courseRepository: ICourseRepository,
     @Inject(() => LessonRepository)
-    private lessonRepository: LessonRepository,
+    private lessonRepository: ILessonRepository,
     @Inject(() => GrammarRepository)
-    private grammarRepository: GrammarRepository,
+    private grammarRepository: IGrammarRepository,
     @Inject(() => VocabularyRepository)
-    private vocabularyRepository: VocabularyRepository,
+    private vocabularyRepository: IVocabularyRepository,
     @Inject(() => TestRepository)
-    private testRepository: TestRepository,
+    private testRepository: ITestRepository,
     @Inject(() => ExerciseRepository)
-    private exerciseRepository: ExerciseRepository,
+    private exerciseRepository: IExerciseRepository,
     @Inject() private database: Database
   ) {}
 
@@ -41,7 +49,7 @@ class CourseService implements ICourseService {
     type: string,
     level: string,
     totalLessons: number | undefined = 0,
-    coverImage?: string | undefined,
+    coverImage?: string | undefined
   ): Promise<ICourse> {
     const session = await this.database.startTransaction();
     try {
@@ -56,7 +64,7 @@ class CourseService implements ICourseService {
         },
         session
       );
- 
+
       if (coverImage) {
         await cleanUpFile(coverImage, "create");
       }
@@ -87,7 +95,7 @@ class CourseService implements ICourseService {
     type?: string,
     level?: string,
     totalLessons?: number,
-    coverImage?: string | undefined,
+    coverImage?: string | undefined
   ): Promise<ICourse | null> {
     const session = await this.database.startTransaction();
     try {
@@ -161,35 +169,50 @@ class CourseService implements ICourseService {
       const lessons = await this.lessonRepository.getLessonsByCourseIdV2(id);
 
       // Extract lesson IDs
-      const lessonIds: Types.ObjectId[] = lessons.map(lesson => lesson._id as Types.ObjectId);
+      const lessonIds: Types.ObjectId[] = lessons.map(
+        (lesson) => lesson._id as Types.ObjectId
+      );
 
       // Delete related data sequentially to maintain transaction integrity
       // 1. Delete exercises first as they depend on lessons
-      await this.exerciseRepository.deleteExercisesByLessonIds(lessonIds, session);
-      
+      await this.exerciseRepository.deleteExercisesByLessonIds(
+        lessonIds,
+        session
+      );
+
       // 2. Delete grammar documents
       await this.grammarRepository.deleteGrammarByLessonIds(lessonIds, session);
-      
+
       // 3. Delete vocabulary documents
-      await this.vocabularyRepository.deleteVocabularyByLessonIds(lessonIds, session);
-      
+      await this.vocabularyRepository.deleteVocabularyByLessonIds(
+        lessonIds,
+        session
+      );
+
       // 4. Delete tests
-      await this.testRepository.deleteTestsByCourseOrLessons(id, lessonIds, session);
-      
+      await this.testRepository.deleteTestsByCourseOrLessons(
+        id,
+        lessonIds,
+        session
+      );
+
       // 5. Delete lessons
       await this.lessonRepository.deleteLessonsByCourseId(id, session);
 
       // 6. Finally, delete the course itself
-      const deletedCourse = await this.courseRepository.deleteCourse(id, session);
-      
+      const deletedCourse = await this.courseRepository.deleteCourse(
+        id,
+        session
+      );
+
       // Commit the transaction
       await this.database.commitTransaction(session);
-      
+
       return deletedCourse;
     } catch (error) {
       // Abort the transaction if there's an error
       await this.database.abortTransaction(session);
-      
+
       if (error instanceof CustomException) {
         throw error;
       }
@@ -259,15 +282,27 @@ class CourseService implements ICourseService {
               "Invalid lesson data"
             );
           }
-          const lessonId = typeof lesson._id === 'string' 
-            ? lesson._id 
-            : lesson._id.toString();
+          const lessonId =
+            typeof lesson._id === "string" ? lesson._id : lesson._id.toString();
 
-          const exercises = await this.exerciseRepository.getAllLessonExercise(lessonId);
-          const tests = await this.testRepository.getTestsByLessonIdV2(lessonId);
+          const exercises = await this.exerciseRepository.getAllLessonExercise(
+            lessonId
+          );
+          const tests = await this.testRepository.getTestsByLessonIdV2(
+            lessonId
+          );
 
+          const vocabularies =
+            await this.vocabularyRepository.getAllVocabulariesByLessonId(
+              lessonId
+            );
+
+          const grammars =
+            await this.grammarRepository.getAllGrammarsByLessonId(lessonId);
           return {
             lesson,
+            vocabularies,
+            grammars,
             exercises,
             tests,
           };
