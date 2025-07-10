@@ -42,4 +42,6 @@ export interface IGrammarRepository {
     title: string,
     currentId?: string
   ): Promise<IGrammar | null>;
+
+  getAllGrammarsByLessonId(lessonId: string): Promise<IGrammar[]>;
 }

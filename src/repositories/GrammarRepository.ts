@@ -284,6 +284,26 @@ class GrammarRepository implements IGrammarRepository {
       );
     }
   }
+
+  async getAllGrammarsByLessonId(lessonId: string): Promise<IGrammar[]> {
+    try {
+      const grammars = await GrammarModel.find({
+        lessonId: new mongoose.Types.ObjectId(lessonId),
+        isDeleted: false,
+      });
+
+      return grammars;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default GrammarRepository;

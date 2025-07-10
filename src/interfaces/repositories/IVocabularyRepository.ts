@@ -49,4 +49,6 @@ export interface IVocabularyRepository {
     englishContent: string,
     currentId?: string
   ): Promise<IVocabulary | null>;
+
+  getAllVocabulariesByLessonId(lessonId: string): Promise<IVocabulary[]>;
 }
