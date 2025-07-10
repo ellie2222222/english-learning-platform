@@ -19,10 +19,10 @@
  *           schema:
  *             type: object
  *             required:
- *               - exerciseId
+ *               - id
  *               - answer
  *             properties:
- *               exerciseId:
+ *               id:
  *                 type: string
  *                 description: The ID of the exercise being submitted
  *                 example: "507f1f77bcf86cd799439011"

@@ -62,14 +62,10 @@ class UserExerciseController {
 
   submitExercise = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { exerciseId, answer } = req.body;
+      const { id, answer } = req.body;
       const userId = req.userInfo.userId;
       const { userExercise, message } =
-        await this.userExerciseService.submitExercise(
-          exerciseId,
-          userId,
-          answer
-        );
+        await this.userExerciseService.submitExercise(id, userId, answer);
 
       res.status(StatusCodeEnum.Created_201).json({
         userExercise: userExercise,
