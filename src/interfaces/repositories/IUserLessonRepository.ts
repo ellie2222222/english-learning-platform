@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
 import { IUserLesson } from "../models/IUserLesson";
+import { ILesson } from "../models/ILesson";
 
 export interface IUserLessonRepository {
   createUserLesson(
@@ -41,4 +42,10 @@ export interface IUserLessonRepository {
   ): Promise<IUserLesson | null>;
 
   countCompletedByUserId(userId: string): Promise<number>;
+
+  getUserLessonBasedOnLessonIds(
+    userId: string,
+    courseLessons: ILesson[],
+    session?: mongoose.ClientSession
+  ): Promise<IUserLesson[]>;
 }

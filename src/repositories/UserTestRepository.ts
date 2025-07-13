@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 import { IUserTest } from "../interfaces/models/IUserTest";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
@@ -7,6 +7,8 @@ import { Service } from "typedi";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IUserTestRepository } from "../interfaces/repositories/IUserTestRepository";
 import UserTestModel from "../models/UserTestModel";
+import { ITest } from "../interfaces/models/ITest";
+import { UserTestStatusEnum } from "../enums/UserTestStatusEnum";
 
 @Service()
 class UserTestRepository implements IUserTestRepository {
@@ -393,6 +395,34 @@ class UserTestRepository implements IUserTestRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         "Error counting tests"
+      );
+    }
+  };
+
+  getUserTestsByTestIds = async (
+    userId: string,
+    courseTests: ITest[],
+    session?: ClientSession
+  ): Promise<IUserTest[]> => {
+    try {
+      const userTests = await UserTestModel.find({
+        userId: new mongoose.Types.ObjectId(userId),
+        testId: { $in: courseTests.map((test) => test._id) },
+        status: UserTestStatusEnum.PASSED,
+      })
+        .session(session ?? null)
+        .sort({ createdAt: -1 })
+        .lean();
+
+      return userTests;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   };

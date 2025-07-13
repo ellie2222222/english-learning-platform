@@ -49,6 +49,8 @@ import getLogger from "../utils/logger";
 import CourseRepository from "../repositories/CourseRepository";
 import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
 import { ExerciseFocusEnum } from "../enums/ExerciseFocusEnum";
+import UserLessonRepository from "../repositories/UserLessonRepository";
+import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
 
 @Service()
 class TestService implements ITestService {
@@ -73,6 +75,8 @@ class TestService implements ITestService {
     private userRepository: IUserRepository,
     @Inject(() => CourseRepository)
     private courseRepository: ICourseRepository,
+    @Inject(() => UserLessonRepository)
+    private userLessonRepository: IUserLessonRepository,
     @Inject() private database: Database
   ) {}
 
@@ -86,7 +90,10 @@ class TestService implements ITestService {
       throw new CustomException(StatusCodeEnum.NotFound_404, "User not found");
     }
     const userCourses =
-      await this.userCourseRepository.getUserCourseForAchievement(userId);
+      await this.userCourseRepository.getUserCourseForAchievement(
+        userId,
+        session
+      );
 
     const achievement = await this.achievementRepository.getClosestAchievement(
       AchievementTypeEnum.CouseCompletion,
@@ -254,11 +261,10 @@ class TestService implements ITestService {
             );
           }
 
-          if (courseId !== null) {
+          //logic error
+          if (courseId === null) {
             courseId = lesson.courseId.toString();
-          }
-
-          if (courseId?.toString() !== lesson.courseId.toString()) {
+          } else if (courseId?.toString() !== lesson.courseId.toString()) {
             throw new CustomException(
               StatusCodeEnum.Conflict_409,
               "A test's lessonIds must be inside the same course"
@@ -283,7 +289,7 @@ class TestService implements ITestService {
         );
 
         const exercise = await this.exerciseRepository.getExercisesForTest(
-          totalQuestions,
+          Number(totalQuestions),
           lessonObjectIds
         );
 
@@ -732,10 +738,12 @@ class TestService implements ITestService {
       );
 
       // 2. Check if all lessons are completed by the user
-      const userLessons = await UserLessonModel.find({
-        userId: new mongoose.Types.ObjectId(userId),
-        lessonId: { $in: courseLessons.map((lesson: ILesson) => lesson._id) },
-      });
+      const userLessons =
+        await this.userLessonRepository.getUserLessonBasedOnLessonIds(
+          userId,
+          courseLessons,
+          session
+        );
 
       const allLessonsCompleted =
         courseLessons.length > 0 &&
@@ -750,13 +758,11 @@ class TestService implements ITestService {
       );
 
       // 4. Check if all tests are passed by the user
-      const userTests = await UserTestModel.find({
-        userId: new mongoose.Types.ObjectId(userId),
-        testId: { $in: courseTests.map((test) => test._id) },
-        status: UserTestStatusEnum.PASSED,
-      })
-        .sort({ createdAt: -1 })
-        .lean();
+      const userTests = await this.userTestRepository.getUserTestsByTestIds(
+        userId,
+        courseTests,
+        session
+      );
 
       // Count unique test IDs that have been passed
       const passedTestIds = new Set<string>();
@@ -790,6 +796,7 @@ class TestService implements ITestService {
         { upsert: true, new: true, session }
       );
 
+      let averageScore: number | undefined;
       //increase user point if course is completed
       if (newStatus === UserCourseStatus.COMPLETED) {
         const course = await this.courseRepository.getCourseById(courseId);
@@ -802,14 +809,17 @@ class TestService implements ITestService {
           (sum: number, test: IUserTest) => sum + test.score,
           0
         );
-        const averageScore = Math.round(totalScore / userTests.length);
-
-        await UserCourseModel.findByIdAndUpdate(
-          userCourse._id,
-          { $set: { averageScore } },
-          { session }
-        );
+        averageScore = Math.round(totalScore / userTests.length);
       }
+
+      await this.userCourseRepository.completeCourseLogic(
+        userId,
+        courseId,
+        newStatus,
+        userLessons,
+        averageScore,
+        session
+      );
     } catch (error) {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
@@ -819,6 +829,7 @@ class TestService implements ITestService {
       );
     }
   }
+
   getUserTestByTestId = async (
     testId: string,
     requesterId: string
