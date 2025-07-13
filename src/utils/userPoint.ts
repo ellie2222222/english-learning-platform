@@ -74,6 +74,7 @@ const increaseUserPoint = async (
 
     case IncreasePointEnum.COURSE: {
       let key = getKeyFromCourseLevel(level);
+      console.log(key);
       config = await ConfigModel.findOne({
         key: key,
       }).select("value");

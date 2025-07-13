@@ -270,6 +270,7 @@ class ExerciseRepository implements IExerciseRepository {
         { $project: { answer: 0, explanation: 0 } },
       ]);
 
+      console.log(exercises.length);
       if (exercises.length < length) {
         throw new CustomException(
           StatusCodeEnum.InternalServerError_500,

@@ -8,6 +8,7 @@ import { IPagination } from "../interfaces/others/IPagination";
 import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
 import UserLessonModel from "../models/UserLessonModel";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
+import { ILesson } from "../interfaces/models/ILesson";
 
 @Service()
 class UserLessonRepository implements IUserLessonRepository {
@@ -409,6 +410,30 @@ class UserLessonRepository implements IUserLessonRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         "Error counting completed lessons"
+      );
+    }
+  };
+
+  getUserLessonBasedOnLessonIds = async (
+    userId: string,
+    courseLessons: ILesson[],
+    session?: mongoose.ClientSession
+  ): Promise<IUserLesson[]> => {
+    try {
+      const userLessons = await UserLessonModel.find({
+        userId: new mongoose.Types.ObjectId(userId),
+        lessonId: { $in: courseLessons.map((lesson: ILesson) => lesson._id) },
+      }).session(session ?? null);
+
+      return userLessons;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   };

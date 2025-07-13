@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 import { IUserCourse } from "../interfaces/models/IUserCourse";
 import { IQuery, OrderType, SortByType } from "../interfaces/others/IQuery";
 import CustomException from "../exceptions/CustomException";
@@ -8,7 +8,12 @@ import { IPagination } from "../interfaces/others/IPagination";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
 import UserCourseModel from "../models/UserCourseModel";
 import TestModel from "../models/TestModel";
-import { UserCourseStatus } from "../enums/UserCourseStatus";
+import {
+  UserCourseStatus,
+  UserCourseStatusType,
+} from "../enums/UserCourseStatus";
+import { IUserLesson } from "../interfaces/models/IUserLesson";
+import { UserLessonStatus } from "../enums/UserLessonStatus";
 
 @Service()
 class UserCourseRepository implements IUserCourseRepository {
@@ -435,7 +440,10 @@ class UserCourseRepository implements IUserCourseRepository {
     }
   }
 
-  async getUserCourseForAchievement(userId: string): Promise<IUserCourse[]> {
+  async getUserCourseForAchievement(
+    userId: string,
+    session?: ClientSession
+  ): Promise<IUserCourse[]> {
     try {
       const matchQuery = {
         userId: new mongoose.Types.ObjectId(userId),
@@ -468,7 +476,7 @@ class UserCourseRepository implements IUserCourseRepository {
             "user.resetPasswordPin": 0,
           },
         },
-      ]);
+      ]).session(session ?? null);
       return userCourses;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -551,6 +559,53 @@ class UserCourseRepository implements IUserCourseRepository {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         "Error counting completed courses"
+      );
+    }
+  };
+
+  completeCourseLogic = async (
+    userId: string,
+    courseId: string,
+    newStatus: UserCourseStatusType,
+    userLessons: IUserLesson[],
+    averageScore?: number,
+    session?: mongoose.ClientSession
+  ): Promise<IUserCourse> => {
+    try {
+      const data: {
+        status: UserCourseStatusType;
+        lessonFinished: number;
+        averageScore?: number;
+      } = {
+        status: newStatus,
+        lessonFinished: userLessons.filter(
+          (ul) => ul.status === UserLessonStatus.COMPLETED
+        ).length,
+      };
+
+      if (averageScore && averageScore !== undefined) {
+        data.averageScore = averageScore;
+      }
+      const userCourse = await UserCourseModel.findOneAndUpdate(
+        {
+          userId: new mongoose.Types.ObjectId(userId),
+          courseId: new mongoose.Types.ObjectId(courseId),
+        },
+        {
+          $set: data,
+        },
+        { upsert: true, new: true, session }
+      );
+
+      return userCourse;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
       );
     }
   };

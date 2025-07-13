@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
 import { IUserTest } from "../models/IUserTest";
+import { ITest } from "../models/ITest";
 
 export interface IUserTestRepository {
   createUserTest(
@@ -42,4 +43,10 @@ export interface IUserTestRepository {
   countCompletedByUserId(userId: string): Promise<number>;
 
   countUserTestByUserId(userId: string): Promise<number>;
+
+  getUserTestsByTestIds(
+    userId: string,
+    courseTests: ITest[],
+    session?: mongoose.ClientSession
+  ): Promise<IUserTest[]>;
 }
