@@ -32,6 +32,7 @@ import UserCourseRepository from "../repositories/UserCourseRepository";
 import { IUserCourseRepository } from "../interfaces/repositories/IUserCourseRepository";
 import increaseUserPoint from "../utils/userPoint";
 import { ILessonTracking } from "../interfaces/others/ILessonTracking";
+import { IncreasePointEnum } from "../enums/IncreasePointEnum";
 
 @Service()
 class UserLessonService implements IUserLessonService {
@@ -191,6 +192,8 @@ class UserLessonService implements IUserLessonService {
           },
         }
       );
+
+      await increaseUserPoint(userId, IncreasePointEnum.LESSON);
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
