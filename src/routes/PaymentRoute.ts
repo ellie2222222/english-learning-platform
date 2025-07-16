@@ -14,14 +14,14 @@ paymentRoutes.use(AuthMiddleware);
 
 paymentRoutes.post(
   "/vnpay/create",
-  RoleMiddleware([UserEnum.USER]),
+  RoleMiddleware([UserEnum.USER, UserEnum.ADMIN]),
   paymentDto.createVNPayPayment,
   paymentController.createVnpayPayment
 );
 
 paymentRoutes.post(
   "/paypal/create",
-  RoleMiddleware([UserEnum.USER]),
+  RoleMiddleware([UserEnum.USER, UserEnum.ADMIN]),
   paymentDto.createPaypalPayment,
   paymentController.createPaypalPayment
 );
