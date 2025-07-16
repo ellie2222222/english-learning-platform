@@ -71,10 +71,11 @@ class LessonDto {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const { courseId, name, description } = req.body;
+
+      const { name, description } = req.body;
 
       this.validateObjectId(id);
-      if (courseId) this.validateObjectId(courseId);
+
       if (name) this.validateName(name);
       if (description) this.validateDescription(description);
 
