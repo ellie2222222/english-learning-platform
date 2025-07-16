@@ -62,7 +62,7 @@ userRoutes.get(
 userRoutes.patch(
   "/:id",
   uploadFile.single("avatar"),
-  RoleMiddleware([UserEnum.ADMIN]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userDto.updateUser,
   userController.updateUser
 );

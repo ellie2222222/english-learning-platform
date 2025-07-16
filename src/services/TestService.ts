@@ -198,7 +198,7 @@ class TestService implements ITestService {
       );
 
       const exercise = await this.exerciseRepository.getExercisesForTest(
-        totalQuestions,
+        Number(totalQuestions),
         lessonObjectIds
       );
 
@@ -381,7 +381,7 @@ class TestService implements ITestService {
       );
 
       const exercises = await this.exerciseRepository.getExercisesForTest(
-        test.totalQuestions,
+        Number(test.totalQuestions),
         lessonObjectIds
       );
 
