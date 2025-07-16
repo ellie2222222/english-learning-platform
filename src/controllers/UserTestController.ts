@@ -112,6 +112,11 @@ class UserTestController {
         id,
         requesterId
       );
+
+      res.status(StatusCodeEnum.OK_200).json({
+        userTest,
+        message: "User test retrieved successfully",
+      });
     } catch (error) {
       next(error);
     }
