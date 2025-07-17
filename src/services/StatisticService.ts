@@ -42,7 +42,7 @@ class StatisticService implements IStatisticService {
   getRevenueOverTime = async (
     time: string,
     value?: number
-  ): Promise<IRevenue[]> => {
+  ): Promise<any> => {
     try {
       const today = new Date(
         Date.UTC(
@@ -51,82 +51,89 @@ class StatisticService implements IStatisticService {
           new Date().getUTCDate()
         )
       );
-
-      let firstDay: Date, lastDay: Date, interval: number, groupBy: string;
-
-      let formattedValue: number = today.getUTCFullYear();
+      let firstDay, lastDay, prevFirstDay, prevLastDay;
+      let interval: number;
+      let formattedValue;
+      let groupBy;
+      let prevValue;
 
       switch (time) {
-        case RevenueTimeEnum.DAY:
-          firstDay = new Date(today.setUTCHours(0, 0, 0, 0));
-          lastDay = new Date(today.setUTCHours(23, 59, 59, 999));
-          interval = 1;
+        case RevenueTimeEnum.MONTH: {
+          formattedValue = value ? value - 1 : today.getMonth();
+          const year = today.getUTCFullYear();
+          firstDay = new Date(Date.UTC(year, formattedValue, 1));
+          lastDay = new Date(Date.UTC(year, formattedValue + 1, 0, 23, 59, 59, 999));
+          // Previous month logic
+          let prevMonth = formattedValue - 1;
+          let prevYear = year;
+          if (prevMonth < 0) {
+            prevMonth = 11;
+            prevYear = year - 1;
+          }
+          prevFirstDay = new Date(Date.UTC(prevYear, prevMonth, 1));
+          prevLastDay = new Date(Date.UTC(prevYear, prevMonth + 1, 0, 23, 59, 59, 999));
+          interval = new Date(year, formattedValue + 1, 0).getDate();
           groupBy = "%Y-%m-%d";
           break;
-
-        case RevenueTimeEnum.WEEK:
-          firstDay = startOfWeek(today.setUTCHours(0, 0, 0, 0), {
-            weekStartsOn: 1,
-          });
-          lastDay = endOfWeek(today.setUTCHours(23, 59, 59, 999), {
-            weekStartsOn: 1,
-          });
-          interval = 7;
-          groupBy = "%Y-%m-%d";
-          break;
-
-        case RevenueTimeEnum.MONTH:
-          formattedValue = value ? value - 1 : today.getUTCMonth();
-          firstDay = startOfMonth(
-            new Date(today.getUTCFullYear(), formattedValue)
-          );
-          lastDay = endOfMonth(new Date(today.getUTCFullYear(), formattedValue));
-          interval = new Date(
-            today.getUTCFullYear(),
-            formattedValue + 1,
-            0
-          ).getDate();
-          groupBy = "%Y-%m-%d";
-          break;
-
-        case RevenueTimeEnum.YEAR:
-          formattedValue = value || today.getUTCFullYear();
-          firstDay = startOfYear(new Date(Date.UTC(formattedValue, 0, 1)));
-          lastDay = endOfYear(new Date(Date.UTC(formattedValue, 11, 31)));
+        }
+        case RevenueTimeEnum.YEAR: {
+          formattedValue = value ? value : today.getUTCFullYear();
+          firstDay = new Date(Date.UTC(Number(formattedValue), 0, 1));
+          lastDay = new Date(Date.UTC(Number(formattedValue), 11, 31, 23, 59, 59, 999));
+          prevValue = Number(formattedValue) - 1;
+          prevFirstDay = new Date(Date.UTC(prevValue, 0, 1));
+          prevLastDay = new Date(Date.UTC(prevValue, 11, 31, 23, 59, 59, 999));
           interval = 12;
           groupBy = "%Y-%m-01";
           break;
-
-        default:
+        }
+        default: {
           throw new CustomException(
             StatusCodeEnum.BadRequest_400,
             "Unsupported time type"
           );
+        }
       }
-
+      // Current period
       const receipts = await this.receiptRepository.getRevenueByTimeInterval(
-        firstDay,
-        lastDay,
+        firstDay as Date,
+        lastDay as Date,
         groupBy
       );
-
       const revenueMap = new Map<string, number>();
       receipts.forEach((r) => revenueMap.set(r.Date, r.Revenue));
-
-      const revenue: IRevenue[] = [];
+      const breakdown = [];
       for (let i = 0; i < interval; i++) {
         const date =
           time === RevenueTimeEnum.YEAR
-            ? new Date(Date.UTC(formattedValue, i, 1))
-            : addDays(firstDay, i);
+            ? new Date(Date.UTC(Number(formattedValue), i, 1))
+            : new Date(Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), i + 1));
         const dateKey = date.toISOString().split("T")[0];
-        revenue.push({
-          Date: dateKey,
-          Revenue: revenueMap.get(dateKey) || 0,
-        });
+        breakdown.push({ Date: dateKey, Revenue: revenueMap.get(dateKey) || 0 });
       }
-
-      return revenue;
+      const total = breakdown.reduce((sum, d) => sum + d.Revenue, 0);
+      // Previous period
+      const prevReceipts = await this.receiptRepository.getRevenueByTimeInterval(
+        prevFirstDay as Date,
+        prevLastDay as Date,
+        groupBy
+      );
+      const prevRevenueMap = new Map<string, number>();
+      prevReceipts.forEach((r) => prevRevenueMap.set(r.Date, r.Revenue));
+      const prevBreakdown = [];
+      for (let i = 0; i < interval; i++) {
+        const date =
+          time === RevenueTimeEnum.YEAR
+            ? new Date(Date.UTC(Number(prevValue), i, 1))
+            : new Date(Date.UTC(prevFirstDay.getUTCFullYear(), prevFirstDay.getUTCMonth(), i + 1));
+        const dateKey = date.toISOString().split("T")[0];
+        prevBreakdown.push({ Date: dateKey, Revenue: prevRevenueMap.get(dateKey) || 0 });
+      }
+      const prevTotal = prevBreakdown.reduce((sum, d) => sum + d.Revenue, 0);
+      return {
+        current: { breakdown, total },
+        previous: { breakdown: prevBreakdown, total: prevTotal }
+      };
     } catch (error) {
       if (error instanceof Error || error instanceof CustomException) {
         throw error;
@@ -138,7 +145,7 @@ class StatisticService implements IStatisticService {
     }
   };
 
-  getNewUsers = async (time: string, value?: number): Promise<INewUsers[]> => {
+  getNewUsers = async (time: string, value?: number): Promise<any> => {
     try {
       const today = new Date(
         Date.UTC(
@@ -147,75 +154,51 @@ class StatisticService implements IStatisticService {
           new Date().getUTCDate()
         )
       );
-      let firstDay, lastDay;
+      let firstDay, lastDay, prevFirstDay, prevLastDay;
       let interval: number;
       let newUsers = [];
       let formattedValue;
       let groupBy;
+      let prevValue;
 
       switch (time) {
-        case RevenueTimeEnum.DAY:
-          firstDay = new Date(today.setUTCHours(0, 0, 0, 0));
-          lastDay = new Date(today.setUTCHours(23, 59, 59, 999));
-          interval = 1;
-          groupBy = "%Y-%m-%d";
-          break;
-
-        case RevenueTimeEnum.WEEK:
-          firstDay = startOfWeek(today.setUTCHours(0, 0, 0, 0), {
-            weekStartsOn: 1,
-          });
-          lastDay = endOfWeek(today.setUTCHours(23, 59, 59, 999), {
-            weekStartsOn: 1,
-          });
-          interval = 7;
-          groupBy = "%Y-%m-%d";
-          break;
-        case RevenueTimeEnum.MONTH:
+        case RevenueTimeEnum.MONTH: {
           formattedValue = value ? value - 1 : today.getMonth();
-          firstDay = new Date(
-            startOfMonth(
-              new Date(
-                new Date(today.getUTCFullYear(), formattedValue).getTime() +
-                  24 * 60 * 60 * 1000
-              )
-            ).getTime() +
-              24 * 60 * 60 * 1000
-          );
-          lastDay = new Date(
-            endOfMonth(
-              new Date(
-                new Date(today.getUTCFullYear(), formattedValue).getTime() +
-                  24 * 60 * 60 * 1000
-              )
-            ).getTime() +
-              24 * 60 * 60 * 1000
-          );
-          interval = new Date(
-            today.getFullYear(),
-            formattedValue + 1,
-            0
-          ).getDate();
+          const year = today.getUTCFullYear();
+          firstDay = new Date(Date.UTC(year, formattedValue, 1));
+          lastDay = new Date(Date.UTC(year, formattedValue + 1, 0, 23, 59, 59, 999));
+          // Previous month logic
+          let prevMonth = formattedValue - 1;
+          let prevYear = year;
+          if (prevMonth < 0) {
+            prevMonth = 11;
+            prevYear = year - 1;
+          }
+          prevFirstDay = new Date(Date.UTC(prevYear, prevMonth, 1));
+          prevLastDay = new Date(Date.UTC(prevYear, prevMonth + 1, 0, 23, 59, 59, 999));
+          interval = new Date(year, formattedValue + 1, 0).getDate();
           groupBy = "%Y-%m-%d";
           break;
-        case RevenueTimeEnum.YEAR:
+        }
+        case RevenueTimeEnum.YEAR: {
           formattedValue = value ? value : today.getUTCFullYear();
-          firstDay = startOfYear(
-            new Date(Date.UTC(Number(formattedValue), 0, 2))
-          );
-          lastDay = endOfYear(
-            new Date(Date.UTC(Number(formattedValue), 11, 31))
-          );
-
+          firstDay = new Date(Date.UTC(Number(formattedValue), 0, 1));
+          lastDay = new Date(Date.UTC(Number(formattedValue), 11, 31, 23, 59, 59, 999));
+          prevValue = Number(formattedValue) - 1;
+          prevFirstDay = new Date(Date.UTC(prevValue, 0, 1));
+          prevLastDay = new Date(Date.UTC(prevValue, 11, 31, 23, 59, 59, 999));
           interval = 12;
           groupBy = "%Y-%m-01";
           break;
-        default:
+        }
+        default: {
           throw new CustomException(
             StatusCodeEnum.BadRequest_400,
             "Unsupported time type"
           );
+        }
       }
+      // Current period
       const users = await this.userRepository.getAllUsersTimeInterval(
         firstDay as Date,
         lastDay as Date,
@@ -223,23 +206,38 @@ class StatisticService implements IStatisticService {
       );
       const userMap = new Map<string, number>();
       users.forEach((u) => userMap.set(u.Date, u.newUsers));
-
-      newUsers = [];
+      const breakdown = [];
       for (let i = 0; i < interval; i++) {
         const date =
           time === RevenueTimeEnum.YEAR
-            ? new Date(
-                Date.UTC(Number(formattedValue ?? today.getUTCFullYear()), i, 1)
-              )
-            : addDays(firstDay, i);
+            ? new Date(Date.UTC(Number(formattedValue), i, 1))
+            : new Date(Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), i + 1));
         const dateKey = date.toISOString().split("T")[0];
-        newUsers.push({
-          Date: dateKey,
-          newUsers: userMap.get(dateKey) || 0,
-        });
+        breakdown.push({ Date: dateKey, newUsers: userMap.get(dateKey) || 0 });
       }
-
-      return newUsers;
+      const total = breakdown.reduce((sum, d) => sum + d.newUsers, 0);
+      // Previous period
+      const prevUsers = await this.userRepository.getAllUsersTimeInterval(
+        prevFirstDay as Date,
+        prevLastDay as Date,
+        groupBy
+      );
+      const prevUserMap = new Map<string, number>();
+      prevUsers.forEach((u) => prevUserMap.set(u.Date, u.newUsers));
+      const prevBreakdown = [];
+      for (let i = 0; i < interval; i++) {
+        const date =
+          time === RevenueTimeEnum.YEAR
+            ? new Date(Date.UTC(Number(prevValue), i, 1))
+            : new Date(Date.UTC(prevFirstDay.getUTCFullYear(), prevFirstDay.getUTCMonth(), i + 1));
+        const dateKey = date.toISOString().split("T")[0];
+        prevBreakdown.push({ Date: dateKey, newUsers: prevUserMap.get(dateKey) || 0 });
+      }
+      const prevTotal = prevBreakdown.reduce((sum, d) => sum + d.newUsers, 0);
+      return {
+        current: { breakdown, total },
+        previous: { breakdown: prevBreakdown, total: prevTotal }
+      };
     } catch (error) {
       if ((error as Error) || (error as CustomException)) {
         throw error;
@@ -312,6 +310,10 @@ class StatisticService implements IStatisticService {
       );
     }
   };
+
+  getActiveCourseCount = async (): Promise<number> => {
+    return await this.userCourseRepository.countActiveCourses();
+  }
 }
 
 export default StatisticService;

@@ -10,9 +10,9 @@ class StatisticDto {
         throw new Error("Time type is required");
       }
 
-      const timeValues = Object.values(RevenueTimeEnum) as string[];
-      if (!timeValues.includes(time as string)) {
-        throw new Error("Invalid time type");
+      const timeValues = [RevenueTimeEnum.MONTH, RevenueTimeEnum.YEAR];
+      if ((time as string) !== RevenueTimeEnum.MONTH && (time as string) !== RevenueTimeEnum.YEAR) {
+        throw new Error("Invalid time type: only 'month' and 'year' are supported for this endpoint");
       }
 
       if (
@@ -46,17 +46,17 @@ class StatisticDto {
         throw new Error("Time type is required");
       }
 
-      const timeValues = Object.values(RevenueTimeEnum) as string[];
-      if (!timeValues.includes(time as string)) {
-        throw new Error("Invalid time type");
+      const timeValues = [RevenueTimeEnum.MONTH, RevenueTimeEnum.YEAR];
+      if ((time as string) !== RevenueTimeEnum.MONTH && (time as string) !== RevenueTimeEnum.YEAR) {
+        throw new Error("Invalid time type: only 'month' and 'year' are supported for this endpoint");
       }
 
       if (
         time === RevenueTimeEnum.MONTH &&
         value &&
-        (parseInt(value as string) < 0 || parseInt(value as string) > 12)
+        (parseInt(value as string) < 1 || parseInt(value as string) > 12)
       ) {
-        throw new Error("Invalid month value");
+        throw new Error("Invalid month value: must be 1-12");
       }
 
       if (
@@ -64,7 +64,7 @@ class StatisticDto {
         value &&
         parseInt(value as string) > new Date().getFullYear()
       ) {
-        throw new Error("Invalid year value");
+        throw new Error("Invalid year value: must be less than or equal to current year");
       }
 
       next();

@@ -5,4 +5,5 @@ export interface IStatisticService {
   getNewUsers: (time: string, value?: number) => Promise<INewUsers[]>;
   getUserStatistics: (userId: string) => Promise<IUserStatistics>;
   getCompletionRate(): Promise<number>;
+  getActiveCourseCount(): Promise<number>;
 }
