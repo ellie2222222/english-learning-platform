@@ -13,6 +13,8 @@ import getLogger from "../utils/logger";
 import FlashcardRepository from "../repositories/FlashcardRepository";
 import { IFlashcardRepository } from "../interfaces/repositories/IFlashcardRepository";
 import UserEnum from "../enums/UserEnum";
+import UserRepository from "../repositories/UserRepository";
+import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 
 @Service()
 class FlashcardSetService implements IFlashcardSetService {
@@ -21,7 +23,9 @@ class FlashcardSetService implements IFlashcardSetService {
     private flashcardSetRepository: IFlashcardSetRepository,
     @Inject() private database: Database,
     @Inject(() => FlashcardRepository)
-    private flashcardRepository: IFlashcardRepository
+    private flashcardRepository: IFlashcardRepository,
+    @Inject(() => UserRepository)
+    private userRepository: IUserRepository
   ) {}
 
   createFlashcardSet = async (
@@ -82,7 +86,9 @@ class FlashcardSetService implements IFlashcardSetService {
         );
       }
 
-      if ((flashcardSet.userId as ObjectId).toString() !== userId) {
+      const user = await this.userRepository.getUserById(id);
+      const isAdmin = user?.role === UserEnum.ADMIN;
+      if ((flashcardSet.userId as ObjectId).toString() !== userId && isAdmin) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
           "You are not the author of this flashcard set and cannot update it"
@@ -145,7 +151,10 @@ class FlashcardSetService implements IFlashcardSetService {
       }
 
       // Allow admins to delete any flashcard set, otherwise check ownership
-      if (userRole !== UserEnum.ADMIN && (flashcardSet.userId as ObjectId).toString() !== userId) {
+      if (
+        userRole !== UserEnum.ADMIN &&
+        (flashcardSet.userId as ObjectId).toString() !== userId
+      ) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
           "You are not the author of this flashcard set and cannot delete it"
@@ -226,7 +235,8 @@ class FlashcardSetService implements IFlashcardSetService {
 
   async getFlashcardSetsByUserId(userId: string): Promise<IFlashcardSet[]> {
     try {
-      const flashcardSets = await this.flashcardSetRepository.getFlashcardSetsByUserId(userId);
+      const flashcardSets =
+        await this.flashcardSetRepository.getFlashcardSetsByUserId(userId);
       return flashcardSets;
     } catch (error) {
       throw new CustomException(
