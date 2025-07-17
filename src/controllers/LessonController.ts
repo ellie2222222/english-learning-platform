@@ -130,8 +130,8 @@ class LessonController {
       const lessons = await this.lessonService.getLessonsByCourseId(id, {
         page: page ? parseInt(page as string) : 1,
         size: size ? parseInt(size as string) : 10,
-        order: order as OrderType,
-        sortBy: sortBy as SortByType,
+        order: (order as OrderType) ?? OrderType.ASC,
+        sortBy: (sortBy as SortByType) ?? SortByType.DATE,
       });
       res.status(StatusCodeEnum.OK_200).json({
         ...lessons,

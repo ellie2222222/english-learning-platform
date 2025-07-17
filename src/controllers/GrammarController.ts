@@ -136,8 +136,8 @@ class GrammarController {
         {
           page: page ? parseInt(page as string) : 1,
           size: size ? parseInt(size as string) : 10,
-          order: order as OrderType,
-          sortBy: sortBy as SortByType,
+          order: (order as OrderType) ?? OrderType.ASC,
+          sortBy: (sortBy as SortByType) ?? SortByType.DATE,
         },
         userId
       );

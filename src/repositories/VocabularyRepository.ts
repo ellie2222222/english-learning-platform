@@ -106,7 +106,7 @@ class VocabularyRepository implements IVocabularyRepository {
       const vocabularies = await this.vocabularyModel
         .aggregate([
           { $match: matchQuery },
-          { $sort: { [sortField]: sortOrder } },
+          { $sort: { order: 1, [sortField]: sortOrder } },
           { $skip: skip },
           { $limit: query.size },
         ])
@@ -156,7 +156,7 @@ class VocabularyRepository implements IVocabularyRepository {
       const vocabularies = await this.vocabularyModel
         .aggregate([
           { $match: matchQuery },
-          { $sort: { [sortField]: sortOrder } },
+          { $sort: { order: 1, [sortField]: sortOrder } },
           { $skip: skip },
           { $limit: query.size },
         ])

@@ -125,7 +125,11 @@ class AchievementRepository implements IAchievementRepository {
   }
 
   async getAchievements(query: IQuery, type?: string): Promise<IPagination> {
-    type SearchQuery = { type?: string; name?: string; isDeleted: false };
+    type SearchQuery = {
+      type?: string;
+      name?: { $regex: string; $options: string };
+      isDeleted: false;
+    };
     try {
       const matchQuery: SearchQuery = { isDeleted: false };
 
@@ -134,7 +138,7 @@ class AchievementRepository implements IAchievementRepository {
       }
 
       if (query.search) {
-        matchQuery.name = query.search;
+        matchQuery.name = { $regex: query.search, $options: "i" };
       }
 
       let sortField = "createdAt";
