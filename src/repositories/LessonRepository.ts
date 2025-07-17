@@ -270,7 +270,7 @@ class LessonRepository implements ILessonRepository {
         { courseId: new mongoose.Types.ObjectId(courseId) },
         { $set: { isDeleted: true } },
         { session }
-      ); 
+      );
 
       return deletedLessons.acknowledged;
     } catch (error) {

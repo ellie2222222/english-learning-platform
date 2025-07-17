@@ -101,7 +101,7 @@ class GrammarRepository implements IGrammarRepository {
       const grammars = await this.grammarModel
         .aggregate([
           { $match: matchQuery },
-          { $sort: { [sortField]: sortOrder } },
+          { $sort: { order: 1, [sortField]: sortOrder } },
           { $skip: skip },
           { $limit: query.size },
         ])
@@ -149,7 +149,7 @@ class GrammarRepository implements IGrammarRepository {
       const grammars = await this.grammarModel
         .aggregate([
           { $match: matchQuery },
-          { $sort: { [sortField]: sortOrder } },
+          { $sort: { order: 1, [sortField]: sortOrder } },
           { $skip: skip },
           { $limit: query.size },
         ])
