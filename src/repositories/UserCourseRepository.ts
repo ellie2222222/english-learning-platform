@@ -609,6 +609,22 @@ class UserCourseRepository implements IUserCourseRepository {
       );
     }
   };
+
+  async countActiveCourses(): Promise<number> {
+    try {
+      const result = await UserCourseModel.aggregate([
+        { $match: { status: 'ongoing', isDeleted: false } },
+        { $group: { _id: '$courseId' } },
+        { $count: 'activeCourses' }
+      ]);
+      return result[0]?.activeCourses || 0;
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : 'Internal Server Error'
+      );
+    }
+  }
 }
 
 export default UserCourseRepository;

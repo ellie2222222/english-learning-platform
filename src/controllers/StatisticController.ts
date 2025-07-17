@@ -16,13 +16,12 @@ class StatisticController {
   ) => {
     try {
       const { time, value } = req.query;
-      const revenue = await this.statisticService.getRevenueOverTime(
+      const result = await this.statisticService.getRevenueOverTime(
         time as string,
         parseInt(value as string)
       );
-
       res.status(StatusCodeEnum.OK_200).json({
-        revenue: revenue,
+        revenue: result,
         message: "Get revenue over time successfully",
       });
     } catch (error) {
@@ -38,13 +37,13 @@ class StatisticController {
     try {
       const { time, value } = req.query;
 
-      const newUserOverTime = await this.statisticService.getNewUsers(
+      const result = await this.statisticService.getNewUsers(
         time as string,
         parseInt(value as string)
       );
 
       res.status(StatusCodeEnum.OK_200).json({
-        newUserOverTime: newUserOverTime,
+        newUserOverTime: result,
         message: "Get new user over time successfully",
       });
     } catch (error) {
@@ -83,6 +82,19 @@ class StatisticController {
         completionRate: completionRate,
         message: "Get completion rate successfully",
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getActiveCourseCount = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const count = await this.statisticService.getActiveCourseCount();
+      res.status(StatusCodeEnum.OK_200).json({ activeCourseCount: count });
     } catch (error) {
       next(error);
     }

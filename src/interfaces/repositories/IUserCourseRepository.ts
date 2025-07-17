@@ -50,4 +50,6 @@ export interface IUserCourseRepository {
     averageScore?: number,
     session?: mongoose.ClientSession
   ): Promise<IUserCourse>;
+
+  countActiveCourses(): Promise<number>;
 }

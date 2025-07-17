@@ -36,4 +36,9 @@ statisticRoutes.get(
   statisticController.getCompletionRate
 );
 
+statisticRoutes.get(
+  "/active-courses",
+  statisticController.getActiveCourseCount
+);
+
 export default statisticRoutes;
