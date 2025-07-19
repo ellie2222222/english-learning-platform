@@ -4,6 +4,7 @@ import ms from "ms";
 import { IAuthService } from "../interfaces/services/IAuthService";
 import { Inject, Service } from "typedi";
 import AuthService from "../services/AuthService";
+import CustomException from "../exceptions/CustomException";
 
 @Service()
 class AuthController {
@@ -116,6 +117,15 @@ class AuthController {
 
       res.redirect(`${process.env.FRONTEND_URL}`);
     } catch (error) {
+      if (
+        error instanceof CustomException &&
+        error.code === StatusCodeEnum.Conflict_409
+      ) {
+        res.render("../templates/Whoops.ejs", {
+          frontendUrl: process.env.FRONTEND_URL,
+        });
+        return;
+      }
       next(error);
     }
   };
