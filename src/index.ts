@@ -40,6 +40,8 @@ import aiRoutes from "./routes/AIRoutes";
 import StatusCodeEnum from "./enums/StatusCodeEnum";
 import statisticRoutes from "./routes/StatisticRoute";
 import configRoutes from "./routes/ConfigRoute";
+import session from "express-session";
+import passport from "./configs/passportConfig";
 
 dotenv.config();
 
@@ -48,6 +50,17 @@ const PORT = process.env.PORT || 4000;
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "templates"));
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET!,
+    resave: true,
+    saveUninitialized: true,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/assets", express.static(path.join(__dirname, "..", "assets")));
 app.use(cookieParser());
 

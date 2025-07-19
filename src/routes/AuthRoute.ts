@@ -5,7 +5,7 @@ import AuthMiddleware from "../middlewares/AuthMiddleware";
 import AuthController from "../controllers/AuthController";
 import AuthService from "../services/AuthService";
 import UserRepository from "../repositories/UserRepository";
-import passport from "passport";
+import passport from "../configs/passportConfig";
 import AuthDto from "../dtos/AuthDto";
 import Container from "typedi";
 

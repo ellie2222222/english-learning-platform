@@ -370,10 +370,7 @@ class AuthService implements IAuthService {
       };
 
       // Check if user already exists
-      let user: IUser | null = await this.userRepository.getGoogleUser(
-        email,
-        sub
-      );
+      let user: IUser | null = await this.userRepository.getUserByEmail(email);
 
       // If the user doesn't exist, create a new user
       if (!user) {
@@ -383,6 +380,13 @@ class AuthService implements IAuthService {
           avatar: picture,
           googleId: sub,
         });
+      }
+
+      if (user && user.googleId === null) {
+        throw new CustomException(
+          StatusCodeEnum.Conflict_409,
+          "This email has been taken"
+        );
       }
 
       // Generate tokens
