@@ -26,9 +26,17 @@ authRoutes.get(
 
 authRoutes.get(
   "/google/redirect",
-  passport.authenticate("google"),
+  passport.authenticate("google", {
+    failureRedirect: "/api/auth/google/cancelled",
+  }),
   authController.loginGoogle
 );
+
+authRoutes.get("/google/cancelled", (req, res) => {
+  res.render("../templates/GoogleCancelled.ejs", {
+    frontendUrl: process.env.FRONTEND_URL,
+  });
+});
 
 authRoutes.post("/login", authDto.login, authController.login);
 
