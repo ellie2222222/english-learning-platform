@@ -36,6 +36,9 @@ const UserCourseModelSchema = new Schema<IUserCourse>(
   { timestamps: true }
 );
 
+// Add unique compound index to prevent duplicate enrollments
+UserCourseModelSchema.index({ userId: 1, courseId: 1 }, { unique: true });
+
 const UserCourseModel: Model<IUserCourse> = mongoose.model<IUserCourse>(
   "UserCourse",
   UserCourseModelSchema
