@@ -63,6 +63,21 @@ class UserCourseService implements IUserCourseService {
         );
       }
 
+      // Check if user is already enrolled in this course
+      const existingUserCourse = await this.userCourseRepository.getUserCourseByCourseId(
+        courseId,
+        userId
+      );
+      
+      if (existingUserCourse) {
+        // If user is already enrolled, return the existing enrollment
+        await this.database.commitTransaction(session);
+        throw new CustomException(
+          StatusCodeEnum.Conflict_409,
+          "You are already enrolled in this course"
+        );
+      }
+
       const userCourse = await this.userCourseRepository.createUserCourse(
         {
           userId,
@@ -80,6 +95,15 @@ class UserCourseService implements IUserCourseService {
       if (error instanceof CustomException) {
         throw error;
       }
+      
+      // Handle MongoDB duplicate key error
+      if (error instanceof Error && error.message.includes('duplicate key error')) {
+        throw new CustomException(
+          StatusCodeEnum.Conflict_409,
+          "You are already enrolled in this course"
+        );
+      }
+      
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Failed to create user course"
