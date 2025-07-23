@@ -190,7 +190,7 @@ HUGGINGFACE_AI_PROVIDER=cerebras
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/english-learning-platform.git
+git clone https://github.com/ellie2222222/english-learning-platform.git
 cd english-learning-platform
 
 # Install dependencies
