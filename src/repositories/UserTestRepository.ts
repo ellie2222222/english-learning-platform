@@ -343,11 +343,14 @@ class UserTestRepository implements IUserTestRepository {
     requesterId: string
   ): Promise<IUserTest | null> {
     try {
+      // Get the latest attempt for this test and user
       const userTest = await UserTestModel.findOne({
         testId: new mongoose.Types.ObjectId(testId),
         userId: new mongoose.Types.ObjectId(requesterId),
         isDeleted: false,
-      });
+      })
+        .sort({ attemptNo: -1 }) // Sort by attempt number descending to get latest
+        .exec();
 
       return userTest;
     } catch (error) {
@@ -405,14 +408,29 @@ class UserTestRepository implements IUserTestRepository {
     session?: ClientSession
   ): Promise<IUserTest[]> => {
     try {
-      const userTests = await UserTestModel.find({
-        userId: new mongoose.Types.ObjectId(userId),
-        testId: { $in: courseTests.map((test) => test._id) },
-        status: UserTestStatusEnum.PASSED,
-      })
-        .session(session ?? null)
-        .sort({ createdAt: -1 })
-        .lean();
+      // Use aggregation to get the latest attempt for each test
+      const userTests = await UserTestModel.aggregate([
+        {
+          $match: {
+            userId: new mongoose.Types.ObjectId(userId),
+            testId: { $in: courseTests.map((test) => test._id) },
+            status: UserTestStatusEnum.PASSED,
+            isDeleted: false,
+          },
+        },
+        {
+          $sort: { attemptNo: -1 }, // Sort by attempt number descending
+        },
+        {
+          $group: {
+            _id: "$testId", // Group by testId
+            latestAttempt: { $first: "$$ROOT" }, // Get the first (latest) attempt for each test
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latestAttempt" }, // Replace root with the latest attempt
+        },
+      ]).session(session ?? null);
 
       return userTests;
     } catch (error) {

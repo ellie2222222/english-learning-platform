@@ -640,7 +640,7 @@ class TestService implements ITestService {
                 incorrectDetail.totalQuestion
               } questions, ${
                 incorrectDetail.incorrectQuestion
-              } questions are incorrect, \n About focus:${
+              } questions are incorrect, \n About focus: ${
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]
               } questions are incorrect in vocabulary, \n ${
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]
@@ -659,7 +659,7 @@ class TestService implements ITestService {
                 incorrectDetail.totalQuestion
               } questions, ${
                 incorrectDetail.incorrectQuestion
-              } questions are incorrect, \n About focus:${
+              } questions are incorrect, \n About focus: ${
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]
               } questions are incorrect in vocabulary, \n ${
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]
@@ -803,7 +803,8 @@ class TestService implements ITestService {
         const level = course?.level;
         await increaseUserPoint(userId, IncreasePointEnum.COURSE, level);
       }
-      // Calculate and update average score if there are passed tests
+      // Calculate and update average score from latest attempts only
+      // Note: userTests already contains only the latest attempts per test due to getUserTestsByTestIds aggregation
       if (userTests.length > 0) {
         const totalScore = userTests.reduce(
           (sum: number, test: IUserTest) => sum + test.score,
