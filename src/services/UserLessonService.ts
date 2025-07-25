@@ -157,7 +157,7 @@ class UserLessonService implements IUserLessonService {
       if (incompleteExercises.length > 0) {
         throw new CustomException(
           StatusCodeEnum.BadRequest_400,
-          "To complete the lesson, you need to complete all of it's exercises"
+          "To complete the lesson, you need to complete all of its exercises"
         );
       }
 
