@@ -11,7 +11,11 @@ class ReceiptController {
     @Inject(() => ReceiptService) private receiptService: IReceiptService
   ) {}
 
-  createReceipt = async (req: Request, res: Response, next: NextFunction) => {
+  createReceipt = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const {
         amount,
@@ -39,7 +43,11 @@ class ReceiptController {
     }
   };
 
-  getReceipt = async (req: Request, res: Response, next: NextFunction) => {
+  getReceipt = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const requesterId = req.userInfo.userId;
       const { id } = req.params;
@@ -54,7 +62,11 @@ class ReceiptController {
     }
   };
 
-  getReceipts = async (req: Request, res: Response, next: NextFunction) => {
+  getReceipts = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search } = req.query;
       const requesterId = req.userInfo.userId;
@@ -80,7 +92,11 @@ class ReceiptController {
     }
   };
 
-  getAllReceipt = async (req: Request, res: Response, next: NextFunction) => {
+  getAllReceipt = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search } = req.query;
 

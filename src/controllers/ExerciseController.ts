@@ -13,7 +13,11 @@ class ExerciseController {
     @Inject(() => ExerciseService) private exerciseService: IExerciseService
   ) {}
 
-  createExercise = async (req: Request, res: Response, next: NextFunction) => {
+  createExercise = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const files = req.files as { [key: string]: Express.Multer.File[] };
 
@@ -56,7 +60,11 @@ class ExerciseController {
     }
   };
 
-  updateExercise = async (req: Request, res: Response, next: NextFunction) => {
+  updateExercise = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const files = req.files as { [key: string]: Express.Multer.File[] };
 
@@ -98,7 +106,11 @@ class ExerciseController {
     }
   };
 
-  deleteExercise = async (req: Request, res: Response, next: NextFunction) => {
+  deleteExercise = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
 
@@ -112,7 +124,11 @@ class ExerciseController {
     }
   };
 
-  getExercises = async (req: Request, res: Response, next: NextFunction) => {
+  getExercises = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const lessonId = req.params.id;
       const { page, size, order, sortBy, search } = req.query;
@@ -137,7 +153,11 @@ class ExerciseController {
     }
   };
 
-  getExercise = async (req: Request, res: Response, next: NextFunction) => {
+  getExercise = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const exercise = await this.exerciseService.getExercise(id);
@@ -151,20 +171,24 @@ class ExerciseController {
     }
   };
 
-  submitExercises = async (req: Request, res: Response, next: NextFunction) => {
+  submitExercises = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { userId, answers } = req.body;
       const { id } = req.params;
-      
+
       const submission = await this.exerciseService.submitExercises({
         userId,
         answers,
-        lessonId: id
+        lessonId: id,
       });
-      
+
       res.status(StatusCodeEnum.OK_200).json({
         submission,
-        message: "Exercises submitted successfully"
+        message: "Exercises submitted successfully",
       });
     } catch (error) {
       next(error);

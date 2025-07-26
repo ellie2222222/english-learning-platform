@@ -142,7 +142,7 @@ class PaymentController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     let vnp_Params = req.query;
 
     let platform = PlatformEnum.WEB;

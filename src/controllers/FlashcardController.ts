@@ -11,7 +11,11 @@ class FlashcardController {
     @Inject(() => FlashcardService) private flashcardService: IFlashcardService
   ) {}
 
-  createFlashcard = async (req: Request, res: Response, next: NextFunction) => {
+  createFlashcard = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { englishContent, vietnameseContent, flashcardSetId } = req.body;
 
@@ -33,7 +37,11 @@ class FlashcardController {
     }
   };
 
-  updateFlashcard = async (req: Request, res: Response, next: NextFunction) => {
+  updateFlashcard = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { englishContent, vietnameseContent } = req.body;
       const { id } = req.params;
@@ -55,12 +63,20 @@ class FlashcardController {
     }
   };
 
-  deleteFlashcard = async (req: Request, res: Response, next: NextFunction) => {
+  deleteFlashcard = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { userId, role } = req.userInfo;
 
-      const flashcard = await this.flashcardService.deleteFlashcard(id, userId, role);
+      const flashcard = await this.flashcardService.deleteFlashcard(
+        id,
+        userId,
+        role
+      );
 
       res.status(StatusCodeEnum.OK_200).json({
         flashcard: flashcard,
@@ -71,7 +87,11 @@ class FlashcardController {
     }
   };
 
-  getFlashcards = async (req: Request, res: Response, next: NextFunction) => {
+  getFlashcards = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, search, order, sortBy } = req.query;
       const { id } = req.params;
@@ -93,7 +113,11 @@ class FlashcardController {
     }
   };
 
-  getFlashcard = async (req: Request, res: Response, next: NextFunction) => {
+  getFlashcard = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
 

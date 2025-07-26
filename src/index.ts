@@ -71,6 +71,7 @@ app.use(
       process.env.FRONTEND_URL as string,
       process.env.MOBILE_URL as string,
       "http://localhost:3000",
+      "http://localhost:8081",
     ],
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],

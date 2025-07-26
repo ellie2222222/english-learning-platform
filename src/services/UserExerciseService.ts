@@ -42,7 +42,7 @@ class UserExerciseService implements IUserExerciseService {
     userId: string,
     answer: string,
     session: mongoose.ClientSession
-  ) => {
+  ): Promise<{ userExercise: IUserExercise | null; message: string }> => {
     type updateData = {
       exerciseId?: mongoose.Types.ObjectId;
       userId?: mongoose.Types.ObjectId;
@@ -119,7 +119,7 @@ class UserExerciseService implements IUserExerciseService {
     lessonId: string,
     order: number,
     session: mongoose.ClientSession
-  ) => {
+  ): Promise<void> => {
     const userLesson = await this.userLessonRepository.getExistingUserLesson(
       userId,
       lessonId
