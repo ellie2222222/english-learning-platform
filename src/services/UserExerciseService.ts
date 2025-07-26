@@ -48,14 +48,12 @@ class UserExerciseService implements IUserExerciseService {
       userId?: mongoose.Types.ObjectId;
       completed?: boolean;
     };
-    //normalize
     let isCorrect = false;
     const normalizedAnswer = this.normalizeString(answer);
     const normalizedCorrectAnswers = (exercise.answer as string[]).map((a) =>
       this.normalizeString(a)
     );
 
-    // Check if user already completed the exercise correctly
     const existingUserExercise =
       await this.userExerciseRepository.getUserExerciseByExerciseId(
         userId,
@@ -73,7 +71,6 @@ class UserExerciseService implements IUserExerciseService {
       };
     }
 
-    // Initialize user exercise data
     const data: updateData = {
       exerciseId: new mongoose.Types.ObjectId(
         (exercise._id as ObjectId).toString()
@@ -82,7 +79,6 @@ class UserExerciseService implements IUserExerciseService {
       completed: false,
     };
 
-    // Check answer based on exercise type
     switch (exercise.type) {
       case ExerciseTypeEnum.MULTIPLE_CHOICE:
       case ExerciseTypeEnum.FILL_IN_THE_BLANK:
@@ -99,7 +95,6 @@ class UserExerciseService implements IUserExerciseService {
         );
     }
 
-    // Save or update the user exercise
     const savedExercise = existingUserExercise
       ? await this.userExerciseRepository.updateUserExercise(
           (existingUserExercise._id as ObjectId).toString(),
@@ -140,8 +135,6 @@ class UserExerciseService implements IUserExerciseService {
       return;
     }
 
-    //what if this did  not exist before update ?
-    //handling tracking for exercise in lesson
     const currentOrderArr = [...(userLesson.currentOrder || [])];
     const idx = currentOrderArr.findIndex(
       (item) => item.for === LessonTrackingType.EXERCISE

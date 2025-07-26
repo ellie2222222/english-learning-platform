@@ -2,10 +2,8 @@ import { createLogger, format, transports, Logger } from "winston";
 
 const { combine, timestamp, label, printf, colorize } = format;
 
-// ANSI color codes for label styling
-const coloredLabel = (text: string) => `\x1b[33m${text}\x1b[0m`; // Purple
+const coloredLabel = (text: string) => `\x1b[33m${text}\x1b[0m`;
 
-// Define the log format with a colored label
 const logFormat = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${coloredLabel(String(label))}] ${level}: ${message}`;
 });

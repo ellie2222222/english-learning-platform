@@ -14,17 +14,31 @@ export interface IUserLessonService {
   updateUserLesson(
     userLessonId: string,
     userId: string,
-    status?: string
+    status: string
   ): Promise<IUserLesson | null>;
 
-  deleteUserLesson(userLessonId: string): Promise<IUserLesson | null>;
+  deleteUserLesson(id: string): Promise<IUserLesson | null>;
 
   getUserLessonById(userLessonId: string): Promise<IUserLesson | null>;
 
-  getUserLessonsByUserId(userId: string, query: IQuery): Promise<IPagination>;
+  getUserLessonsByUserId(
+    userId: string,
+    query: IQuery
+  ): Promise<IPagination>;
 
-  getUserLessonByLessonId: (
+  getUserLessonsByCourseId(
+    userId: string,
+    courseId: string
+  ): Promise<IUserLesson[]>;
+
+  getUserLessonByLessonId(
     lessonId: string,
     userId: string
-  ) => Promise<IUserLesson>;
+  ): Promise<IUserLesson>;
+
+  checkUserLessonCompletion(
+    lessonId: string,
+    userId: string,
+    points: number
+  ): Promise<void>;
 }

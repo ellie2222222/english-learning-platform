@@ -220,6 +220,60 @@ class UserLessonRepository implements IUserLessonRepository {
     }
   }
 
+  async getUserLessonsByCourseId(
+    userId: string,
+    courseId: string
+  ): Promise<IUserLesson[]> {
+    try {
+      const userLessons = await UserLessonModel.aggregate([
+        {
+          $match: {
+            userId: new mongoose.Types.ObjectId(userId),
+            isDeleted: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "lessons",
+            localField: "lessonId",
+            foreignField: "_id",
+            as: "lesson",
+          },
+        },
+        { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+        {
+          $match: {
+            "lesson.courseId": new mongoose.Types.ObjectId(courseId),
+            "lesson.isDeleted": false,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            lessonId: 1,
+            currentOrder: 1,
+            status: 1,
+            isDeleted: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            lesson: 1,
+          },
+        },
+      ]);
+
+      return userLessons;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
+
   async checkExistingUserLesson(
     userId: string,
     lessonId: string

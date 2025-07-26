@@ -10,9 +10,6 @@ import CustomException from "../exceptions/CustomException";
 class AuthController {
   constructor(@Inject(() => AuthService) private authService: IAuthService) {}
 
-  /**
-   * Handles user login.
-   */
   login = async (
     req: Request,
     res: Response,
@@ -83,9 +80,6 @@ class AuthController {
     }
   };
 
-  /**
-   * Handle Google login
-   */
   loginGoogle = async (
     req: Request,
     res: Response,
