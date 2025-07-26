@@ -412,6 +412,37 @@ class UserLessonService implements IUserLessonService {
     }
   }
 
+  async getUserLessonsByCourseId(
+    userId: string,
+    courseId: string
+  ): Promise<IUserLesson[]> {
+    try {
+      const user = await this.userRepository.getUserById(userId);
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+
+      const userLessons = await this.userLessonRepository.getUserLessonsByCourseId(
+        userId,
+        courseId
+      );
+      return userLessons;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error
+          ? error.message
+          : "Failed to retrieve user lessons by course"
+      );
+    }
+  }
+
   getUserLessonByLessonId = async (
     lessonId: string,
     userId: string

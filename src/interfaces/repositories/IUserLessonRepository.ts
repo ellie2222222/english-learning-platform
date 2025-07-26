@@ -25,6 +25,8 @@ export interface IUserLessonRepository {
 
   getUserLessonsByUserId(userId: string, query: IQuery): Promise<IPagination>;
 
+  getUserLessonsByCourseId(userId: string, courseId: string): Promise<IUserLesson[]>;
+
   checkExistingUserLesson(userId: string, lessonId: string): Promise<boolean>;
 
   getExistingUserLesson(

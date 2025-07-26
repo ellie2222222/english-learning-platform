@@ -46,6 +46,12 @@ userLessonRoutes.get(
 );
 
 userLessonRoutes.get(
+  "/:userId/course/:courseId",
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
+  userLessonController.getUserLessonsByCourseId
+);
+
+userLessonRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   OwnershipMiddleware(ResourceModel.USER_LESSON),

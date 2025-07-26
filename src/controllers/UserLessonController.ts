@@ -132,6 +132,26 @@ class UserLessonController {
     }
   };
 
+  getUserLessonsByCourseId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { userId, courseId } = req.params;
+      const userLessons = await this.userLessonService.getUserLessonsByCourseId(
+        userId,
+        courseId
+      );
+      res.status(StatusCodeEnum.OK_200).json({
+        data: userLessons,
+        message: "User lessons by course retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getUserLessonByLessonId = async (
     req: Request,
     res: Response,
