@@ -82,7 +82,6 @@ class VocabularyService implements IVocabularyService {
   ): Promise<IVocabulary> {
     const session = await this.database.startTransaction();
     try {
-      // Validate lessonId
       const lesson = await this.lessonRepository.getLessonById(lessonId);
       if (!lesson) {
         throw new CustomException(
@@ -91,7 +90,6 @@ class VocabularyService implements IVocabularyService {
         );
       }
 
-      // Check for duplicate englishContent within the same lesson
       const existingVocabulary =
         await this.vocabularyRepository.checkDupplicated(
           lessonId,
@@ -124,7 +122,6 @@ class VocabularyService implements IVocabularyService {
         await cleanUpFile(imageUrl, "create");
       }
 
-      //update lesson length
       const updatedLength = [...lesson.length];
       const idx = updatedLength.findIndex(
         (item) => item.for === LessonTrackingType.VOCABULARY
@@ -166,7 +163,6 @@ class VocabularyService implements IVocabularyService {
   ): Promise<IVocabulary | null> {
     const session = await this.database.startTransaction();
     try {
-      // Validate vocabulary exists
       const vocabulary = await this.vocabularyRepository.getVocabularyById(
         vocabularyId
       );
@@ -177,7 +173,6 @@ class VocabularyService implements IVocabularyService {
         );
       }
 
-      // Validate lessonId if provided
       if (lessonId) {
         const lesson = await this.lessonRepository.getLessonById(lessonId);
         if (!lesson) {
@@ -188,7 +183,6 @@ class VocabularyService implements IVocabularyService {
         }
       }
 
-      // Check for duplicate englishContent within the same lesson if updated
       if (englishContent && (lessonId || vocabulary.lessonId)) {
         const targetLessonId = lessonId || vocabulary.lessonId.toString();
         const existingVocabulary =
@@ -227,12 +221,10 @@ class VocabularyService implements IVocabularyService {
         );
       }
 
-      // Clean up old image if a new one is provided
       if (imageUrl && vocabulary.imageUrl) {
         await cleanUpFile(vocabulary.imageUrl, "update");
       }
 
-      // Clean up temporary file after successful update
       if (imageUrl) {
         await cleanUpFile(imageUrl, "create");
       }
@@ -240,7 +232,6 @@ class VocabularyService implements IVocabularyService {
       await this.database.commitTransaction(session);
       return updatedVocabulary;
     } catch (error) {
-      // Clean up temporary file on error
       if (imageUrl) {
         await cleanUpFile(imageUrl, "create");
       }
@@ -271,12 +262,10 @@ class VocabularyService implements IVocabularyService {
       const deletedVocabulary =
         await this.vocabularyRepository.deleteVocabulary(vocabularyId, session);
 
-      // Clean up image file on deletion
       if (vocabulary.imageUrl) {
         await cleanUpFile(vocabulary.imageUrl, "update");
       }
 
-      //update lesson length
       const lessonId =
         await this.vocabularyRepository.getLessonIdByVocabularyId(vocabularyId);
       if (!lessonId) {

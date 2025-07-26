@@ -445,7 +445,6 @@ class TestService implements ITestService {
     console.log(data);
     const session = await this.database.startTransaction();
     try {
-      // Validate test exists
       const test = await this.testRepository.getTestById(data.testId);
       if (!test) {
         throw new CustomException(
@@ -454,7 +453,6 @@ class TestService implements ITestService {
         );
       }
 
-      // Get exercises for the test's lessons
       const exercises = await this.exerciseRepository.getExercisesByLessonIds(
         test.lessonIds.map((id) => id.toString())
       );
@@ -473,7 +471,6 @@ class TestService implements ITestService {
           [ExerciseTypeEnum.FILL_IN_THE_BLANK]: 0,
         },
       };
-      // Validate all submitted exercise IDs belong to the test's lessons
       const exerciseIds = exercises.map((ex: IExercise) =>
         (ex._id as mongoose.Types.ObjectId)?.toString()
       );
@@ -491,7 +488,6 @@ class TestService implements ITestService {
         return str.replace(/[.,]/g, "").trim().toLowerCase();
       }
 
-      // Grade the submission
       let correctAnswers = 0;
       const results = data.answers.map((answer) => {
         incorrectDetail.totalQuestion++;
@@ -502,10 +498,8 @@ class TestService implements ITestService {
         )!;
         let isCorrect: boolean;
 
-        // Handle grading based on exercise type
         switch (exercise.type) {
           case ExerciseTypeEnum.MULTIPLE_CHOICE:
-            // Exact match for multiple-choice answers
             isCorrect =
               answer.selectedAnswers.length === exercise.answer.length &&
               answer.selectedAnswers.every((ans) =>
@@ -523,7 +517,6 @@ class TestService implements ITestService {
 
             break;
           case ExerciseTypeEnum.TRANSLATE:
-            // Case-insensitive match for translation answers
             isCorrect = answer.selectedAnswers.some(
               (selected) =>
                 Array.isArray(exercise.answer) &&
@@ -543,7 +536,6 @@ class TestService implements ITestService {
 
             break;
           case ExerciseTypeEnum.IMAGE_TRANSLATE:
-            // Case-insensitive match for translation answers
             isCorrect = answer.selectedAnswers.some(
               (selected) =>
                 Array.isArray(exercise.answer) &&
@@ -563,7 +555,6 @@ class TestService implements ITestService {
 
             break;
           case ExerciseTypeEnum.FILL_IN_THE_BLANK:
-            // Exact match for fill-in-the-blank answers
             isCorrect = answer.selectedAnswers.some(
               (selected) =>
                 Array.isArray(exercise.answer) &&
@@ -600,34 +591,27 @@ class TestService implements ITestService {
         };
       });
 
-      // Calculate score (percentage)
       const score = Math.round((correctAnswers / test.totalQuestions) * 100);
 
-      // Get passing point from config (default to 80 if not found)
       let passingPoint = 80;
       try {
         const config = await this.configService.getConfig("test_passing_point");
         passingPoint = parseInt(config.value, 10);
       } catch (configError) {
-        // Use default value if config not found
         console.log("Using default passing point:", passingPoint);
       }
 
-      // Determine status based on score and passing point
       const status =
         score >= passingPoint
           ? UserTestStatusEnum.PASSED
           : UserTestStatusEnum.FAILED;
 
-      // Get the latest attempt number
       const lastAttempt = await this.userTestRepository.getLatestAttempt(
         data.userId,
         data.testId
       );
       const attemptNo = lastAttempt ? lastAttempt.attemptNo + 1 : 1;
 
-      // Create submission
-      //no partial => partial use schema.types => wrong
       const submission = {
         userId: new mongoose.Types.ObjectId(data.userId),
         testId: new mongoose.Types.ObjectId(data.testId),
@@ -676,13 +660,11 @@ class TestService implements ITestService {
               } questions are incorrect in fill in the blank`,
       };
 
-      // Save submission
       const savedSubmission = await this.userTestRepository.createUserTest(
         submission,
         session
       );
 
-      // Update user course status if test is passed
       if (status === UserTestStatusEnum.PASSED) {
         await this.updateUserCourseStatus(
           data.userId,
@@ -732,12 +714,10 @@ class TestService implements ITestService {
     session: mongoose.ClientSession
   ): Promise<void> {
     try {
-      // 1. Get all lessons for the course
       const courseLessons = await this.lessonRepository.getLessonsByCourseIdV2(
         courseId
       );
 
-      // 2. Check if all lessons are completed by the user
       const userLessons =
         await this.userLessonRepository.getUserLessonBasedOnLessonIds(
           userId,
@@ -752,19 +732,16 @@ class TestService implements ITestService {
           (userLesson) => userLesson.status === UserLessonStatus.COMPLETED
         );
 
-      // 3. Get all tests for the course directly
       const courseTests = await this.testRepository.getTestsByCourseId(
         courseId
       );
 
-      // 4. Check if all tests are passed by the user
       const userTests = await this.userTestRepository.getUserTestsByTestIds(
         userId,
         courseTests,
         session
       );
 
-      // Count unique test IDs that have been passed
       const passedTestIds = new Set<string>();
       for (const test of userTests as any[]) {
         passedTestIds.add(test.testId.toString());
@@ -773,13 +750,11 @@ class TestService implements ITestService {
       const allTestsPassed =
         courseTests.length > 0 && passedTestIds.size === courseTests.length;
 
-      // 5. Update user course status
       const newStatus =
         allLessonsCompleted && allTestsPassed
           ? UserCourseStatus.COMPLETED
           : UserCourseStatus.ONGOING;
 
-      // Find or create user course record
       const userCourse = await UserCourseModel.findOneAndUpdate(
         {
           userId: new mongoose.Types.ObjectId(userId),
@@ -797,14 +772,11 @@ class TestService implements ITestService {
       );
 
       let averageScore: number | undefined;
-      //increase user point if course is completed
       if (newStatus === UserCourseStatus.COMPLETED) {
         const course = await this.courseRepository.getCourseById(courseId);
         const level = course?.level;
         await increaseUserPoint(userId, IncreasePointEnum.COURSE, level);
       }
-      // Calculate and update average score from latest attempts only
-      // Note: userTests already contains only the latest attempts per test due to getUserTestsByTestIds aggregation
       if (userTests.length > 0) {
         const totalScore = userTests.reduce(
           (sum: number, test: IUserTest) => sum + test.score,

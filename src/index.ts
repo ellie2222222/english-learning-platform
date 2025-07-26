@@ -9,13 +9,8 @@ import http from "http";
 import path from "path";
 import cookieParser from "cookie-parser";
 
-//middlewares
 import ErrorLogMiddleware from "./middlewares/ErrorLogMiddleware";
-
-//utils
 import cronJob from "./utils/cronJob";
-
-//routes
 import authRoutes from "./routes/AuthRoute";
 import userRoutes from "./routes/UserRoute";
 import achievementRoutes from "./routes/AchievementRoute";
@@ -79,7 +74,6 @@ app.use(
 );
 app.use(express.json());
 
-// Request logging middleware - moved before routes
 app.use((req: Request, res: Response, next: NextFunction) => {
   const logger = getLogger("API");
   const startTime = new Date();

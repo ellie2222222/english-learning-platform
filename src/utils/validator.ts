@@ -3,7 +3,6 @@ import mongoose, { Document } from "mongoose";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import CustomException from "../exceptions/CustomException";
 
-// Validates if the ID is a valid Mongoose ObjectId
 const validateMongooseObjectId = (id: string): boolean => {
   try {
     return mongoose.Types.ObjectId.isValid(id);
@@ -18,7 +17,6 @@ const validateMongooseObjectId = (id: string): boolean => {
   }
 };
 
-// Validates the name length and character requirements
 const validateName = (name: string): void => {
   if (!name) {
     throw new CustomException(
@@ -34,7 +32,6 @@ const validateName = (name: string): void => {
   }
 };
 
-// Validates if the email is correct
 const validateEmail = (email: string): void => {
   if (!email) {
     throw new CustomException(
@@ -50,7 +47,6 @@ const validateEmail = (email: string): void => {
   }
 };
 
-// Validates the password strength
 const validatePassword = (password: string): void => {
   if (!password) {
     throw new CustomException(
@@ -74,7 +70,6 @@ const validatePassword = (password: string): void => {
   }
 };
 
-// Validates the phone number
 const validatePhoneNumber = (phoneNumber: string): void => {
   if (!phoneNumber) {
     throw new CustomException(
@@ -90,13 +85,11 @@ const validatePhoneNumber = (phoneNumber: string): void => {
   }
 };
 
-// Checks if the content has special characters
 const hasSpecialCharacters = (content: string): boolean => {
   const regex = /^[a-zA-Z0-9\s]+$/;
   return !regex.test(content);
 };
 
-// Capitalizes the first letter of each word in a string
 const capitalizeWords = (str: string): string => {
   const newString = str.trim().replace(/\s+/g, " ").toLowerCase();
 
@@ -106,7 +99,6 @@ const capitalizeWords = (str: string): string => {
     .join(" ");
 };
 
-// Validates the length of a string within specified min and max limits
 const validateLength = (
   min: number,
   max: number,
@@ -130,12 +122,10 @@ const validateLength = (
   }
 };
 
-// Converts an ID to a Mongoose ObjectId
 const convertToMongoObjectId = (id: string): mongoose.Types.ObjectId => {
   return new mongoose.Types.ObjectId(id);
 };
 
-// Checks if an entry exists by ID in the specified model
 const checkExistById = async (
   model: mongoose.Model<Document>,
   id: string

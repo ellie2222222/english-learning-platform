@@ -216,9 +216,6 @@ class UserService implements IUserService {
       }
 
       await this.userRepository.deleteUserById(id, session);
-      // if (user.avatar) {
-      //   await cleanUpFile(user.avatar, "delete");
-      // }
 
       await this.database.commitTransaction(session);
       return true;
