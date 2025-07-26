@@ -10,7 +10,11 @@ class ConfigController {
     @Inject(() => ConfigService) private configService: IConfigService
   ) {}
 
-  getConfig = async (req: Request, res: Response, next: NextFunction) => {
+  getConfig = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const key = req.params.id;
       const config = await this.configService.getConfig(key);
@@ -22,7 +26,11 @@ class ConfigController {
     }
   };
 
-  getConfigs = async (req: Request, res: Response, next: NextFunction) => {
+  getConfigs = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const configs = await this.configService.getConfigs();
       res
@@ -33,7 +41,11 @@ class ConfigController {
     }
   };
 
-  createConfig = async (req: Request, res: Response, next: NextFunction) => {
+  createConfig = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { key, value, description } = req.body;
       const config = await this.configService.createConfig(
@@ -49,7 +61,11 @@ class ConfigController {
     }
   };
 
-  updateConfig = async (req: Request, res: Response, next: NextFunction) => {
+  updateConfig = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const key = req.params.id;
       const { value, description } = req.body;

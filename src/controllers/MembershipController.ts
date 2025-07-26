@@ -16,7 +16,7 @@ class MembershipController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { name, description, price, duration } = req.body;
       const membership = await this.membershipService.createMembership(
@@ -39,7 +39,7 @@ class MembershipController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { name, description, duration, price } = req.body;
@@ -64,7 +64,7 @@ class MembershipController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const membership = await this.membershipService.deleteMembership(id);
@@ -77,7 +77,11 @@ class MembershipController {
     }
   };
 
-  getMembership = async (req: Request, res: Response, next: NextFunction) => {
+  getMembership = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const membership = await this.membershipService.getMembership(id);
@@ -90,7 +94,11 @@ class MembershipController {
     }
   };
 
-  getMemberships = async (req: Request, res: Response, next: NextFunction) => {
+  getMemberships = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search } = req.query;
       const memberships = await this.membershipService.getMemberships({

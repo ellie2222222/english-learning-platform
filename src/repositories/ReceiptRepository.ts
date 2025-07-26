@@ -151,11 +151,15 @@ class ReceiptRepository implements IReceiptRepository {
 
   async getReceipts(query: IQuery, userId: string): Promise<IPagination> {
     type SearchQuery = {
+      userId: mongoose.Types.ObjectId;
       "membership.name"?: { $regex: string; $options: string };
       isDeleted?: boolean;
     };
     try {
-      const matchQuery: SearchQuery = { isDeleted: false };
+      const matchQuery: SearchQuery = {
+        isDeleted: false,
+        userId: new mongoose.Types.ObjectId(userId),
+      };
       if (query.name) {
         matchQuery["membership.name"] = { $regex: query.name, $options: "i" };
       }

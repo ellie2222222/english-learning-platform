@@ -16,7 +16,7 @@ class FlashcardSetController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { name, description } = req.body;
       const { userId } = req.userInfo;
@@ -39,7 +39,7 @@ class FlashcardSetController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { name, description } = req.body;
@@ -64,7 +64,7 @@ class FlashcardSetController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { userId, role } = req.userInfo;
@@ -87,7 +87,7 @@ class FlashcardSetController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { page, size, search, order, sortBy, userId } = req.query;
 
@@ -111,7 +111,11 @@ class FlashcardSetController {
     }
   };
 
-  getFlashcardSet = async (req: Request, res: Response, next: NextFunction) => {
+  getFlashcardSet = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
 
@@ -130,7 +134,7 @@ class FlashcardSetController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const flashcardSets =

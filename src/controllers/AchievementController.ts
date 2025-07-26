@@ -15,7 +15,7 @@ class AchievementController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { name, description, type, goal } = req.body;
       const achievement = await this.achievementService.createAchievement(
@@ -37,7 +37,7 @@ class AchievementController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { name, description, type, goal } = req.body;
@@ -61,7 +61,7 @@ class AchievementController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const achievement = await this.achievementService.deleteAchievement(id);
@@ -74,7 +74,11 @@ class AchievementController {
     }
   };
 
-  getAchievement = async (req: Request, res: Response, next: NextFunction) => {
+  getAchievement = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const achievement = await this.achievementService.getAchievement(id);
@@ -87,7 +91,11 @@ class AchievementController {
     }
   };
 
-  getAchievements = async (req: Request, res: Response, next: NextFunction) => {
+  getAchievements = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search, type } = req.query;
       const achievements = await this.achievementService.getAchievements(

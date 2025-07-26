@@ -16,7 +16,7 @@ class UserExerciseController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search } = req.query;
       const { id } = req.params;
@@ -43,7 +43,11 @@ class UserExerciseController {
     }
   };
 
-  getUserExercise = async (req: Request, res: Response, next: NextFunction) => {
+  getUserExercise = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const requesterId = req.userInfo.userId;
@@ -60,7 +64,11 @@ class UserExerciseController {
     }
   };
 
-  submitExercise = async (req: Request, res: Response, next: NextFunction) => {
+  submitExercise = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id, answer } = req.body;
       const userId = req.userInfo.userId;
@@ -80,7 +88,7 @@ class UserExerciseController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const requesterId = req.userInfo.userId;

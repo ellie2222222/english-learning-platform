@@ -17,7 +17,11 @@ dotenv.config();
 class BlogController {
   constructor(@Inject(() => BlogService) private blogService: IBlogService) {}
 
-  createBlog = async (req: Request, res: Response, next: NextFunction) => {
+  createBlog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     const files = req.files as { [key: string]: Express.Multer.File[] };
     let attachments: string[] | null = null;
     let coverImage: string | null = null;
@@ -72,7 +76,11 @@ class BlogController {
     }
   };
 
-  updateBlog = async (req: Request, res: Response, next: NextFunction) => {
+  updateBlog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     const files = req.files as { [key: string]: Express.Multer.File[] };
 
     let coverImage: string | null = null;
@@ -109,7 +117,11 @@ class BlogController {
     }
   };
 
-  deleteBlog = async (req: Request, res: Response, next: NextFunction) => {
+  deleteBlog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const blog = await this.blogService.deleteBlog(id);
@@ -122,7 +134,11 @@ class BlogController {
     }
   };
 
-  getBlog = async (req: Request, res: Response, next: NextFunction) => {
+  getBlog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const userId = req.userInfo?.userId;
@@ -136,7 +152,11 @@ class BlogController {
     }
   };
 
-  getBlogs = async (req: Request, res: Response, next: NextFunction) => {
+  getBlogs = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, order, sortBy, search } = req.query;
       const userId = req.userInfo?.userId || undefined;

@@ -15,7 +15,11 @@ import { Inject, Service } from "typedi";
 class UserController {
   constructor(@Inject(() => UserService) private userService: IUserService) {}
 
-  createUser = async (req: Request, res: Response, next: NextFunction) => {
+  createUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const requesterId = req.userInfo.userId;
       const { username, email, password, role } = req.body;
@@ -57,7 +61,11 @@ class UserController {
     }
   };
 
-  getUsers = async (req: Request, res: Response, next: NextFunction) => {
+  getUsers = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page, size, search, order, sortBy, role } = req.query;
       const requesterId = req.userInfo.userId;
@@ -80,7 +88,11 @@ class UserController {
     }
   };
 
-  updateUser = async (req: Request, res: Response, next: NextFunction) => {
+  updateUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { name, role, phoneNumber } = req.body;
@@ -117,7 +129,11 @@ class UserController {
     }
   };
 
-  deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+  deleteUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const requesterId = req.userInfo.userId;
@@ -136,7 +152,7 @@ class UserController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { limit, sortBy } = req.query;
 

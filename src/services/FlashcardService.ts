@@ -174,15 +174,18 @@ class FlashcardService implements IFlashcardService {
           "Flashcard set not found"
         );
       }
-      
+
       // Allow admins to delete any flashcard, otherwise check ownership
-      if (userRole !== UserEnum.ADMIN && flashcardSet.userId.toString() !== userId) {
+      if (
+        userRole !== UserEnum.ADMIN &&
+        flashcardSet.userId.toString() !== userId
+      ) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
           "You are not the author of this flashcard set and cannot delete this flashcard"
         );
       }
-      
+
       const deletedFlashcard = await this.flashcardRepository.deleteFlashcard(
         id
       );

@@ -13,7 +13,7 @@ class StatisticController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { time, value } = req.query;
       const result = await this.statisticService.getRevenueOverTime(
@@ -33,7 +33,7 @@ class StatisticController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { time, value } = req.query;
 
@@ -55,7 +55,7 @@ class StatisticController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { userId } = req.params;
 
@@ -74,7 +74,7 @@ class StatisticController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const completionRate = await this.statisticService.getCompletionRate();
 
@@ -91,7 +91,7 @@ class StatisticController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const count = await this.statisticService.getActiveCourseCount();
       res.status(StatusCodeEnum.OK_200).json({ activeCourseCount: count });

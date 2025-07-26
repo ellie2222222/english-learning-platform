@@ -18,6 +18,11 @@ receiptRoutes.use(AuthMiddleware);
 //   receiptDto.createReceipt,
 //   receiptController.createReceipt
 // );
+receiptRoutes.get(
+  "/",
+  RoleMiddleware([UserEnum.ADMIN]),
+  receiptController.getAllReceipt
+);
 
 receiptRoutes.get(
   "/:id/users",

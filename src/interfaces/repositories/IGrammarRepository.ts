@@ -4,12 +4,15 @@ import { IPagination } from "../others/IPagination";
 import { IQuery } from "../others/IQuery";
 
 export interface IGrammarRepository {
-  createGrammar(grammar: object, session?: any): Promise<IGrammar>;
+  createGrammar(
+    grammar: object,
+    session?: mongoose.ClientSession
+  ): Promise<IGrammar>;
 
   updateGrammar(
     grammarId: string,
     updateData: object,
-    session?: any
+    session?: mongoose.ClientSession
   ): Promise<IGrammar | null>;
 
   deleteGrammar(

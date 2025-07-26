@@ -12,7 +12,7 @@ class AIController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { question } = req.body;
       const response = await this.aiService.askEnglishTutorAI(question);
@@ -30,7 +30,7 @@ class AIController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const requesterId = req.userInfo.userId;
