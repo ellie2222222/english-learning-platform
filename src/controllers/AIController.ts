@@ -15,7 +15,9 @@ class AIController {
   ): Promise<void> => {
     try {
       const { question } = req.body;
-      const response = await this.aiService.askEnglishTutorAI(question);
+      const userId = req?.userInfo?.userId;
+
+      const response = await this.aiService.askEnglishTutorAI(question, userId);
 
       res.status(StatusCodeEnum.OK_200).json({
         response: response,

@@ -1,5 +1,5 @@
 export interface IAIService {
-  askEnglishTutorAI: (prompt: string) => Promise<string>;
+  askEnglishTutorAI: (prompt: string, userId?: string) => Promise<string>;
   getPersonalizeLearningRecommendation: (
     userId: string,
     requesterId: string

@@ -6,6 +6,7 @@ import ejs from "ejs";
 import dotenv from "dotenv";
 import path from "path";
 import { IAchievement } from "../interfaces/models/IAchievement";
+import { AchievementTypeEnum } from "../enums/AchievementTypeEnum";
 dotenv.config();
 
 const achievementEmailTemplatePath = path.resolve(
@@ -47,13 +48,36 @@ const sendMail = async (mailOptions: Mail.Options): Promise<void> => {
     logger.error(`Error sending email: ${error}`);
   }
 };
-
+const getOrdinalSuffix = (n: number): string => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
 const notifyAchievement = async (
   achievement: IAchievement,
   usermail: string
 ) => {
+  let message = "";
+  switch (achievement.type) {
+    case AchievementTypeEnum.LoginStreak:
+      message = `Logged in ${getOrdinalSuffix(achievement.goal)} day in a row!`;
+      break;
+
+    case AchievementTypeEnum.CouseCompletion:
+      message = `Completed your ${achievement.goal}${getOrdinalSuffix(
+        achievement.goal
+      )} course!`;
+      break;
+
+    case AchievementTypeEnum.LessonCompletion:
+      message = `Completed your ${achievement.goal}${getOrdinalSuffix(
+        achievement.goal
+      )} lesson!`;
+      break;
+  }
   const emailHtml = await ejs.renderFile(achievementEmailTemplatePath, {
     achievementName: achievement.name,
+    message: message,
     serverUrl: `${process.env.FRONTEND_URL}` || "http://localhost:3000",
   });
 
