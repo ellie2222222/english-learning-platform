@@ -24,6 +24,9 @@ import UserLessonRepository from "../repositories/UserLessonRepository";
 import { IUserLessonRepository } from "../interfaces/repositories/IUserLessonRepository";
 import UserTestRepository from "../repositories/UserTestRepository";
 import { IUserTestRepository } from "../interfaces/repositories/IUserTestRepository";
+import CourseRepository from "../repositories/CourseRepository";
+import { ICourseRepository } from "../interfaces/repositories/ICourseRepository";
+import { OrderType, SortByType } from "../interfaces/others/IQuery";
 
 @Service()
 class StatisticService implements IStatisticService {
@@ -37,7 +40,9 @@ class StatisticService implements IStatisticService {
     @Inject(() => UserLessonRepository)
     private userLessonRepository: IUserLessonRepository,
     @Inject(() => UserTestRepository)
-    private userTestRepository: IUserTestRepository
+    private userTestRepository: IUserTestRepository,
+    @Inject(() => CourseRepository)
+    private courseRepository: ICourseRepository
   ) {}
   getRevenueOverTime = async (
     time: string,
@@ -130,6 +135,17 @@ class StatisticService implements IStatisticService {
         prevBreakdown.push({ Date: dateKey, Revenue: prevRevenueMap.get(dateKey) || 0 });
       }
       const prevTotal = prevBreakdown.reduce((sum, d) => sum + d.Revenue, 0);
+      
+      // Debug logging
+      console.log('Backend Revenue Debug:', {
+        requestedMonth: value,
+        formattedValue,
+        currentTotal: total,
+        previousTotal: prevTotal,
+        currentPeriod: `${firstDay.toISOString()} to ${lastDay.toISOString()}`,
+        previousPeriod: `${prevFirstDay.toISOString()} to ${prevLastDay.toISOString()}`
+      });
+      
       return {
         current: { breakdown, total },
         previous: { breakdown: prevBreakdown, total: prevTotal }
@@ -263,15 +279,39 @@ class StatisticService implements IStatisticService {
       // Get completed lessons count
       const completedLessons = await this.userLessonRepository.countCompletedByUserId(userId);
       
-      // Get completed tests count
+      // Get completed tests count and calculate average score
       const completedTests = await this.userTestRepository.countCompletedByUserId(userId);
+      
+      // Get all user tests to calculate average score
+      const allUserTests = await this.userTestRepository.getUserTestsByUserId(userId, {
+        page: 1,
+        size: 1000,
+        order: OrderType.DESC,
+        sortBy: SortByType.DATE
+      });
+      
+      let averageScore = 0;
+      if (allUserTests.data && allUserTests.data.length > 0) {
+        const completedTestScores = allUserTests.data
+          .filter((test: any) => test.status === "passed" || test.status === "failed")
+          .map((test: any) => test.score || 0);
+        
+        if (completedTestScores.length > 0) {
+          averageScore = Number((completedTestScores.reduce((sum, score) => sum + score, 0) / completedTestScores.length).toFixed(2));
+        }
+      }
+      
+      // Get flashcards mastered count (placeholder - you may need to implement this)
+      const flashcardsMastered = 0; // TODO: Implement flashcard statistics
       
       // Return user statistics
       return {
         totalPoints: user.points || 0,
         completedCourses,
         completedLessons,
-        completedTests
+        completedTests,
+        averageScore,
+        flashcardsMastered
       };
     } catch (error) {
       if (error instanceof Error || error instanceof CustomException) {
@@ -284,22 +324,56 @@ class StatisticService implements IStatisticService {
     }
   };
 
-  getCompletionRate = async (): Promise<number> => {
+  getCompletionRate = async (): Promise<{ currentRate: number; previousRate: number; trend: number }> => {
     try {
-      // Get all user courses
-      const userCourses = await this.userCourseRepository.getAllUserCourses();
+      const today = new Date(
+        Date.UTC(
+          new Date().getUTCFullYear(),
+          new Date().getUTCMonth(),
+          new Date().getUTCDate()
+        )
+      );
+      const currentMonthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+      const currentMonthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0, 23, 59, 59, 999));
       
-      if (userCourses.length === 0) {
-        return 0;
-      }
+      const lastMonthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1));
+      const lastMonthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0, 23, 59, 59, 999));
 
-      // Count completed courses
-      const completedCourses = userCourses.filter((uc: any) => uc.progress === 100).length;
+      // Get all user courses for current month and last month
+      const userCoursesCurrentMonth = await this.userCourseRepository.getAllUserCourses();
+      const userCoursesLastMonth = await this.userCourseRepository.getAllUserCourses();
+
+      // Filter by date range
+      const currentMonthCourses = userCoursesCurrentMonth.filter((uc: any) => {
+        const createdAt = new Date(uc.createdAt);
+        return createdAt >= currentMonthStart && createdAt <= currentMonthEnd;
+      });
+
+      const lastMonthCourses = userCoursesLastMonth.filter((uc: any) => {
+        const createdAt = new Date(uc.createdAt);
+        return createdAt >= lastMonthStart && createdAt <= lastMonthEnd;
+      });
+
+      // Calculate completion rates
+      const completedCoursesCurrentMonth = currentMonthCourses.filter((uc: any) => uc.status === "completed").length;
+      const completedCoursesLastMonth = lastMonthCourses.filter((uc: any) => uc.status === "completed").length;
       
-      // Calculate completion rate as a percentage
-      const completionRate = (completedCourses / userCourses.length) * 100;
+      const currentRate = currentMonthCourses.length > 0 
+        ? (completedCoursesCurrentMonth / currentMonthCourses.length) * 100
+        : 0;
       
-      return Math.round(completionRate * 10) / 10; // Round to 1 decimal place
+      const previousRate = lastMonthCourses.length > 0 
+        ? (completedCoursesLastMonth / lastMonthCourses.length) * 100
+        : 0;
+
+      // Calculate trend
+      const trend = previousRate > 0 ? ((currentRate - previousRate) / previousRate) * 100 : 0;
+      
+      return {
+        currentRate: Math.round(currentRate * 10) / 10, // Round to 1 decimal place
+        previousRate: Math.round(previousRate * 10) / 10,
+        trend: Math.round(trend * 10) / 10
+      };
     } catch (error) {
       if (error instanceof Error || error instanceof CustomException) {
         throw error;
@@ -312,8 +386,26 @@ class StatisticService implements IStatisticService {
   };
 
   getActiveCourseCount = async (): Promise<number> => {
-    return await this.userCourseRepository.countActiveCourses();
-  }
+    try {
+      return await this.courseRepository.countActiveCourses();
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
+
+  getTotalUserCount = async (): Promise<number> => {
+    try {
+      return await this.userRepository.getUsers({ page: 1, size: 1 }).then(result => result.total);
+    } catch (error) {
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
 }
 
 export default StatisticService;

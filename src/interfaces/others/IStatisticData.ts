@@ -13,4 +13,6 @@ export interface IUserStatistics {
   completedLessons: number;
   completedCourses: number;
   completedTests: number;
+  averageScore: number;
+  flashcardsMastered: number;
 }

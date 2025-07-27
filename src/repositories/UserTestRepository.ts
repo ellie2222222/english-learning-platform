@@ -369,7 +369,7 @@ class UserTestRepository implements IUserTestRepository {
     try {
       const count = await UserTestModel.countDocuments({
         userId,
-        status: "completed",
+        status: { $in: ["passed", "failed"] },
       });
 
       return count;

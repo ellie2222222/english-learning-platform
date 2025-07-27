@@ -453,7 +453,7 @@ class UserLessonRepository implements IUserLessonRepository {
     try {
       const count = await UserLessonModel.countDocuments({
         userId,
-        status: "completed",
+        status: UserLessonStatus.COMPLETED,
       });
 
       return count;

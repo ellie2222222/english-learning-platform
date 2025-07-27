@@ -76,10 +76,11 @@ class StatisticController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const completionRate = await this.statisticService.getCompletionRate();
+      const completionData = await this.statisticService.getCompletionRate();
 
       res.status(StatusCodeEnum.OK_200).json({
-        completionRate: completionRate,
+        completionRate: completionData.currentRate,
+        completionTrend: completionData.trend,
         message: "Get completion rate successfully",
       });
     } catch (error) {
@@ -95,6 +96,19 @@ class StatisticController {
     try {
       const count = await this.statisticService.getActiveCourseCount();
       res.status(StatusCodeEnum.OK_200).json({ activeCourseCount: count });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getTotalUserCount = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const count = await this.statisticService.getTotalUserCount();
+      res.status(StatusCodeEnum.OK_200).json({ totalUserCount: count });
     } catch (error) {
       next(error);
     }

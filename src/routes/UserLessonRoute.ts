@@ -40,7 +40,7 @@ userLessonRoutes.get(
 
 userLessonRoutes.get(
   "/:id/user",
-  RoleMiddleware([UserEnum.ADMIN]),
+  RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
   userLessonDto.getUserLessonsByUserId,
   userLessonController.getUserLessonsByUserId
 );

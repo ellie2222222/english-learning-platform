@@ -23,4 +23,6 @@ export interface ICourseRepository {
   getCourses(query: IQuery, type?: string): Promise<IPagination>;
 
   getCourseById(id: string): Promise<ICourse | null>;
+
+  countActiveCourses(): Promise<number>;
 }

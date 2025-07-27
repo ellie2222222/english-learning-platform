@@ -41,4 +41,9 @@ statisticRoutes.get(
   statisticController.getActiveCourseCount
 );
 
+statisticRoutes.get(
+  "/total-users",
+  statisticController.getTotalUserCount
+);
+
 export default statisticRoutes;

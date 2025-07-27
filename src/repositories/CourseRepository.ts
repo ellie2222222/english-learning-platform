@@ -184,6 +184,21 @@ class CourseRepository implements ICourseRepository {
       );
     }
   }
+
+  async countActiveCourses(): Promise<number> {
+    try {
+      const count = await CourseModel.countDocuments({ isDeleted: false });
+      return count;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  }
 }
 
 export default CourseRepository;

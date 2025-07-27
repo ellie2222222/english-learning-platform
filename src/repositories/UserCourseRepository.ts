@@ -548,7 +548,7 @@ class UserCourseRepository implements IUserCourseRepository {
     try {
       const count = await UserCourseModel.countDocuments({
         userId,
-        status: "completed",
+        status: UserCourseStatus.COMPLETED,
       });
 
       return count;
