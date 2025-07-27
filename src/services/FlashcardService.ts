@@ -11,6 +11,8 @@ import { IFlashcardRepository } from "../interfaces/repositories/IFlashcardRepos
 import FlashcardSetRepository from "../repositories/FlashcardSetRepository";
 import { IFlashcardSetRepository } from "../interfaces/repositories/IFlashcardSetRepository";
 import UserEnum from "../enums/UserEnum";
+import UserRepository from "../repositories/UserRepository";
+import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 
 @Service()
 class FlashcardService implements IFlashcardService {
@@ -19,7 +21,9 @@ class FlashcardService implements IFlashcardService {
     @Inject(() => FlashcardRepository)
     private flashcardRepository: IFlashcardRepository,
     @Inject(() => FlashcardSetRepository)
-    private flashcardSetRepository: IFlashcardSetRepository
+    private flashcardSetRepository: IFlashcardSetRepository,
+    @Inject(() => UserRepository)
+    private userRepository: IUserRepository
   ) {}
 
   createFlashcard = async (
@@ -40,8 +44,17 @@ class FlashcardService implements IFlashcardService {
           "Flashcard set not found"
         );
       }
-
-      if (flashcardSet.userId.toString() !== userId) {
+      const user = await this.userRepository.getUserById(userId);
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+      if (
+        flashcardSet.userId.toString() !== userId &&
+        user?.role !== UserEnum.ADMIN
+      ) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
           "You are not the author of this flashcard set and cannot create flashcards in it"
@@ -104,8 +117,17 @@ class FlashcardService implements IFlashcardService {
           "Flashcard set not found"
         );
       }
-
-      if (flashcardSet.userId.toString() !== userId) {
+      const user = await this.userRepository.getUserById(userId);
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+      if (
+        flashcardSet.userId.toString() !== userId &&
+        user.role !== UserEnum.ADMIN
+      ) {
         throw new CustomException(
           StatusCodeEnum.Forbidden_403,
           "You are not the author of this flashcard set and cannot update this flashcard"
@@ -174,10 +196,16 @@ class FlashcardService implements IFlashcardService {
           "Flashcard set not found"
         );
       }
-
+      const user = await this.userRepository.getUserById(userId);
+      if (!user) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
       // Allow admins to delete any flashcard, otherwise check ownership
       if (
-        userRole !== UserEnum.ADMIN &&
+        user?.role !== UserEnum.ADMIN &&
         flashcardSet.userId.toString() !== userId
       ) {
         throw new CustomException(
