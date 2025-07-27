@@ -6,122 +6,313 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Congratulations on Your Achievement!</title>
   <style>
-    body {
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: Arial, Helvetica, sans-serif;
-      background-color: #f4f4f4;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .header {
-      background-color: #ffd700;
+      background-color: #0f1419;
+      margin: 0;
       padding: 20px;
+      color: #e2e8f0;
+    }
+
+    /* Main container table for email compatibility */
+    .email-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #1e2532;
+      border-radius: 24px;
+      border: 2px solid #f59e0b;
+      overflow: hidden;
+    }
+
+    /* Header section */
+    .header-table {
+      width: 100%;
+      background-color: #f59e0b;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .header-cell {
+      padding: 40px 20px;
       text-align: center;
+      vertical-align: middle;
     }
 
-    .header img {
-      width: 60px;
-      height: 60px;
+    /* Trophy styling - using table for perfect centering */
+    .trophy-table {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px auto;
+      background-color: #fbbf24;
+      background: linear-gradient(135deg, #fbbf24, #ffffff);
+      border-radius: 50px;
     }
 
-    .content {
-      padding: 30px;
+    .trophy-cell {
+      width: 100px;
+      height: 100px;
       text-align: center;
-      color: #333333;
+      vertical-align: middle;
+      font-size: 48px;
+      line-height: 1;
+      color: #fff;
+      font-weight: bold;
     }
 
-    .content h1 {
-      font-size: 24px;
-      margin: 0 0 20px;
+    /* Content section */
+    .content-table {
+      width: 100%;
+      background-color: #1e2532;
     }
 
-    .content p {
-      font-size: 16px;
-      line-height: 1.5;
-      margin: 0 0 20px;
+    .content-cell {
+      padding: 48px 40px;
+      text-align: center;
+      vertical-align: top;
+      color: #e2e8f0;
     }
 
-    .button {
+    .achievement-badge {
       display: inline-block;
-      padding: 12px 24px;
-      background-color: #007bff;
+      background-color: rgba(245, 158, 11, 0.2);
+      border: 1px solid #f59e0b;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #f59e0b;
+      margin-bottom: 24px;
+      font-weight: bold;
+    }
+
+    .main-title {
+      font-size: 36px;
+      margin: 0 0 24px 0;
+      font-weight: bold;
+      color: #f59e0b;
+      text-align: center;
+    }
+
+    .achievement-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #fbbf24;
+      background-color: rgba(245, 158, 11, 0.2);
+      border: 1px solid #f59e0b;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 24px auto;
+      display: inline-block;
+      max-width: 90%;
+    }
+
+    .message-section {
+      background-color: rgba(30, 37, 50, 0.8);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 32px auto;
+      border: 1px solid #94a3b8;
+      max-width: 90%;
+      color: "#fff" !important;
+      text-align: center;
+    }
+
+    .description-text {
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 20px 0;
+      color: #cbd5e1;
+      text-align: center;
+    }
+
+    /* Button styling */
+    .button-table {
+      margin: 24px auto 0 auto;
+      background-color: #f59e0b;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border-radius: 12px;
+      border: 1px solid #f59e0b;
+    }
+
+    .button-cell {
+      padding: 16px 32px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .button-link {
       color: #fff !important;
       text-decoration: none;
       border-radius: 5px;
       font-size: 16px;
       font-weight: bold;
+      display: block;
     }
 
-    .button:hover {
-      background-color: #0056b3;
-      color: #fff;
+    /* Footer section */
+    .footer-table {
+      width: 100%;
+      background-color: #1a1f29;
+      border-top: 1px solid #94a3b8;
     }
 
-    .footer {
-      background-color: #f4f4f4;
-      padding: 10px;
+    .footer-cell {
+      padding: 24px 40px;
       text-align: center;
-      font-size: 12px;
-      color: #666666;
+      vertical-align: middle;
+      font-size: 14px;
+      color: #94a3b8;
     }
 
+    /* Mobile responsive */
     @media only screen and (max-width: 600px) {
-      .container {
-        width: 100%;
-        margin: 0;
+      body {
+        padding: 10px;
       }
 
-      .content {
-        padding: 20px;
+      .email-container {
+        border-radius: 16px;
       }
 
-      .header img {
-        width: 50px;
-        height: 50px;
+      .header-cell {
+        padding: 32px 20px;
       }
 
-      .content h1 {
-        font-size: 20px;
+      .content-cell {
+        padding: 32px 24px;
       }
 
-      .button {
-        padding: 10px 20px;
-        font-size: 14px;
+      .trophy-table {
+        width: 80px;
+        height: 80px;
+        border-radius: 40px;
       }
 
-      .white_text {
-        color: #fff;
+      .trophy-cell {
+        width: 80px;
+        height: 80px;
+        font-size: 40px;
       }
+
+      .main-title {
+        font-size: 28px;
+      }
+
+      .achievement-name {
+        font-size: 18px;
+      }
+
+      .button-cell {
+        padding: 14px 28px;
+      }
+
+      .button-link {
+        font-size: 15px;
+      }
+
+      .footer-cell {
+        padding: 20px 24px;
+      }
+    }
+
+    /* Fallback for clients that don't support gradients */
+    .no-gradient .header-table {
+      background-color: #f59e0b;
+    }
+
+    .no-gradient .trophy-table {
+      background-color: #fbbf24;
+    }
+
+    .no-gradient .button-table {
+      background-color: #f59e0b;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div class="header">
-      <img src="https://img.icons8.com/emoji/48/000000/trophy-emoji.png" alt="Gold Trophy">
-    </div>
-    <div class="content">
-      <h1>Congratulations!</h1>
-      <p>You've earned the <strong><%= achievementName %></strong> achievement!</p>
-      <p>Keep up the great work, and check out your progress on our platform.</p>
-      <a href="<%= serverUrl %>" class="button">
-        View Your Achievements
-      </a>
-    </div>
-    <div class="footer">
-      <p>&copy; <%=new Date().getFullYear() %> English Learning Platform. All rights reserved.</p>
-    </div>
-  </div>
+  <!-- Email-friendly table-based layout -->
+  <table class="email-container" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+
+    <!-- Header Section -->
+    <tr>
+      <td>
+        <table class="header-table" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+          <tr>
+            <td class="header-cell">
+              <!-- Trophy using nested table for perfect alignment -->
+              <table class="trophy-table" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+                <tr>
+                  <td class="trophy-cell">🏆</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Content Section -->
+    <tr>
+      <td>
+        <table class="content-table" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+          <tr>
+            <td class="content-cell">
+
+              <div class="achievement-badge">
+                Achievement Unlocked
+              </div>
+
+              <h1 class="main-title">Congratulations!</h1>
+
+              <div class="achievement-name">
+                🏆 <%= achievementName %>
+              </div>
+              <br />
+              <% if (message) { %>
+              <div class="message-section">
+                <p><%= message %></p>
+              </div>
+              <%}%>
+
+              <p class="description-text">Keep up the great work, and check out your progress on our platform.</p>
+
+              <!-- Button using table for better email support -->
+              <table class="button-table" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+                <tr>
+                  <td class="button-cell">
+                    <a href="<%= serverUrl || '#' %>" class="button-link">
+              View Your Achievements
+              </a>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+  </td>
+  </tr>
+
+  <!-- Footer Section -->
+  <tr>
+    <td>
+      <table class="footer-table" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+        <tr>
+          <td class="footer-cell">
+            <p>&copy; <%= new Date().getFullYear() %> English Learning Platform. All rights reserved.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  </table>
 </body>
 
 </html>

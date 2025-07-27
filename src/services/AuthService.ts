@@ -835,6 +835,14 @@ class AuthService implements IAuthService {
         );
       }
 
+      const isTheSame = await bcrypt.compare(newPassword, user.password);
+      if (isTheSame) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "New password can't be the same as old password"
+        );
+      }
+
       // Hash new password
       const saltRounds = 10;
       const salt = await bcrypt.genSalt(saltRounds);
