@@ -21,8 +21,36 @@ class AIService implements IAIService {
     @Inject(() => UserTestRepository)
     private userTestRepository: IUserTestRepository
   ) {}
-  askEnglishTutorAI = async (prompt: string): Promise<string> => {
+  askEnglishTutorAI = async (
+    prompt: string,
+    userId?: string
+  ): Promise<string> => {
     try {
+      if (!userId) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Authentication is required"
+        );
+      }
+
+      const requester = await this.userRepository.getUserById(userId);
+      if (!requester) {
+        throw new CustomException(
+          StatusCodeEnum.NotFound_404,
+          "User not found"
+        );
+      }
+
+      if (
+        (requester.activeUntil === null ||
+          new Date(requester.activeUntil) < new Date()) &&
+        requester.role !== UserEnum.ADMIN
+      ) {
+        throw new CustomException(
+          StatusCodeEnum.PaymentRequired_402,
+          "This feature requires membership"
+        );
+      }
       const rule =
         "You are an English tutor for Vietnamese learners." +
         " Always encourage users to use English." +
@@ -66,6 +94,17 @@ class AIService implements IAIService {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "User not found"
+        );
+      }
+
+      if (
+        (requester.activeUntil === null ||
+          new Date(requester.activeUntil) < new Date()) &&
+        requester.role !== UserEnum.ADMIN
+      ) {
+        throw new CustomException(
+          StatusCodeEnum.PaymentRequired_402,
+          "This feature requires membership"
         );
       }
 
