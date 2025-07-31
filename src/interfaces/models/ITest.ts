@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 import { IExercise } from "./IExercise";
 import { ICourse } from "./ICourse";
 import { ILesson } from "./ILesson";
+import { IQuestion } from "./IQuestion";
 
 export interface ITest extends Document {
   lessonIds: mongoose.Schema.Types.ObjectId[] | string[] | ILesson[];
@@ -13,5 +14,5 @@ export interface ITest extends Document {
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  exercises?: IExercise[];
+  questions?: IQuestion[];
 }

@@ -1,4 +1,5 @@
 import { ITest } from "../models/ITest";
+import { IUserTest } from "../models/IUserTest";
 import { IQuery } from "../others/IQuery";
 import { IPagination } from "../others/IPagination";
 import { ISubmitTest, IUserTestResponse } from "../others/ISubmission";
@@ -14,9 +15,9 @@ export interface ITestService {
   updateTest(
     testId: string,
     lessonIds: string[],
-    name?: string,
-    description?: string,
-    totalQuestions?: number
+    name: string,
+    description: string,
+    totalQuestions: number
   ): Promise<ITest | null>;
 
   deleteTest(testId: string): Promise<ITest | null>;
@@ -30,4 +31,9 @@ export interface ITestService {
   submitTest(
     data: ISubmitTest
   ): Promise<IUserTestResponse>;
+
+  getUserTestByTestId(
+    testId: string,
+    requesterId: string
+  ): Promise<IUserTest | null>;
 }

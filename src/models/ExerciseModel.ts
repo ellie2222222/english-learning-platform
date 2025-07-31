@@ -11,35 +11,9 @@ const ExerciseModelSchema = new Schema<IExercise>(
       ref: "Lesson",
       required: true,
     },
-    type: {
-      type: String,
+    questionIds: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Question" }],
       required: true,
-      enum: Object.values(ExerciseTypeEnum),
-    },
-    question: {
-      type: String,
-      required: true,
-    },
-    options: {
-      type: [{ type: String }],
-      required: false,
-    },
-    answer: {
-      type: [{ type: String }],
-      required: true,
-    },
-    explanation: {
-      type: String,
-      required: false,
-    },
-    focus: {
-      type: String,
-      required: true,
-      enum: Object.values(ExerciseFocusEnum),
-    },
-    image: {
-      type: String,
-      required: false,
     },
     order: {
       type: Number,

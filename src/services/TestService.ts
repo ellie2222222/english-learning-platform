@@ -8,17 +8,17 @@ import { IQuery } from "../interfaces/others/IQuery";
 import { IPagination } from "../interfaces/others/IPagination";
 import { ITestRepository } from "../interfaces/repositories/ITestRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
+import { IQuestionRepository } from "../interfaces/repositories/IQuestionRepository";
 import TestRepository from "../repositories/TestRepository";
 import LessonRepository from "../repositories/LessonRepository";
-import ExerciseRepository from "../repositories/ExcerciseRepository";
-import { IExerciseRepository } from "../interfaces/repositories/IExerciseRepository";
+import QuestionRepository from "../repositories/QuestionRepository";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import {
   ISubmitTest,
   IUserTestResponse,
 } from "../interfaces/others/ISubmission";
-import { IExercise } from "../interfaces/models/IExercise";
+import { IQuestion } from "../interfaces/models/IQuestion";
 import { ExerciseTypeEnum } from "../enums/ExerciseTypeEnum";
 import { UserTestStatusEnum } from "../enums/UserTestStatusEnum";
 import { IUserTest } from "../interfaces/models/IUserTest";
@@ -26,7 +26,6 @@ import UserTestRepository from "../repositories/UserTestRepository";
 import { IUserTestRepository } from "../interfaces/repositories/IUserTestRepository";
 import ConfigService from "./ConfigService";
 import { IConfigService } from "../interfaces/services/IConfigService";
-import { error } from "console";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
 import { UserCourseStatus } from "../enums/UserCourseStatus";
 import UserLessonModel from "../models/UserLessonModel";
@@ -59,8 +58,8 @@ class TestService implements ITestService {
     private testRepository: ITestRepository,
     @Inject(() => LessonRepository)
     private lessonRepository: ILessonRepository,
-    @Inject(() => ExerciseRepository)
-    private exerciseRepository: IExerciseRepository,
+    @Inject(() => QuestionRepository)
+    private questionRepository: IQuestionRepository,
     @Inject(() => UserTestRepository)
     private userTestRepository: IUserTestRepository,
     @Inject(() => ConfigService)
@@ -197,19 +196,25 @@ class TestService implements ITestService {
         typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
       );
 
-      const exercise = await this.exerciseRepository.getExercisesForTest(
+      const questions = await this.questionRepository.getQuestionsForTest(
         Number(totalQuestions),
         lessonObjectIds
       );
 
-      if (exercise.length < totalQuestions) {
+      if (questions.length < totalQuestions) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
-          `Not enough exercises for test`
+          `Not enough questions for test`
         );
       }
 
       // Get the next order number for this course
+      if (!courseId) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Course ID is required"
+        );
+      }
       const order = await this.testRepository.getTestOrder(courseId);
 
       // Create the test with courseId
@@ -261,7 +266,6 @@ class TestService implements ITestService {
             );
           }
 
-          //logic error
           if (courseId === null) {
             courseId = lesson.courseId.toString();
           } else if (courseId?.toString() !== lesson.courseId.toString()) {
@@ -272,31 +276,21 @@ class TestService implements ITestService {
           }
         }
       }
-      // Validate lesson IDs
-      for (const lessonId of lessonIds) {
-        const lesson = await this.lessonRepository.getLessonById(lessonId);
-        if (!lesson) {
-          throw new CustomException(
-            StatusCodeEnum.NotFound_404,
-            `Lesson with ID ${lessonId} not found`
-          );
-        }
-      }
 
       if (totalQuestions && totalQuestions !== test.totalQuestions) {
         const lessonObjectIds = lessonIds.map((id: any) =>
           typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
         );
 
-        const exercise = await this.exerciseRepository.getExercisesForTest(
+        const questions = await this.questionRepository.getQuestionsForTest(
           Number(totalQuestions),
           lessonObjectIds
         );
 
-        if (exercise.length < totalQuestions) {
+        if (questions.length < totalQuestions) {
           throw new CustomException(
             StatusCodeEnum.NotFound_404,
-            `Not enough exercises for test`
+            `Not enough questions for test`
           );
         }
       }
@@ -380,12 +374,12 @@ class TestService implements ITestService {
         typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
       );
 
-      const exercises = await this.exerciseRepository.getExercisesForTest(
+      const questions = await this.questionRepository.getQuestionsForTest(
         Number(test.totalQuestions),
         lessonObjectIds
       );
 
-      return { ...test, exercises } as ITest;
+      return { ...test, questions } as ITest;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -453,7 +447,7 @@ class TestService implements ITestService {
         );
       }
 
-      const exercises = await this.exerciseRepository.getExercisesByLessonIds(
+      const questions = await this.questionRepository.getQuestionsByLessonIds(
         test.lessonIds.map((id) => id.toString())
       );
 
@@ -471,16 +465,16 @@ class TestService implements ITestService {
           [ExerciseTypeEnum.FILL_IN_THE_BLANK]: 0,
         },
       };
-      const exerciseIds = exercises.map((ex: IExercise) =>
-        (ex._id as mongoose.Types.ObjectId)?.toString()
+      const questionIds = questions.map((q: IQuestion) =>
+        (q._id as mongoose.Types.ObjectId)?.toString()
       );
-      const invalidExerciseIds = data.answers.filter(
-        (ans) => !exerciseIds.includes(ans.exerciseId)
+      const invalidQuestionIds = data.answers.filter(
+        (ans) => questionIds.indexOf(ans.exerciseId) === -1
       );
-      if (invalidExerciseIds.length > 0) {
+      if (invalidQuestionIds.length > 0) {
         throw new CustomException(
           StatusCodeEnum.BadRequest_400,
-          "Invalid exercise IDs in submission"
+          "Invalid question IDs in submission"
         );
       }
 
@@ -491,25 +485,25 @@ class TestService implements ITestService {
       let correctAnswers = 0;
       const results = data.answers.map((answer) => {
         incorrectDetail.totalQuestion++;
-        const exercise = exercises.find(
-          (ex: IExercise) =>
-            (ex._id as mongoose.Types.ObjectId)?.toString() ===
+        const question = questions.find(
+          (q: IQuestion) =>
+            (q._id as mongoose.Types.ObjectId)?.toString() ===
             answer.exerciseId?.toString()
         )!;
         let isCorrect: boolean;
 
-        switch (exercise.type) {
+        switch (question.type) {
           case ExerciseTypeEnum.MULTIPLE_CHOICE:
             isCorrect =
-              answer.selectedAnswers.length === exercise.answer.length &&
+              answer.selectedAnswers.length === (Array.isArray(question.answer) ? question.answer.length : 1) &&
               answer.selectedAnswers.every((ans) =>
-                exercise.answer.includes(ans)
+                Array.isArray(question.answer) ? question.answer.indexOf(ans) !== -1 : question.answer === ans
               );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
-              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+              if (question.focus === ExerciseFocusEnum.VOCABULARY) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
-              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+              } else if (question.focus === ExerciseFocusEnum.GRAMMAR) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
               }
               incorrectDetail.incorrectType[ExerciseTypeEnum.MULTIPLE_CHOICE]++;
@@ -519,16 +513,16 @@ class TestService implements ITestService {
           case ExerciseTypeEnum.TRANSLATE:
             isCorrect = answer.selectedAnswers.some(
               (selected) =>
-                Array.isArray(exercise.answer) &&
-                exercise.answer.some(
+                Array.isArray(question.answer) &&
+                question.answer.some(
                   (correct) => normalize(selected) === normalize(correct)
                 )
             );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
-              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+              if (question.focus === ExerciseFocusEnum.VOCABULARY) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
-              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+              } else if (question.focus === ExerciseFocusEnum.GRAMMAR) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
               }
               incorrectDetail.incorrectType[ExerciseTypeEnum.TRANSLATE]++;
@@ -538,16 +532,16 @@ class TestService implements ITestService {
           case ExerciseTypeEnum.IMAGE_TRANSLATE:
             isCorrect = answer.selectedAnswers.some(
               (selected) =>
-                Array.isArray(exercise.answer) &&
-                exercise.answer.some(
+                Array.isArray(question.answer) &&
+                question.answer.some(
                   (correct) => normalize(selected) === normalize(correct)
                 )
             );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
-              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+              if (question.focus === ExerciseFocusEnum.VOCABULARY) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
-              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+              } else if (question.focus === ExerciseFocusEnum.GRAMMAR) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
               }
               incorrectDetail.incorrectType[ExerciseTypeEnum.IMAGE_TRANSLATE]++;
@@ -557,16 +551,16 @@ class TestService implements ITestService {
           case ExerciseTypeEnum.FILL_IN_THE_BLANK:
             isCorrect = answer.selectedAnswers.some(
               (selected) =>
-                Array.isArray(exercise.answer) &&
-                exercise.answer.some(
+                Array.isArray(question.answer) &&
+                question.answer.some(
                   (correct) => normalize(selected) === normalize(correct)
                 )
             );
             if (!isCorrect) {
               incorrectDetail.incorrectQuestion++;
-              if (exercise.focus === ExerciseFocusEnum.VOCABULARY) {
+              if (question.focus === ExerciseFocusEnum.VOCABULARY) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.VOCABULARY]++;
-              } else if (exercise.focus === ExerciseFocusEnum.GRAMMAR) {
+              } else if (question.focus === ExerciseFocusEnum.GRAMMAR) {
                 incorrectDetail.incorrectFocus[ExerciseFocusEnum.GRAMMAR]++;
               }
 
@@ -577,16 +571,16 @@ class TestService implements ITestService {
             break;
           default:
             isCorrect = false;
-            incorrectDetail.incorrectType[exercise.type]++;
+            incorrectDetail.incorrectType[question.type]++;
         }
 
         if (isCorrect) correctAnswers++;
         return {
           exerciseId: answer.exerciseId,
           selectedAnswers: answer.selectedAnswers,
-          correctAnswers: Array.isArray(exercise.answer)
-            ? exercise.answer
-            : [exercise.answer],
+          correctAnswers: Array.isArray(question.answer)
+            ? question.answer
+            : [question.answer],
           isCorrect,
         };
       });
@@ -704,9 +698,6 @@ class TestService implements ITestService {
 
   /**
    * Updates the user course status based on lesson completion and test results
-   * @param userId User ID
-   * @param courseId Course ID
-   * @param session MongoDB session for transaction
    */
   private async updateUserCourseStatus(
     userId: string,
@@ -832,28 +823,6 @@ class TestService implements ITestService {
       );
     }
   };
-  // async getTestsByUserId(userId: string, query: IQuery): Promise<IPagination> {
-  //   try {
-  //     const user = await this.userRepository.getUserById(userId);
-  //     if (!user) {
-  //       throw new CustomException(
-  //         StatusCodeEnum.NotFound_404,
-  //         "Lesson not found"
-  //       );
-  //     }
-
-  //     const tests = await this.testRepository.getTestsByUserId(userId, query);
-  //     return tests;
-  //   } catch (error) {
-  //     if (error instanceof CustomException) {
-  //       throw error;
-  //     }
-  //     throw new CustomException(
-  //       StatusCodeEnum.InternalServerError_500,
-  //       error instanceof Error ? error.message : "Failed to retrieve tests"
-  //     );
-  //   }
-  // }
 }
 
 export default TestService;

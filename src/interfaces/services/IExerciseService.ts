@@ -6,23 +6,29 @@ import { ISubmitExercises, IUserExerciseResponse } from "../others/ISubmission";
 export interface IExerciseService {
   createExercise: (
     lessonId: string,
-    type: string,
-    question: string,
-    answer: string | string[],
-    focus: string,
-    options?: string[],
-    explanation?: string,
-    image?: string
+    questions: Array<{
+      type: string;
+      question: string;
+      answer: string | string[];
+      focus: string;
+      options?: string[];
+      explanation?: string;
+      image?: string;
+    }>
   ) => Promise<IExercise | null>;
 
   updateExercise: (
     id: string,
-    question: string,
-    answer: string | string[],
-    focus: string,
-    options?: string[],
-    explanation?: string,
-    image?: string
+    questions: Array<{
+      id?: string; // If provided, update existing question
+      type: string;
+      question: string;
+      answer: string | string[];
+      focus: string;
+      options?: string[];
+      explanation?: string;
+      image?: string;
+    }>
   ) => Promise<IExercise | null>;
 
   deleteExercise: (id: string) => Promise<IExercise | null>;

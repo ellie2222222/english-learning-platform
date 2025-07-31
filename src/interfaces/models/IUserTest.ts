@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 import { UserTestStatusEnumType } from "../../enums/UserTestStatusEnum";
 
 export interface IUserTest extends Document {
+  _id: mongoose.Types.ObjectId;
   testId: mongoose.Schema.Types.ObjectId;
   userId: mongoose.Schema.Types.ObjectId;
   attemptNo: number;

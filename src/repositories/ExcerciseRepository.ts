@@ -225,7 +225,7 @@ class ExerciseRepository implements IExerciseRepository {
     try {
       const matchQuery = {
         lessonId: { $in: lessonIds },
-        isDeleted: false,
+        isDeleted: { $ne: true },
       };
 
       const exercises = await ExerciseModel.find(matchQuery);
@@ -250,7 +250,7 @@ class ExerciseRepository implements IExerciseRepository {
     try {
       const matchQuery = {
         lessonId: { $in: lessonIds },
-        isDeleted: false,
+        isDeleted: { $ne: true },
       };
 
       const exercises = await ExerciseModel.aggregate([
@@ -295,7 +295,7 @@ class ExerciseRepository implements IExerciseRepository {
     try {
       const exerciseOrder = await ExerciseModel.find({
         lessonId: new mongoose.Types.ObjectId(lessonId),
-        isDeleted: false,
+        isDeleted: { $ne: true },
       }).sort({ order: -1 });
 
       if (!exerciseOrder[0]) {
@@ -319,7 +319,7 @@ class ExerciseRepository implements IExerciseRepository {
     try {
       const exercises = await ExerciseModel.find({
         lessonId: new mongoose.Types.ObjectId(lessonId),
-        isDeleted: false,
+        isDeleted: { $ne: true },
       });
 
       return exercises;
@@ -343,7 +343,7 @@ class ExerciseRepository implements IExerciseRepository {
       const exercises = await ExerciseModel.updateMany(
         {
           lessonId: new mongoose.Types.ObjectId(lessonId),
-          isDeleted: false,
+          isDeleted: { $ne: true },
         },
         { $set: { isDeleted: true } },
         { session, new: true }
@@ -370,7 +370,7 @@ class ExerciseRepository implements IExerciseRepository {
       const exercises = await ExerciseModel.updateMany(
         {
           lessonId: { $in: lessonIds },
-          isDeleted: false,
+          isDeleted: { $ne: true },
         },
         { $set: { isDeleted: true } },
         { session, new: true }
@@ -394,7 +394,7 @@ class ExerciseRepository implements IExerciseRepository {
     try {
       const count = await ExerciseModel.countDocuments({
         lessonId: { $in: lessonIds },
-        isDeleted: false,
+        isDeleted: { $ne: true },
       });
 
       return count;

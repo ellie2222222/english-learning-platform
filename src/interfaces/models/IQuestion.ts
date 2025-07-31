@@ -1,14 +1,18 @@
 import mongoose, { Document } from "mongoose";
 import { ILesson } from "./ILesson";
-import { IQuestion } from "./IQuestion";
 
-export interface IExercise extends Document {
+export interface IQuestion extends Document {
   _id: mongoose.Types.ObjectId;
   lessonId: mongoose.Schema.Types.ObjectId | string | ILesson;
-  questionIds: mongoose.Schema.Types.ObjectId[] | string[] | IQuestion[];
+  question: string;
+  type: string;
+  options?: string[];
+  answer: string | string[];
+  explanation?: string;
+  focus: string;
+  image?: string;
   order: number;
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  toObject(): any;
-}
+} 

@@ -1,8 +1,10 @@
 import { Inject, Service } from "typedi";
 import { IExerciseService } from "../interfaces/services/IExerciseService";
 import ExerciseRepository from "../repositories/ExcerciseRepository";
+import QuestionRepository from "../repositories/QuestionRepository";
 import mongoose, { ObjectId, Schema } from "mongoose";
 import { IExercise } from "../interfaces/models/IExercise";
+import { IQuestion } from "../interfaces/models/IQuestion";
 import { IPagination } from "../interfaces/others/IPagination";
 import { IQuery } from "../interfaces/others/IQuery";
 import Database from "../db/database";
@@ -10,6 +12,7 @@ import CustomException from "../exceptions/CustomException";
 import StatusCodeEnum from "../enums/StatusCodeEnum";
 import LessonRepository from "../repositories/LessonRepository";
 import { ILessonRepository } from "../interfaces/repositories/ILessonRepository";
+import { IQuestionRepository } from "../interfaces/repositories/IQuestionRepository";
 import { ExerciseTypeEnum } from "../enums/ExerciseTypeEnum";
 import { cleanUpFile } from "../utils/fileUtils";
 import TestRepository from "../repositories/TestRepository";
@@ -36,6 +39,8 @@ class ExerciseService implements IExerciseService {
     private lessonRepository: ILessonRepository,
     @Inject(() => ExerciseRepository)
     private exerciseRepository: IExerciseRepository,
+    @Inject(() => QuestionRepository)
+    private questionRepository: IQuestionRepository,
     @Inject(() => TestRepository)
     private testRepository: ITestRepository,
     @Inject(() => UserExerciseRepository)
@@ -45,28 +50,20 @@ class ExerciseService implements IExerciseService {
     @Inject() private database: Database
   ) {}
 
-  private arraysEqual(
-    a: string | string[] | undefined,
-    b: string | string[] | undefined
-  ): boolean {
-    if (a === b) return true;
-    if (!a || !b) return false;
-    if (typeof a === "string" && typeof b === "string") return a === b;
-    if (Array.isArray(a) && Array.isArray(b)) {
-      return a.length === b.length && a.every((val, index) => val === b[index]);
-    }
-    return false;
-  }
-
+  /**
+   * Create an exercise with questions
+   */
   createExercise = async (
     lessonId: string,
-    type: string,
-    question: string,
-    answer: string | string[],
-    focus: string,
-    options?: string[],
-    explanation?: string,
-    image?: string
+    questions: Array<{
+      type: string;
+      question: string;
+      answer: string | string[];
+      focus: string;
+      options?: string[];
+      explanation?: string;
+      image?: string;
+    }>
   ): Promise<IExercise | null> => {
     const session = await this.database.startTransaction();
     try {
@@ -79,23 +76,41 @@ class ExerciseService implements IExerciseService {
       }
 
       const order = await this.exerciseRepository.getExerciseOrder(lessonId);
+      const questionIds: mongoose.Types.ObjectId[] = [];
 
+      // Create questions first
+      for (const questionData of questions) {
+        const questionOrder = await this.questionRepository.getQuestionOrder(lessonId);
+        const question = await this.questionRepository.createQuestion(
+          {
+            lessonId: new mongoose.Types.ObjectId(lessonId),
+            type: questionData.type,
+            question: questionData.question,
+            answer: Array.isArray(questionData.answer) ? questionData.answer : [questionData.answer],
+            focus: questionData.focus,
+            options: questionData.options,
+            explanation: questionData.explanation,
+            image: questionData.image,
+            order: questionOrder,
+          },
+          session
+        );
+        if (question) {
+          questionIds.push(question._id as mongoose.Types.ObjectId);
+        }
+      }
+
+      // Create exercise with question references
       const exercise = await this.exerciseRepository.createExercise(
         {
           lessonId: new mongoose.Types.ObjectId(lessonId),
-          type,
-          question,
-          answer,
-          focus,
-          options,
-          explanation,
-          image,
+          questionIds,
           order,
         },
         session
       );
 
-      //update lesson length
+      // Update lesson length
       const updatedLength = [...lesson.length];
       const idx = updatedLength.findIndex(
         (item) => item.for === LessonTrackingType.EXERCISE
@@ -112,14 +127,17 @@ class ExerciseService implements IExerciseService {
       );
 
       await this.database.commitTransaction(session);
-
       return exercise;
     } catch (error) {
       await session.abortTransaction(session);
 
-      if (image) {
-        await cleanUpFile(image, "create");
+      // Clean up any uploaded images
+      for (const questionData of questions) {
+        if (questionData.image) {
+          await cleanUpFile(questionData.image, "create");
+        }
       }
+      
       if (error instanceof CustomException) {
         throw error;
       }
@@ -132,148 +150,96 @@ class ExerciseService implements IExerciseService {
       await session.endSession();
     }
   };
+
+  /**
+   * Update an exercise and its questions
+   */
   updateExercise = async (
     id: string,
-    question: string,
-    answer: string | string[],
-    focus: string,
-    options?: string[],
-    explanation?: string,
-    image?: string
+    questions: Array<{
+      id?: string; // If provided, update existing question
+      type: string;
+      question: string;
+      answer: string | string[];
+      focus: string;
+      options?: string[];
+      explanation?: string;
+      image?: string;
+    }>
   ): Promise<IExercise | null> => {
     const session = await this.database.startTransaction();
     try {
-      // Exercise existence
-      const checkExercise = await this.exerciseRepository.getExercise(id);
-      let cleanUpImage = false;
-      if (!checkExercise) {
+      const exercise = await this.exerciseRepository.getExercise(id);
+      if (!exercise) {
         throw new CustomException(
           StatusCodeEnum.NotFound_404,
           "Exercise not found"
         );
       }
 
-      // Lesson existence
-      const checkLesson = await this.lessonRepository.getLessonById(
-        (checkExercise.lessonId as ObjectId).toString()
-      );
+      const questionIds: mongoose.Types.ObjectId[] = [];
 
-      if (!checkLesson) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "Lesson not found or have been deleted"
-        );
-      }
-
-      // Validate answer based on exercise type
-      if (answer !== undefined || options !== undefined) {
-        const checkOptions = options ?? checkExercise.options;
-        const checkAnswer = answer ?? checkExercise.answer;
-
-        if (checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE) {
-          // Ensure checkAnswer is an array with one string and exists in checkOptions
-          if (
-            !Array.isArray(checkAnswer) ||
-            checkAnswer.length !== 1 ||
-            typeof checkAnswer[0] !== "string" ||
-            (checkOptions && !checkOptions.includes(checkAnswer[0]))
-          ) {
-            throw new CustomException(
-              StatusCodeEnum.BadRequest_400,
-              "Answer must be an array with one valid option for multiple choice"
-            );
-          }
-
-          // Validate options if provided
-          if (options) {
-            if (
-              !Array.isArray(options) ||
-              options.length === 0 ||
-              options.some((opt) => typeof opt !== "string" || !opt)
-            ) {
-              throw new CustomException(
-                StatusCodeEnum.BadRequest_400,
-                "Options must be a non-empty array of strings"
-              );
+      // Update or create questions
+      for (const questionData of questions) {
+        if (questionData.id) {
+          // Update existing question
+          const updatedQuestion = await this.questionRepository.updateQuestion(
+            questionData.id,
+            {
+              question: questionData.question,
+              answer: Array.isArray(questionData.answer) ? questionData.answer : [questionData.answer],
+              focus: questionData.focus,
+              options: questionData.options,
+              explanation: questionData.explanation,
+              image: questionData.image,
             }
+          );
+          if (updatedQuestion) {
+            questionIds.push(updatedQuestion._id as mongoose.Types.ObjectId);
           }
-        } else if (
-          [
-            ExerciseTypeEnum.IMAGE_TRANSLATE,
-            ExerciseTypeEnum.FILL_IN_THE_BLANK,
-            ExerciseTypeEnum.TRANSLATE,
-          ].includes(checkExercise.type)
-        ) {
-          if (
-            !Array.isArray(checkAnswer) ||
-            checkAnswer.length === 0 ||
-            checkAnswer.some((ans) => typeof ans !== "string" || !ans)
-          ) {
-            throw new CustomException(
-              StatusCodeEnum.BadRequest_400,
-              "Answer must be a non-empty array of strings"
-            );
-          }
-        }
-      }
-
-      const data: Partial<IExercise> = {};
-      if (question && question !== checkExercise.question)
-        data.question = question;
-      if (
-        answer !== undefined &&
-        !this.arraysEqual(answer, checkExercise.answer)
-      ) {
-        // Normalize answer to array for multiple-choice if it's a string
-        data.answer =
-          checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE &&
-          typeof answer === "string"
-            ? [answer]
-            : answer;
-      }
-      if (focus && focus !== checkExercise.focus) data.focus = focus;
-      if (
-        options &&
-        checkExercise.type === ExerciseTypeEnum.MULTIPLE_CHOICE &&
-        !this.arraysEqual(options, checkExercise.options)
-      ) {
-        data.options = options;
-      }
-      if (explanation && explanation !== checkExercise.explanation) {
-        data.explanation = explanation;
-      }
-      if (
-        image &&
-        checkExercise.type === ExerciseTypeEnum.IMAGE_TRANSLATE &&
-        image !== checkExercise.image
-      ) {
-        if (checkExercise.image) {
-          data.image = image;
-          cleanUpImage = true; // Flag for cleanup
         } else {
-          data.image = image;
+          // Create new question
+          const lessonId = exercise.lessonId.toString();
+          const questionOrder = await this.questionRepository.getQuestionOrder(lessonId);
+          const newQuestion = await this.questionRepository.createQuestion(
+            {
+              lessonId: new mongoose.Types.ObjectId(lessonId),
+              type: questionData.type,
+              question: questionData.question,
+              answer: Array.isArray(questionData.answer) ? questionData.answer : [questionData.answer],
+              focus: questionData.focus,
+              options: questionData.options,
+              explanation: questionData.explanation,
+              image: questionData.image,
+              order: questionOrder,
+            },
+            session
+          );
+          if (newQuestion) {
+            questionIds.push(newQuestion._id as mongoose.Types.ObjectId);
+          }
         }
       }
 
-      const exercise = await this.exerciseRepository.updateExercise(
+      // Update exercise with new question references
+      const updatedExercise = await this.exerciseRepository.updateExercise(
         id,
-        data,
+        { questionIds },
         session
       );
 
       await this.database.commitTransaction(session);
-
-      if (cleanUpImage) {
-        await cleanUpFile(checkExercise.image as string, "update");
-      }
-
-      return exercise;
+      return updatedExercise;
     } catch (error) {
       await session.abortTransaction(session);
 
-      if (image) {
-        cleanUpFile(image, "create");
+      // Clean up any uploaded images
+      for (const questionData of questions) {
+        if (questionData.image) {
+          await cleanUpFile(questionData.image, "create");
+        }
       }
+      
       if (error instanceof CustomException) {
         throw error;
       }
@@ -287,6 +253,9 @@ class ExerciseService implements IExerciseService {
     }
   };
 
+  /**
+   * Delete an exercise and its associated questions
+   */
   async deleteExercise(id: string): Promise<IExercise | null> {
     const session = await this.database.startTransaction();
     try {
@@ -298,48 +267,11 @@ class ExerciseService implements IExerciseService {
         );
       }
 
-      // Get the lesson ID and count of exercises in the lesson
-      const lessonId = exercise.lessonId.toString();
-
-      // Find tests that include the exercise's lesson
-      const tests = await this.testRepository.getTestsByLessonIdV2(lessonId);
-
-      let canDelete = true;
-      for (const test of tests) {
-        const remainingLessonIds = test.lessonIds.filter(
-          (lid) => lid?.toString() !== exercise.lessonId?.toString()
-        );
-        const totalExercisesAcrossLessons =
-          await this.exerciseRepository.countExercisesByLessonIds(
-            test.lessonIds.map((lid) => lid.toString())
-          );
-        const deletedExercisesAcrossLessons =
-          await this.exerciseRepository.countDeletedExercisesByLessonIds(
-            test.lessonIds.map((lid) => lid.toString())
-          );
-        const remainingExercisesAcrossLessons =
-          totalExercisesAcrossLessons - deletedExercisesAcrossLessons;
-
-        if (
-          remainingExercisesAcrossLessons === test.totalQuestions &&
-          remainingLessonIds.length > 0
-        ) {
-          // Do not delete if remaining exercises match totalQuestions and other lessons exist
-          canDelete = true; // Still allowed, just update test
-        } else if (
-          remainingExercisesAcrossLessons < test.totalQuestions ||
-          remainingLessonIds.length === 0
-        ) {
-          // Cannot delete if it would reduce exercises below totalQuestions or leave no lessons
-          canDelete = false;
-          break;
-        }
-      }
-
-      if (!canDelete) {
-        throw new CustomException(
-          StatusCodeEnum.BadRequest_400,
-          "Cannot delete exercise as it would invalidate test constraints"
+      // Delete associated questions
+      for (const questionId of exercise.questionIds) {
+        await this.questionRepository.deleteQuestion(
+          questionId.toString(),
+          session
         );
       }
 
@@ -349,47 +281,24 @@ class ExerciseService implements IExerciseService {
         session
       );
 
-      // Update or delete tests after successful deletion
-      for (const test of tests) {
-        const remainingLessonIds = test.lessonIds.filter(
-          (lid) => lid?.toString() !== exercise.lessonId?.toString()
-        );
-        if (remainingLessonIds.length === 0) {
-          await this.testRepository.deleteTest(
-            (test._id as string).toString(),
-            session
-          );
-        } else {
-          await this.testRepository.updateTest(
-            (test._id as string).toString(),
-            { lessonIds: remainingLessonIds },
-            session
-          );
-        }
-      }
-
-      //update lesson length
+      // Update lesson length
+      const lessonId = exercise.lessonId.toString();
       const lesson = await this.lessonRepository.getLessonById(lessonId);
-      if (!lesson) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          "Lesson not found"
+      if (lesson) {
+        const updatedLength = [...lesson.length];
+        const idx = updatedLength.findIndex(
+          (item) => item.for === LessonTrackingType.EXERCISE
+        );
+        if (idx !== -1) {
+          updatedLength[idx].amount =
+            updatedLength[idx].amount - 1 < 0 ? 0 : updatedLength[idx].amount - 1;
+        }
+        await this.lessonRepository.updateLesson(
+          lessonId,
+          { length: updatedLength },
+          session
         );
       }
-
-      const updatedLength = [...lesson.length];
-      const idx = updatedLength.findIndex(
-        (item) => item.for === LessonTrackingType.EXERCISE
-      );
-      if (idx !== -1) {
-        updatedLength[idx].amount =
-          updatedLength[idx].amount - 1 < 0 ? 0 : updatedLength[idx].amount - 1;
-      }
-      await this.lessonRepository.updateLesson(
-        lessonId,
-        { length: updatedLength },
-        session
-      );
 
       await this.database.commitTransaction(session);
       return deletedExercise;
@@ -406,6 +315,9 @@ class ExerciseService implements IExerciseService {
     }
   }
 
+  /**
+   * Get exercises with populated questions
+   */
   getExercises = async (
     query: IQuery,
     lessonId: string
@@ -416,7 +328,25 @@ class ExerciseService implements IExerciseService {
         lessonId
       );
 
-      return exercises;
+      // Populate questions for each exercise
+      const exercisesWithQuestions = await Promise.all(
+        exercises.data.map(async (exercise: IExercise) => {
+          const questions = await Promise.all(
+            exercise.questionIds.map(async (questionId) => {
+              return await this.questionRepository.getQuestion(questionId.toString());
+            })
+          );
+          return {
+            ...exercise.toObject(),
+            questions: questions.filter(q => q !== null),
+          };
+        })
+      );
+
+      return {
+        ...exercises,
+        data: exercisesWithQuestions,
+      };
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -429,10 +359,27 @@ class ExerciseService implements IExerciseService {
     }
   };
 
+  /**
+   * Get a single exercise with populated questions
+   */
   getExercise = async (id: string): Promise<IExercise | null> => {
     try {
       const exercise = await this.exerciseRepository.getExercise(id);
-      return exercise;
+      if (!exercise) {
+        return null;
+      }
+
+      // Populate questions
+      const questions = await Promise.all(
+        exercise.questionIds.map(async (questionId) => {
+          return await this.questionRepository.getQuestion(questionId.toString());
+        })
+      );
+
+      return {
+        ...exercise.toObject(),
+        questions: questions.filter(q => q !== null),
+      } as IExercise;
     } catch (error) {
       if (error instanceof CustomException) {
         throw error;
@@ -445,6 +392,9 @@ class ExerciseService implements IExerciseService {
     }
   };
 
+  /**
+   * Submit exercises with questions
+   */
   submitExercises = async (
     data: ISubmitExercises
   ): Promise<IUserExerciseResponse> => {
@@ -459,67 +409,65 @@ class ExerciseService implements IExerciseService {
         );
       }
 
-      // Validate all exercise IDs exist and belong to the specified lesson
-      const exerciseIds = data.answers.map((answer) => answer.exerciseId);
-      const exercises = await Promise.all(
-        exerciseIds.map((id) => this.exerciseRepository.getExercise(id))
-      );
-
-      // Check if any exercises were not found
-      const missingExercises = exercises.findIndex((ex) => !ex);
-      if (missingExercises !== -1) {
-        throw new CustomException(
-          StatusCodeEnum.NotFound_404,
-          `Exercise with ID ${exerciseIds[missingExercises]} not found`
+      // Get all exercises for the lesson
+      const exercises = await this.exerciseRepository.getExercisesByLessonIds([data.lessonId]);
+      
+      // Get all questions for these exercises
+      const allQuestions: IQuestion[] = [];
+      for (const exercise of exercises) {
+        const questions = await Promise.all(
+          exercise.questionIds.map(async (questionId) => {
+            return await this.questionRepository.getQuestion(questionId.toString());
+          })
         );
+        allQuestions.push(...questions.filter(q => q !== null) as IQuestion[]);
       }
 
-      // Validate all exercises belong to the specified lesson
-      const invalidExercises = exercises.filter(
-        (exercise) => exercise?.lessonId.toString() !== data.lessonId
+      // Validate all question IDs exist
+      const questionIds = allQuestions.map(q => q._id?.toString());
+      const invalidQuestionIds = data.answers.filter(
+        (ans) => questionIds.indexOf(ans.exerciseId) === -1
       );
-
-      if (invalidExercises.length > 0) {
+      if (invalidQuestionIds.length > 0) {
         throw new CustomException(
           StatusCodeEnum.BadRequest_400,
-          `Some exercises do not belong to the specified lesson`
+          "Invalid question IDs in submission"
         );
       }
 
-      // Process each exercise submission - evaluate correctness but will mark all as completed
-      const results = data.answers.map((answer, index) => {
-        const exercise = exercises[index] as IExercise;
+      // Process each question submission
+      const results = data.answers.map((answer) => {
+        const question = allQuestions.find(
+          (q) => q._id?.toString() === answer.exerciseId
+        )!;
         let isCorrect = false;
 
-        // Grade based on exercise type
-        switch (exercise.type) {
+        // Grade based on question type
+        switch (question.type) {
           case ExerciseTypeEnum.MULTIPLE_CHOICE:
-            // Exact match for multiple-choice answers
             isCorrect =
               answer.selectedAnswers.length === 1 &&
-              exercise.answer.length === 1 &&
-              answer.selectedAnswers[0] === exercise.answer[0];
+              question.answer.length === 1 &&
+              answer.selectedAnswers[0] === question.answer[0];
             break;
           case ExerciseTypeEnum.TRANSLATE:
           case ExerciseTypeEnum.IMAGE_TRANSLATE:
-            // Case-insensitive match for translation answers
             isCorrect =
               answer.selectedAnswers.length === 1 &&
-              exercise.answer.length >= 1 &&
-              Array.isArray(exercise.answer) &&
-              exercise.answer.some(
+              question.answer.length >= 1 &&
+              Array.isArray(question.answer) &&
+              question.answer.some(
                 (correctAns: string) =>
                   correctAns.toLowerCase().trim() ===
                   answer.selectedAnswers[0].toLowerCase().trim()
               );
             break;
           case ExerciseTypeEnum.FILL_IN_THE_BLANK:
-            // Exact match for fill-in-the-blank answers
             isCorrect =
-              answer.selectedAnswers.length === exercise.answer.length &&
+              answer.selectedAnswers.length === question.answer.length &&
               answer.selectedAnswers.every(
                 (ans, idx) =>
-                  ans.trim() === (exercise.answer as string[])[idx].trim()
+                  ans.trim() === (question.answer as string[])[idx].trim()
               );
             break;
           default:
@@ -529,24 +477,18 @@ class ExerciseService implements IExerciseService {
         return {
           exerciseId: answer.exerciseId,
           selectedAnswers: answer.selectedAnswers,
-          correctAnswers: Array.isArray(exercise.answer)
-            ? exercise.answer
-            : [exercise.answer as string],
-          isCorrect, // Return actual correctness
+          correctAnswers: Array.isArray(question.answer)
+            ? question.answer
+            : [question.answer as string],
+          isCorrect,
         };
       });
 
-      // Get total exercises for this lesson
-      const totalExercises = await this.exerciseRepository.getAllLessonExercise(
-        data.lessonId
-      );
-      const totalExerciseCount = totalExercises.length;
-
-      // Mark all exercises in the lesson as completed regardless of correctness
+      // Mark all exercises in the lesson as completed
       await this.userExerciseRepository.markAllExercisesInLessonAsCompleted(
         data.userId,
         data.lessonId,
-        totalExercises.map((ex) => ex._id as mongoose.Types.ObjectId),
+        exercises.map((ex) => ex._id as mongoose.Types.ObjectId),
         session
       );
 
@@ -554,7 +496,7 @@ class ExerciseService implements IExerciseService {
       await this.userLessonRepository.markLessonAsCompleted(
         data.userId,
         data.lessonId,
-        totalExerciseCount,
+        allQuestions.length,
         session
       );
 
@@ -563,12 +505,10 @@ class ExerciseService implements IExerciseService {
         await increaseUserPoint(data.userId, "lesson");
       } catch (error) {
         console.error("Failed to increase user points:", error);
-        // Continue execution even if points couldn't be increased
       }
 
       await this.database.commitTransaction(session);
 
-      // Return the submission response with actual correctness
       return {
         userId: data.userId,
         submittedAt: new Date(),
