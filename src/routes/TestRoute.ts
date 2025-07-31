@@ -10,6 +10,7 @@ import {
   MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
+import { MembershipAccessMiddleware, ResourceType as NewResourceType } from "../middlewares/MembershipAccessMiddleware";
 
 const testController = Container.get(TestController);
 const testDto = new TestDto();
@@ -28,8 +29,7 @@ testRoutes.post(
 testRoutes.get(
   "/:id/course",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.COURSE),
-  GenericResourceAccessMiddleware(ResourceType.COURSE),
+  MembershipAccessMiddleware(NewResourceType.COURSE),
   testDto.getTests,
   testController.getTests
 );
@@ -38,8 +38,7 @@ testRoutes.get(
 testRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.TEST),
-  GenericResourceAccessMiddleware(ResourceType.TEST),
+  MembershipAccessMiddleware(NewResourceType.TEST),
   testDto.getTestById,
   testController.getTestById
 );
@@ -60,8 +59,7 @@ testRoutes.delete(
 
 testRoutes.post("/:id/submission",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.TEST),
-  GenericResourceAccessMiddleware(ResourceType.TEST),
+  MembershipAccessMiddleware(NewResourceType.TEST),
   testDto.submitTest,
   testController.submitTest
 ); 
@@ -70,8 +68,7 @@ testRoutes.post("/:id/submission",
 testRoutes.get(
   "/lesson/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.LESSON),
-  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  MembershipAccessMiddleware(NewResourceType.LESSON),
   testDto.getTestsByLessonId,
   testController.getTestsByLessonId
 );

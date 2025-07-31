@@ -11,6 +11,7 @@ import {
   MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
 import { ResourceType } from "../enums/ResourceType";
+import { MembershipAccessMiddleware, ResourceType as NewResourceType } from "../middlewares/MembershipAccessMiddleware";
 
 const exerciseRoutes = Router();
 const exerciseController = Container.get(ExerciseController);
@@ -45,8 +46,7 @@ exerciseRoutes.delete(
 exerciseRoutes.get(
   "/:id/lesson",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.LESSON),
-  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  MembershipAccessMiddleware(NewResourceType.LESSON),
   exerciseDto.getExercises,
   exerciseController.getExercises
 );
@@ -55,8 +55,7 @@ exerciseRoutes.get(
 exerciseRoutes.get(
   "/:id",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.EXERCISE),
-  GenericResourceAccessMiddleware(ResourceType.EXERCISE),
+  MembershipAccessMiddleware(NewResourceType.EXERCISE),
   exerciseDto.getExercise,
   exerciseController.getExercise
 );

@@ -12,7 +12,8 @@ import {
   GenericResourceAccessMiddleware,
   MembershipAccessLimitMiddleware,
 } from "../middlewares/ResourceAccessMiddleware";
-import { ResourceType } from "../enums/ResourceType";
+import { MembershipAccessMiddleware, ResourceType } from "../middlewares/MembershipAccessMiddleware";
+import { ResourceType as OldResourceType } from "../enums/ResourceType";
 
 const courseController = Container.get(CourseController);
 const lessonController = Container.get(LessonController);
@@ -41,8 +42,7 @@ courseRoutes.get(
 courseRoutes.get(
   "/:id/details",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.COURSE),
-  GenericResourceAccessMiddleware(ResourceType.COURSE),
+  MembershipAccessMiddleware(ResourceType.COURSE),
   courseDto.getCourseById,
   courseController.getCourseDetails
 );
@@ -51,8 +51,7 @@ courseRoutes.get(
 courseRoutes.get(
   "/:id/lessons",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.COURSE),
-  GenericResourceAccessMiddleware(ResourceType.COURSE),
+  MembershipAccessMiddleware(ResourceType.COURSE),
   lessonDto.getLessonsByCourseId,
   lessonController.getLessonsByCourseId
 );

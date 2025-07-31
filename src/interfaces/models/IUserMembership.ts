@@ -1,12 +1,17 @@
 import mongoose, { Document } from "mongoose";
 import { MembershipTierEnum } from "../../enums/MembershipTierEnum";
 
-export interface IMembership extends Document {
-  name: string;
-  description?: string;
-  duration: number;
-  price: number;
+export interface IUserMembership extends Document {
+  userId: mongoose.Types.ObjectId | string;
+  membershipId: mongoose.Types.ObjectId | string;
   tier: MembershipTierEnum;
+  startDate: Date;
+  endDate: Date;
+  isActive: boolean;
+  autoRenew: boolean;
+  paymentMethod?: string;
+  lastPaymentDate?: Date;
+  nextPaymentDate?: Date;
   features: {
     maxCourses: number;
     maxLessonsPerDay: number;
@@ -24,9 +29,15 @@ export interface IMembership extends Document {
     progressTracking: boolean;
     exportCertificates: boolean;
   };
-  color: string;
-  icon: string;
+  usageStats: {
+    coursesEnrolled: number;
+    lessonsCompleted: number;
+    testsTaken: number;
+    aiChatUsed: number;
+    certificatesEarned: number;
+    lastActivityDate: Date;
+  };
   isDeleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-}
+} 

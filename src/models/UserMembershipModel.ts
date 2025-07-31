@@ -1,27 +1,56 @@
 import mongoose, { Model, Schema } from "mongoose";
 import baseModelSchema from "./BaseModel";
-import { IMembership } from "../interfaces/models/IMembership";
+import { IUserMembership } from "../interfaces/models/IUserMembership";
 import { MembershipTierEnum } from "../enums/MembershipTierEnum";
 
-const MembershipModelSchema = new Schema<IMembership>(
+const UserMembershipModelSchema = new Schema<IUserMembership>(
   {
-    name: { type: String, required: true },
-    description: { type: String, required: false },
-    duration: {
-      type: Number,
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
-      min: 0,
     },
-    price: {
-      type: Number,
+    membershipId: {
+      type: Schema.Types.ObjectId,
+      ref: "Membership",
       required: true,
-      min: 0,
     },
     tier: {
       type: String,
       enum: [MembershipTierEnum.FREE, MembershipTierEnum.BASIC, MembershipTierEnum.PREMIUM, MembershipTierEnum.PRO, MembershipTierEnum.ENTERPRISE],
       required: true,
       default: MembershipTierEnum.FREE,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
+    autoRenew: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    paymentMethod: {
+      type: String,
+      required: false,
+    },
+    lastPaymentDate: {
+      type: Date,
+      required: false,
+    },
+    nextPaymentDate: {
+      type: Date,
+      required: false,
     },
     features: {
       maxCourses: { type: Number, required: true, default: 3 },
@@ -40,16 +69,26 @@ const MembershipModelSchema = new Schema<IMembership>(
       progressTracking: { type: Boolean, required: true, default: true },
       exportCertificates: { type: Boolean, required: true, default: false },
     },
-    color: { type: String, required: true, default: "#6B7280" },
-    icon: { type: String, required: true, default: "🎓" },
+    usageStats: {
+      coursesEnrolled: { type: Number, default: 0 },
+      lessonsCompleted: { type: Number, default: 0 },
+      testsTaken: { type: Number, default: 0 },
+      aiChatUsed: { type: Number, default: 0 },
+      certificatesEarned: { type: Number, default: 0 },
+      lastActivityDate: { type: Date, default: Date.now },
+    },
     ...baseModelSchema.obj,
   },
   { timestamps: true }
 );
 
-const MembershipModel: Model<IMembership> = mongoose.model<IMembership>(
-  "Membership",
-  MembershipModelSchema
+// Index for efficient queries
+UserMembershipModelSchema.index({ userId: 1, isActive: 1 });
+UserMembershipModelSchema.index({ endDate: 1, isActive: 1 });
+
+const UserMembershipModel: Model<IUserMembership> = mongoose.model<IUserMembership>(
+  "UserMembership",
+  UserMembershipModelSchema
 );
 
-export default MembershipModel;
+export default UserMembershipModel; 

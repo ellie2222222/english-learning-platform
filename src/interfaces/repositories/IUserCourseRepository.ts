@@ -40,6 +40,8 @@ export interface IUserCourseRepository {
 
   countCompletedByUserId(userId: string): Promise<number>;
 
+  countUserCoursesByUserId(userId: string): Promise<number>;
+
   getAllUserCourses(): Promise<IUserCourse[]>;
 
   completeCourseLogic(

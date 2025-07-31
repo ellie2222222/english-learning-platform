@@ -10,6 +10,9 @@ import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import UserEnum from "../enums/UserEnum";
 import UserTestRepository from "../repositories/UserTestRepository";
 import { IUserTestRepository } from "../interfaces/repositories/IUserTestRepository";
+import UserMembershipModel from "../models/UserMembershipModel";
+import { MembershipTierEnum, MEMBERSHIP_TIERS } from "../enums/MembershipTierEnum";
+import mongoose from "mongoose";
 
 @Service()
 class AIService implements IAIService {
@@ -41,15 +44,29 @@ class AIService implements IAIService {
         );
       }
 
-      if (
-        (requester.activeUntil === null ||
-          new Date(requester.activeUntil) < new Date()) &&
-        requester.role !== UserEnum.ADMIN
-      ) {
-        throw new CustomException(
-          StatusCodeEnum.PaymentRequired_402,
-          "This feature requires membership"
-        );
+      // Check AI chat access based on membership tier
+      if (requester.role !== UserEnum.ADMIN) {
+        const userMembership = await UserMembershipModel.findOne({
+          userId: new mongoose.Types.ObjectId(userId),
+          isActive: true,
+          endDate: { $gte: new Date() },
+          isDeleted: { $ne: true },
+        });
+
+        const currentTier = userMembership?.tier || MembershipTierEnum.FREE;
+        const tierConfig = MEMBERSHIP_TIERS[currentTier as MembershipTierEnum];
+
+        if (!tierConfig.features.aiChatAccess) {
+          const error = new CustomException(
+            StatusCodeEnum.PaymentRequired_402,
+            "AI Chat requires a higher membership tier"
+          );
+          (error as any).data = {
+            requiredTier: MembershipTierEnum.PREMIUM,
+            currentTier: currentTier,
+          };
+          throw error;
+        }
       }
       const rule =
         "You are an English tutor for Vietnamese learners." +
@@ -97,15 +114,29 @@ class AIService implements IAIService {
         );
       }
 
-      if (
-        (requester.activeUntil === null ||
-          new Date(requester.activeUntil) < new Date()) &&
-        requester.role !== UserEnum.ADMIN
-      ) {
-        throw new CustomException(
-          StatusCodeEnum.PaymentRequired_402,
-          "This feature requires membership"
-        );
+      // Check AI chat access based on membership tier
+      if (requester.role !== UserEnum.ADMIN) {
+        const userMembership = await UserMembershipModel.findOne({
+          userId: new mongoose.Types.ObjectId(requesterId),
+          isActive: true,
+          endDate: { $gte: new Date() },
+          isDeleted: { $ne: true },
+        });
+
+        const currentTier = userMembership?.tier || MembershipTierEnum.FREE;
+        const tierConfig = MEMBERSHIP_TIERS[currentTier as MembershipTierEnum];
+
+        if (!tierConfig.features.aiChatAccess) {
+          const error = new CustomException(
+            StatusCodeEnum.PaymentRequired_402,
+            "AI Chat requires a higher membership tier"
+          );
+          (error as any).data = {
+            requiredTier: MembershipTierEnum.PREMIUM,
+            currentTier: currentTier,
+          };
+          throw error;
+        }
       }
 
       const notAdmin = requester?.role !== UserEnum.ADMIN;

@@ -14,6 +14,9 @@ import UserRepository from "../repositories/UserRepository";
 import { UserCourseStatusType } from "../enums/UserCourseStatus";
 import UserCourseRepository from "../repositories/UserCourseRepository";
 import { CourseTypeEnum } from "../enums/CourseTypeEnum";
+import UserMembershipModel from "../models/UserMembershipModel";
+import { MembershipTierEnum, MEMBERSHIP_TIERS } from "../enums/MembershipTierEnum";
+import mongoose from "mongoose";
 
 @Service()
 class UserCourseService implements IUserCourseService {
@@ -51,16 +54,39 @@ class UserCourseService implements IUserCourseService {
         );
       }
 
-      if (
-        course.type === CourseTypeEnum.MEMBERSHIP &&
-        (!user.activeUntil ||
-          isNaN(new Date(user.activeUntil).getTime()) ||
-          new Date(user.activeUntil) < new Date())
-      ) {
-        throw new CustomException(
-          StatusCodeEnum.PaymentRequired_402,
-          "This course requires Membership"
-        );
+      if (course.type === CourseTypeEnum.MEMBERSHIP) {
+        // Check user's current membership tier
+        const userMembership = await UserMembershipModel.findOne({
+          userId: new mongoose.Types.ObjectId(userId),
+          isActive: true,
+          endDate: { $gte: new Date() },
+          isDeleted: { $ne: true },
+        });
+
+        if (!userMembership) {
+          throw new CustomException(
+            StatusCodeEnum.PaymentRequired_402,
+            "Premium membership is required for this course"
+          );
+        }
+
+        // Check if user's tier has access to premium courses
+        const tierConfig = MEMBERSHIP_TIERS[userMembership.tier as MembershipTierEnum];
+        if (!tierConfig.features.premiumCourses) {
+          throw new CustomException(
+            StatusCodeEnum.PaymentRequired_402,
+            "Higher membership tier required for premium courses"
+          );
+        }
+
+        // Check course limit
+        const userCoursesCount = await this.userCourseRepository.countUserCoursesByUserId(userId);
+        if (tierConfig.features.maxCourses !== -1 && userCoursesCount >= tierConfig.features.maxCourses) {
+          throw new CustomException(
+            StatusCodeEnum.PaymentRequired_402,
+            `Course limit reached. Maximum ${tierConfig.features.maxCourses} courses allowed for ${userMembership.tier} tier.`
+          );
+        }
       }
 
       // Check if user is already enrolled in this course

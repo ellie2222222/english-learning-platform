@@ -10,11 +10,13 @@ import UserEnum from "../enums/UserEnum";
 import VocabularyModel from "../models/VocabularyModel";
 import ExerciseModel from "../models/ExerciseModel";
 import GrammarModel from "../models/GrammarModel";
+import UserMembershipModel from "../models/UserMembershipModel";
 import { UserLessonStatus } from "../enums/UserLessonStatus";
 import { ResourceType } from "../enums/ResourceType";
 import CourseModel from "../models/CourseModel";
 import UserModel from "../models/UserModel";
 import { CourseTypeEnum } from "../enums/CourseTypeEnum";
+import { MembershipTierEnum, MEMBERSHIP_TIERS } from "../enums/MembershipTierEnum";
 import { ILesson } from "../interfaces/models/ILesson";
 import { IGrammar } from "../interfaces/models/IGrammar";
 import { IExercise } from "../interfaces/models/IExercise";
@@ -167,14 +169,35 @@ const MembershipAccessLimitMiddleware = (resourceType: string) => {
 
       if (
         courseType &&
-        (courseType as CourseTypeOnly).type === CourseTypeEnum.MEMBERSHIP &&
-        (user.activeUntil === null ||
-          new Date(user.activeUntil as Date) < new Date())
+        (courseType as CourseTypeOnly).type === CourseTypeEnum.MEMBERSHIP
       ) {
-        res.status(StatusCodeEnum.PaymentRequired_402).json({
-          message: "Membership is required for this resource",
+        // Check user's current membership tier
+        const userMembership = await UserMembershipModel.findOne({
+          userId: new mongoose.Types.ObjectId(userId),
+          isActive: true,
+          endDate: { $gte: new Date() },
+          isDeleted: { $ne: true },
         });
-        return;
+
+        if (!userMembership) {
+          res.status(StatusCodeEnum.PaymentRequired_402).json({
+            message: "Premium membership is required for this resource",
+            requiredTier: MembershipTierEnum.PREMIUM,
+            currentTier: MembershipTierEnum.FREE,
+          });
+          return;
+        }
+
+        // Check if user's tier has access to premium courses
+        const tierConfig = MEMBERSHIP_TIERS[userMembership.tier as MembershipTierEnum];
+        if (!tierConfig.features.premiumCourses) {
+          res.status(StatusCodeEnum.PaymentRequired_402).json({
+            message: "Higher membership tier required for premium courses",
+            requiredTier: MembershipTierEnum.PREMIUM,
+            currentTier: userMembership.tier,
+          });
+          return;
+        }
       }
 
       next();

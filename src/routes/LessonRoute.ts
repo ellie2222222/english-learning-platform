@@ -15,6 +15,7 @@ import VocabularyDto from "../dtos/VocabularyDto";
 import VocabularyController from "../controllers/VocabularyController";
 import { uploadFile } from "../middlewares/storeFile";
 import { ResourceType } from "../enums/ResourceType";
+import { MembershipAccessMiddleware, ResourceType as NewResourceType } from "../middlewares/MembershipAccessMiddleware";
 import ExerciseController from "../controllers/ExerciseController";
 import ExerciseDto from "../dtos/ExerciseDto";
 
@@ -47,9 +48,8 @@ lessonRoutes.get(
 //get lesson by lessonId => id:lessonId => ResourceType.LESSON
 lessonRoutes.get(
   "/:id",
-  MembershipAccessLimitMiddleware(ResourceType.LESSON),
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  MembershipAccessMiddleware(NewResourceType.LESSON),
   lessonDto.getLessonById,
   lessonController.getLessonById
 );
@@ -72,8 +72,7 @@ lessonRoutes.delete(
 lessonRoutes.get(
   "/:id/grammars",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.LESSON),
-  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  MembershipAccessMiddleware(NewResourceType.LESSON),
   grammarDto.getGrammarsByLessonId,
   grammarController.getGrammarsByLessonId
 );
@@ -81,8 +80,7 @@ lessonRoutes.get(
 //get vocabularies by lessonId => id: lessonId => ResourceType.LESSON
 lessonRoutes.get(
   "/:id/vocabularies",
-  MembershipAccessLimitMiddleware(ResourceType.LESSON),
-  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  MembershipAccessMiddleware(NewResourceType.LESSON),
   vocabularyDto.getVocabulariesByLessonId,
   vocabularyController.getVocabulariesByLessonId
 );
@@ -91,8 +89,7 @@ lessonRoutes.get(
 lessonRoutes.post(
   "/:id/exercises/submission",
   RoleMiddleware([UserEnum.ADMIN, UserEnum.USER]),
-  MembershipAccessLimitMiddleware(ResourceType.LESSON),
-  GenericResourceAccessMiddleware(ResourceType.LESSON),
+  MembershipAccessMiddleware(NewResourceType.LESSON),
   exerciseDto.submitExercises,
   exerciseController.submitExercises
 );

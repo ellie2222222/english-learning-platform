@@ -8,6 +8,7 @@ import { IMembershipRepository } from "../interfaces/repositories/IMembershipRep
 import Database from "../db/database";
 import { IQuery } from "../interfaces/others/IQuery";
 import { IPagination } from "../interfaces/others/IPagination";
+import { MembershipTierEnum, MEMBERSHIP_TIERS } from "../enums/MembershipTierEnum";
 
 @Service()
 class MembershipService implements IMembershipService {
@@ -21,7 +22,8 @@ class MembershipService implements IMembershipService {
     name: string,
     description: string,
     duration: number,
-    price: number
+    price: number,
+    tier: MembershipTierEnum = MembershipTierEnum.FREE
   ): Promise<IMembership | null> => {
     const session = await this.database.startTransaction();
     try {
@@ -35,12 +37,25 @@ class MembershipService implements IMembershipService {
         );
       }
 
+      // Get tier configuration
+      const tierConfig = MEMBERSHIP_TIERS[tier];
+      if (!tierConfig) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Invalid membership tier"
+        );
+      }
+
       const membership = await this.membershipRepository.createMembership(
         {
           name,
           description,
           duration,
           price,
+          tier,
+          features: tierConfig.features,
+          color: tierConfig.color,
+          icon: tierConfig.icon,
         },
         session
       );
@@ -69,7 +84,8 @@ class MembershipService implements IMembershipService {
     name: string,
     description: string,
     duration: number,
-    price: number
+    price: number,
+    tier: MembershipTierEnum
   ): Promise<IMembership | null> => {
     const session = await this.database.startTransaction();
     try {
@@ -96,6 +112,15 @@ class MembershipService implements IMembershipService {
         );
       }
 
+      // Get tier configuration
+      const tierConfig = MEMBERSHIP_TIERS[tier];
+      if (!tierConfig) {
+        throw new CustomException(
+          StatusCodeEnum.BadRequest_400,
+          "Invalid membership tier"
+        );
+      }
+
       const updatedMembership =
         await this.membershipRepository.updateMembership(
           id,
@@ -104,6 +129,10 @@ class MembershipService implements IMembershipService {
             description,
             duration,
             price,
+            tier,
+            features: tierConfig.features,
+            color: tierConfig.color,
+            icon: tierConfig.icon,
           },
           session
         );
@@ -180,6 +209,20 @@ class MembershipService implements IMembershipService {
         throw error;
       }
 
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
+
+  getMembershipTiers = async (): Promise<any> => {
+    try {
+      return {
+        tiers: MEMBERSHIP_TIERS,
+        availableTiers: [MembershipTierEnum.FREE, MembershipTierEnum.BASIC, MembershipTierEnum.PREMIUM, MembershipTierEnum.PRO, MembershipTierEnum.ENTERPRISE],
+      };
+    } catch (error) {
       throw new CustomException(
         StatusCodeEnum.InternalServerError_500,
         error instanceof Error ? error.message : "Internal Server Error"

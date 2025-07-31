@@ -563,6 +563,24 @@ class UserCourseRepository implements IUserCourseRepository {
     }
   };
 
+  countUserCoursesByUserId = async (userId: string): Promise<number> => {
+    try {
+      const count = await UserCourseModel.countDocuments({
+        userId: new mongoose.Types.ObjectId(userId),
+        isDeleted: { $ne: true },
+      });
+      return count;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      throw new CustomException(
+        StatusCodeEnum.InternalServerError_500,
+        error instanceof Error ? error.message : "Internal Server Error"
+      );
+    }
+  };
+
   completeCourseLogic = async (
     userId: string,
     courseId: string,
