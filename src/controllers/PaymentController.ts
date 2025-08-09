@@ -108,7 +108,15 @@ class PaymentController {
       }
 
       await this.paymentQueue.sendPaymentData(data);
-      const receipt = await this.paymentQueue.consumePaymentData();
+      const receipt = {
+        userId: data.userId,
+        membershipPackageId: data.membershipPackageId,
+        transactionId: data.transactionId,
+        totalAmount: data.totalAmount,
+        paymentMethod: data.paymentMethod,
+        paymentGateway: data.paymentGateway,
+        createdAt: new Date(),
+      };
 
       // Render EJS page
       return res.render("PaymentReturn", {
@@ -172,7 +180,15 @@ class PaymentController {
       }
 
       await this.paymentQueue.sendPaymentData(data);
-      const receipt = await this.paymentQueue.consumePaymentData();
+      const receipt = {
+        userId: data.userId,
+        membershipPackageId: data.membershipPackageId,
+        transactionId: data.transactionId,
+        totalAmount: data.totalAmount,
+        paymentMethod: data.paymentMethod,
+        paymentGateway: data.paymentGateway,
+        createdAt: new Date(),
+      };
 
       return res.render("PaymentReturn", {
         success: true,
